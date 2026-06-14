@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* ── Healthcare Design System ──────────────────────────────── */
+@theme inline {
+  /* Fonts */
+  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+
+  /* Brand palette */
+  --color-brand-blue:       #1D6FA4;
+  --color-brand-blue-light: #EFF6FF;
+  --color-brand-blue-dark:  #155078;
+  --color-brand-teal:       #0D9488;
+  --color-brand-teal-light: #F0FDFA;
+  --color-brand-teal-dark:  #0A7A70;
+
+  /* Semantic status */
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger:  #DC2626;
+  --color-info:    #0284C7;
+
+  /* Radius */
+  --radius: 0.5rem;
+}
+
+/* ── CSS Custom Properties (shadcn tokens + role accents) ──── */
+:root {
+  /* Surface & backgrounds */
+  --background:            #F8FAFC;
+  --foreground:            #0F172A;
+  --card:                  #FFFFFF;
+  --card-foreground:       #0F172A;
+  --popover:               #FFFFFF;
+  --popover-foreground:    #0F172A;
+
+  /* Brand interactions */
+  --primary:               #1D6FA4;
+  --primary-foreground:    #FFFFFF;
+  --secondary:             #F1F5F9;
+  --secondary-foreground:  #1E293B;
+  --accent:                #EFF6FF;
+  --accent-foreground:     #1D6FA4;
+
+  /* UI states */
+  --muted:                 #F1F5F9;
+  --muted-foreground:      #64748B;
+  --destructive:           #DC2626;
+  --destructive-foreground:#FFFFFF;
+
+  /* Borders & inputs */
+  --border:                #E2E8F0;
+  --input:                 #E2E8F0;
+  --ring:                  #1D6FA4;
+
+  /* Role accent overrides */
+  --admin-accent:          #1D6FA4;
+  --doctor-accent:         #0D9488;
+  --patient-accent:        #0D9488;
+
+  /* Chart colours (Recharts-ready) */
+  --chart-1: #1D6FA4;
+  --chart-2: #0D9488;
+  --chart-3: #7C3AED;
+  --chart-4: #D97706;
+  --chart-5: #DC2626;
+}
+
+.dark {
+  --background:            #0F172A;
+  --foreground:            #F8FAFC;
+  --card:                  #1E293B;
+  --card-foreground:       #F8FAFC;
+  --popover:               #1E293B;
+  --popover-foreground:    #F8FAFC;
+  --primary:               #38BDF8;
+  --primary-foreground:    #0F172A;
+  --secondary:             #1E293B;
+  --secondary-foreground:  #F8FAFC;
+  --accent:                #1E293B;
+  --accent-foreground:     #38BDF8;
+  --muted:                 #1E293B;
+  --muted-foreground:      #94A3B8;
+  --destructive:           #EF4444;
+  --destructive-foreground:#FFFFFF;
+  --border:                #334155;
+  --input:                 #334155;
+  --ring:                  #38BDF8;
+}
+
+/* ── Base resets ────────────────────────────────────────────── */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--muted-foreground); }
+
+/* ── Role-scoped accent helpers ─────────────────────────────── */
+[data-role="admin"]   { --role-accent: var(--admin-accent); }
+[data-role="doctor"]  { --role-accent: var(--doctor-accent); }
+[data-role="patient"] { --role-accent: var(--patient-accent); }
