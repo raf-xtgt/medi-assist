@@ -29,9 +29,7 @@ export function DoctorShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar
           breadcrumb={[{ label: "Doctor", href: "/doctor/dashboard" }]}
-        >
-          {/* Mobile hamburger injected via className trick — handled inside TopBar slot */}
-        </TopBar>
+        />
 
         {/* Mobile nav trigger row */}
         <div className="flex items-center gap-2 border-b border-border px-4 py-2 lg:hidden">

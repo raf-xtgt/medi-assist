@@ -1,13 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/providers/SessionProvider";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -22,20 +15,28 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor:      "#1D6FA4",
-  width:           "device-width",
-  initialScale:    1,
-  userScalable:    false,
+  themeColor:    "#1D6FA4",
+  width:         "device-width",
+  initialScale:  1,
+  userScalable:  false,
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" className="bg-background" style={{ fontFamily: "var(--font-sans)" }}>
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en" className="bg-background font-sans">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="font-sans antialiased">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { useSessionContext } from "@/providers/SessionProvider";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export default function LoginPage() {
+function LoginForm() {
   const { sendOtp, otpState }  = useSessionContext();
   const [identifier, setId]    = useState("");
   const [role, setRole]        = useState<"admin" | "doctor" | "patient">("patient");
@@ -115,7 +115,7 @@ export default function LoginPage() {
               {isPending || otpState === "sending" ? (
                 <>
                   <Loader2 size={16} className="animate-spin" data-icon="inline-start" aria-hidden="true" />
-                  Sending code…
+                  Sending code...
                 </>
               ) : (
                 <>
@@ -140,5 +140,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

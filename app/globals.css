@@ -3,7 +3,7 @@
 /* ── Healthcare Design System ──────────────────────────────── */
 @theme inline {
   /* Fonts */
-  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
   /* Brand palette */
   --color-brand-blue:       #1D6FA4;
@@ -104,7 +104,7 @@ body {
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar              { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover  { background: var(--muted-foreground); }
 
 /* ── Role-scoped accent helpers ─────────────────────────────── */
