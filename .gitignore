@@ -144,3 +144,4 @@ vite.config.ts.timestamp-*
 
 api/.webservice-venv
 documentation
+.kiro
