@@ -40,6 +40,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Comment out to not enforce auth
   // Accessing another role's area → redirect to own home
   if (isWrongRolePath(pathname, role)) {
     const url = req.nextUrl.clone();
