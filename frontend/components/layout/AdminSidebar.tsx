@@ -7,10 +7,12 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Building2,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
   Settings,
+  UserPlus,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,15 +29,17 @@ const navGroups: { group: string; items: NavItem[] }[] = [
   {
     group: "Operations",
     items: [
-      { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-      { label: "Users",     href: "/admin/users",     icon: Users },
-      { label: "Clinics",   href: "/admin/clinics",   icon: Building2 },
+      { label: "Dashboard",    href: "/admin/dashboard",   icon: LayoutDashboard },
+      { label: "Availability", href: "/admin/availability",icon: CalendarRange   },
+      { label: "Onboarding",   href: "/admin/onboarding",  icon: UserPlus        },
+      { label: "Directory",    href: "/admin/directory",   icon: Users           },
     ],
   },
   {
-    group: "Configuration",
+    group: "Platform",
     items: [
-      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Clinics",  href: "/admin/clinics",  icon: Building2 },
+      { label: "Settings", href: "/admin/settings", icon: Settings  },
     ],
   },
 ];

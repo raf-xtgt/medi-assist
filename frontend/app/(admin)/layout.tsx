@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
-import { TopBar } from "@/components/layout/TopBar";
+import { ConsoleTopBar } from "@/components/layout/ConsoleTopBar";
 
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s | Admin | medi-assist" },
+  title: { default: "Admin Console", template: "%s | Admin | medi-assist" },
+  description: "Medical practice operational console for administrators.",
 };
 
 export default function AdminLayout({
@@ -21,9 +22,9 @@ export default function AdminLayout({
 
       {/* Main column */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar
+        <ConsoleTopBar
           breadcrumb={[
-            { label: "Admin", href: "/admin/dashboard" },
+            { label: "Admin Console", href: "/admin/dashboard" },
           ]}
         />
         <div className="flex-1 overflow-y-auto">
