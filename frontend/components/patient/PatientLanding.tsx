@@ -98,21 +98,22 @@ export function PatientLanding() {
         </div>
 
         {/* Trust strip */}
-        <div className="mt-auto pt-8 flex items-center justify-center gap-6">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Shield size={13} className="text-[var(--color-brand-teal)]" aria-hidden="true" />
-            HIPAA compliant
-          </div>
-          <div className="h-3 w-px bg-border" aria-hidden="true" />
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Zap size={13} className="text-[var(--color-brand-teal)]" aria-hidden="true" />
-            No account needed
-          </div>
-          <div className="h-3 w-px bg-border" aria-hidden="true" />
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CalendarCheck size={13} className="text-[var(--color-brand-teal)]" aria-hidden="true" />
-            &lt; 1 min to book
-          </div>
+        <div className="mt-auto pt-8 pb-2 grid grid-cols-3 gap-2">
+          {[
+            { icon: Shield, label: "HIPAA compliant" },
+            { icon: Zap, label: "No login needed" },
+            { icon: CalendarCheck, label: "< 1 min to book" },
+          ].map(({ icon: Icon, label }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border/60 px-2 py-3"
+            >
+              <Icon size={15} className="text-[var(--color-brand-teal)]" aria-hidden="true" />
+              <span className="text-center text-[11px] font-medium text-muted-foreground leading-tight">
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

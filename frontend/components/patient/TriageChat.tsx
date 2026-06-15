@@ -318,13 +318,10 @@ export function TriageChat() {
   /* ── Booking view (post-morph) ───────────────────────────── */
   if (phase === "booking") {
     return (
-      <div
-        className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-        style={{ minHeight: "100vh" }}
-      >
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
         {/* Banner: context from chat */}
         <div className="px-4 pt-4">
-          <div className="mx-auto max-w-md mb-0">
+          <div className="mx-auto max-w-md">
             <div className="flex items-center gap-3 rounded-xl bg-[var(--color-brand-teal-light)] border border-[var(--color-brand-teal)]/20 px-4 py-3 mb-1">
               <div className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-muted">
                 <Image
