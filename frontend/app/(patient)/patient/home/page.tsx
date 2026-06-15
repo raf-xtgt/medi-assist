@@ -6,6 +6,7 @@ import {
   Heart,
   MessageCircle,
   Phone,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,21 +19,21 @@ const quickActions = [
   {
     label:      "Book Appointment",
     icon:       CalendarCheck,
-    href:       "/patient/appointments",
+    href:       "/patient/book",
     accentBg:   "bg-[var(--color-brand-teal-light)]",
     accentText: "text-[var(--color-brand-teal)]",
+  },
+  {
+    label:      "AI Triage",
+    icon:       Sparkles,
+    href:       "/patient/triage",
+    accentBg:   "bg-[var(--color-brand-blue-light)]",
+    accentText: "text-[var(--color-brand-blue)]",
   },
   {
     label:      "My Records",
     icon:       FileText,
     href:       "/patient/records",
-    accentBg:   "bg-[var(--color-brand-blue-light)]",
-    accentText: "text-[var(--color-brand-blue)]",
-  },
-  {
-    label:      "Message Doctor",
-    icon:       MessageCircle,
-    href:       "/patient/appointments",
     accentBg:   "bg-emerald-50",
     accentText: "text-emerald-600",
   },

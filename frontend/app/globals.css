@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 /* ── Healthcare Design System ──────────────────────────────── */
 @theme inline {
@@ -56,6 +57,9 @@
   --admin-accent:          #1D6FA4;
   --doctor-accent:         #0D9488;
   --patient-accent:        #0D9488;
+
+  /* Patient landing specific */
+  --patient-landing-bg:    #F8FAFC;
 
   /* Chart colours (Recharts-ready) */
   --chart-1: #1D6FA4;

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { CalendarCheck, FileText, Home, User } from "lucide-react";
+import { CalendarCheck, FileText, Home, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,11 +9,23 @@ interface NavItem {
   label: string;
   href:  string;
   icon:  React.ElementType;
+  /** Additional paths that should activate this tab */
+  activePaths?: string[];
 }
 
 const navItems: NavItem[] = [
   { label: "Home",         href: "/patient/home",         icon: Home },
-  { label: "Appointments", href: "/patient/appointments", icon: CalendarCheck },
+  {
+    label: "Book",
+    href: "/patient/book",
+    icon: CalendarCheck,
+    activePaths: ["/patient/book", "/patient/landing"],
+  },
+  {
+    label: "Ask AI",
+    href: "/patient/triage",
+    icon: Sparkles,
+  },
   { label: "Records",      href: "/patient/records",      icon: FileText },
   { label: "Profile",      href: "/patient/profile",      icon: User },
 ];
@@ -30,7 +42,12 @@ export function PatientBottomNav() {
       <ul role="list" className="flex w-full items-center">
         {navItems.map((item) => {
           const Icon     = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive =
+            pathname === item.href ||
+            pathname.startsWith(`${item.href}/`) ||
+            (item.activePaths ?? []).some(
+              (p) => pathname === p || pathname.startsWith(`${p}/`)
+            );
 
           return (
             <li key={item.href} className="flex-1">
@@ -45,7 +62,7 @@ export function PatientBottomNav() {
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon
-                  size={22}
+                  size={20}
                   strokeWidth={isActive ? 2.2 : 1.8}
                   aria-hidden="true"
                 />

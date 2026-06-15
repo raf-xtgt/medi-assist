@@ -43,9 +43,9 @@ const portals = [
   {
     role:        "patient",
     label:       "Patient Portal",
-    href:        "/patient/home",
+    href:        "/patient/landing",
     icon:        Heart,
-    description: "Book appointments, view your health records, and stay connected with your care team — all from your phone.",
+    description: "Book appointments, view your health records, and stay connected with your care team — no login required.",
     accent:      "teal" as const,
     accentClass: "bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)]",
     btnClass:    "bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white",
