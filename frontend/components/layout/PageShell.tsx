@@ -19,7 +19,7 @@ export function PageShell({ children, className, maxWidth = "2xl" }: PageShellPr
   return (
     <main
       className={cn(
-        "flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8",
+        "h-full overflow-y-auto px-4 py-6 md:px-6 lg:px-8",
         className
       )}
     >

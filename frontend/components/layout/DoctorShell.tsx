@@ -45,7 +45,7 @@ export function DoctorShell({ children }: { children: React.ReactNode }) {
           <span className="text-sm font-medium text-muted-foreground">Doctor Portal</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
   );

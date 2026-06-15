@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   ClipboardList,
   LayoutDashboard,
+  Stethoscope,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,10 +19,12 @@ interface NavItem {
   label: string;
   href:  string;
   icon:  React.ElementType;
+  badge?: string;
 }
 
 const navItems: NavItem[] = [
   { label: "Dashboard",    href: "/doctor/dashboard",    icon: LayoutDashboard },
+  { label: "Consult",      href: "/doctor/consult",      icon: Stethoscope,    badge: "Live" },
   { label: "Appointments", href: "/doctor/appointments", icon: CalendarCheck },
   { label: "Patients",     href: "/doctor/patients",     icon: Users },
   { label: "Notes",        href: "/doctor/notes",        icon: ClipboardList },
@@ -84,7 +87,12 @@ export function DoctorSidebar({ className, onClose }: DoctorSidebarProps) {
                         aria-current={isActive ? "page" : undefined}
                       >
                         <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge && (
+                          <span className="ml-auto rounded-full bg-[var(--color-brand-teal)] px-1.5 py-0 text-[9px] font-bold text-white leading-4">
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">{item.label}</TooltipContent>
