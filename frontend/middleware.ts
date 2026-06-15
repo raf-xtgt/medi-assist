@@ -16,6 +16,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Zero-login patient paths — publicly accessible without a session
+  const PUBLIC_PATIENT_PATHS = [
+    "/patient/landing",
+    "/patient/book",
+    "/patient/triage",
+  ];
+  if (PUBLIC_PATIENT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return NextResponse.next();
+  }
+
   const token   = req.cookies.get(SESSION_COOKIE)?.value;
   const payload = token ? decodeJwt(token) : null;
 
@@ -53,6 +63,15 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|images).*)",
+    /*
+     * Match all request paths EXCEPT:
+     * - _next/static (static files)
+     * - _next/image  (image optimisation)
+     * - favicon.ico
+     * - images/      (public images folder)
+     * - doctors/     (public doctor headshot images)
+     * - *.png, *.jpg, *.svg, *.ico, *.webp (static assets)
+     */
+    "/((?!_next/static|_next/image|favicon\\.ico|images/|doctors/|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp)).*)",
   ],
 };

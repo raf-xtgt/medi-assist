@@ -115,7 +115,7 @@ export function TriageChat() {
   }, [phase]);
 
   /* ── Advance bot script after user sends a message ─────── */
-  function advanceBot() {
+  function advanceBot(autoChain = false) {
     if (scriptIdx >= triageScript.length) return;
     const next = triageScript[scriptIdx];
     setIsTyping(true);
@@ -125,8 +125,26 @@ export function TriageChat() {
         ...prev,
         { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot },
       ]);
-      setScriptIdx((i) => i + 1);
-      if (next.isIntentPivot) setAwaitingPivotReply(true);
+      const nextIdx = scriptIdx + 1;
+      setScriptIdx(nextIdx);
+      if (next.isIntentPivot) {
+        setAwaitingPivotReply(true);
+      } else if (nextIdx < triageScript.length && triageScript[nextIdx].isIntentPivot) {
+        // Auto-chain into the pivot message without waiting for user input
+        setTimeout(() => {
+          const pivot = triageScript[nextIdx];
+          setIsTyping(true);
+          setTimeout(() => {
+            setIsTyping(false);
+            setMessages((prev) => [
+              ...prev,
+              { id: pivot.id, from: "bot", text: pivot.text, isIntentPivot: pivot.isIntentPivot },
+            ]);
+            setScriptIdx(nextIdx + 1);
+            setAwaitingPivotReply(true);
+          }, pivot.delay);
+        }, 600);
+      }
     }, next.delay);
   }
 

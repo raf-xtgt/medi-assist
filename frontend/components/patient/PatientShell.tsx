@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
  * Routes that take over the full viewport and manage their own chrome.
  * On these routes the shared header and bottom nav are hidden.
  */
-const CHROME_FREE_ROUTES = ["/patient/triage"];
+const CHROME_FREE_ROUTES = ["/patient/triage", "/patient/landing"];
 
 export function PatientShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
