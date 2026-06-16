@@ -52,11 +52,11 @@ export function middleware(req: NextRequest) {
 
   // Comment out to not enforce auth
   // Accessing another role's area → redirect to own home
-  if (isWrongRolePath(pathname, role)) {
-    const url = req.nextUrl.clone();
-    url.pathname = roleHome(role);
-    return NextResponse.redirect(url);
-  }
+  // if (isWrongRolePath(pathname, role)) {
+  //   const url = req.nextUrl.clone();
+  //   url.pathname = roleHome(role);
+  //   return NextResponse.redirect(url);
+  // }
 
   return NextResponse.next();
 }
