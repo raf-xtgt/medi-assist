@@ -1,8 +1,8 @@
 -- Create a dedicated DBeaver user with read/write access for database queries
 -- This user can be used to connect via DBeaver without needing IAM tokens
 
--- Create the user (replace 'dbeaver_password' with a strong password)
-CREATE USER dbeaver_user WITH PASSWORD 'dbeaver_password' LOGIN;
+-- Create the user with a strong password for static authentication
+CREATE USER IF NOT EXISTS dbeaver_user WITH PASSWORD 'DBeaver@Secure2025' LOGIN;
 
 -- Grant permissions on the current database
 GRANT CONNECT ON DATABASE postgres TO dbeaver_user;
@@ -17,3 +17,6 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dbeaver_user;
 -- Make these permissions the default for future tables/sequences
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO dbeaver_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO dbeaver_user;
+
+-- Grant ability to create temporary tables
+ALTER USER dbeaver_user CREATETEMP;
