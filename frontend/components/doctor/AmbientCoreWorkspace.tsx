@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { AmbientScheduler, type Appointment } from "@/components/doctor/AmbientScheduler";
 import { AmbientSessionPanel, type SessionData } from "@/components/doctor/AmbientSessionPanel";
 import { AmbientBrief, type AIBriefData } from "@/components/doctor/AmbientBrief";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Bot, CalendarClock, LayoutGrid, Stethoscope } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAmbientRecording } from "@/hooks/useAmbientRecording";
 
 /* ── Mock seed data ──────────────────────────────────────── */
 const INITIAL_APPOINTMENTS: Appointment[] = [
@@ -107,6 +108,10 @@ function generateBrief(appointment: Appointment, data: SessionData): AIBriefData
   };
 }
 
+/* ── Hardcoded GUIDs for MVP ──────────────────────────────── */
+const HARDCODED_APPOINTMENT_GUID = "4e247042-f8f2-4cd5-b026-74fa99409eb7";
+const HARDCODED_DOCTOR_GUID = "06f97db0-15dc-41cf-acab-bc278b38f00a";
+
 /* ── Main Component ─────────────────────────────────────── */
 export function AmbientCoreWorkspace() {
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
@@ -114,6 +119,22 @@ export function AmbientCoreWorkspace() {
   const [sessionState, setSessionState] = useState<"idle" | "live" | "processing" | "complete">("idle");
   const [sessionData, setSessionData] = useState<SessionData>(EMPTY_SESSION_DATA);
   const [brief, setBrief] = useState<AIBriefData | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const {
+    startRecording,
+    stopRecording,
+    pollTranscript,
+    isRecording,
+    sessionGuid,
+    chunkCount,
+    error: recordingError,
+  } = useAmbientRecording({
+    appointmentGuid: HARDCODED_APPOINTMENT_GUID,
+    doctorGuid: HARDCODED_DOCTOR_GUID,
+  });
 
   const handleSelectAppointment = useCallback(
     (appt: Appointment) => {
@@ -138,32 +159,80 @@ export function AmbientCoreWorkspace() {
     [activeAppointment]
   );
 
-  const handleStartSession = useCallback(() => {
+  const handleStartSession = useCallback(async () => {
     if (!activeAppointment) return;
+
+    // Start real audio recording + backend session
+    const sGuid = await startRecording();
+    if (!sGuid) {
+      console.error("Failed to start recording session");
+      return;
+    }
+
     setSessionState("live");
     setAppointments((prev) =>
       prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "in-progress" } : a))
     );
     setActiveAppointment((prev) => (prev ? { ...prev, status: "in-progress" } : null));
-  }, [activeAppointment]);
+  }, [activeAppointment, startRecording]);
 
   const handleEndSession = useCallback(
-    (data: SessionData) => {
+    async (data: SessionData) => {
       if (!activeAppointment) return;
       setSessionState("processing");
 
-      // Simulate AI pipeline processing delay
-      setTimeout(() => {
-        const generatedBrief = generateBrief(activeAppointment, data);
-        setBrief(generatedBrief);
-        setSessionState("complete");
-        setAppointments((prev) =>
-          prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
-        );
-        setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
-      }, 2800);
+      // Stop recording + trigger backend transcription
+      await stopRecording();
+
+      // Start polling for transcript
+      const currentSessionGuid = sessionGuid;
+      if (currentSessionGuid) {
+        pollIntervalRef.current = setInterval(async () => {
+          try {
+            const status = await pollTranscript(currentSessionGuid);
+            if (status.transcription_status === "completed") {
+              // Transcription done
+              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+              setTranscript(status.transcript);
+
+              // Generate brief (still using simulated AI brief for now)
+              const generatedBrief = generateBrief(activeAppointment, data);
+              setBrief(generatedBrief);
+              setSessionState("complete");
+              setAppointments((prev) =>
+                prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
+              );
+              setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+            } else if (status.transcription_status === "failed") {
+              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+              console.error("Transcription failed");
+              // Still show brief with what we have
+              const generatedBrief = generateBrief(activeAppointment, data);
+              setBrief(generatedBrief);
+              setSessionState("complete");
+              setAppointments((prev) =>
+                prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
+              );
+              setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+            }
+          } catch (err) {
+            console.error("Polling error:", err);
+          }
+        }, 5000); // Poll every 5 seconds
+      } else {
+        // No session guid — fallback to simulated brief
+        setTimeout(() => {
+          const generatedBrief = generateBrief(activeAppointment, data);
+          setBrief(generatedBrief);
+          setSessionState("complete");
+          setAppointments((prev) =>
+            prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
+          );
+          setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+        }, 2800);
+      }
     },
-    [activeAppointment]
+    [activeAppointment, stopRecording, sessionGuid, pollTranscript]
   );
 
   const completedCount = appointments.filter((a) => a.status === "completed").length;
@@ -199,7 +268,7 @@ export function AmbientCoreWorkspace() {
               <Separator orientation="vertical" className="h-3" />
               <span className="flex items-center gap-1 text-emerald-600 font-semibold animate-pulse">
                 <span className="size-1.5 rounded-full bg-emerald-500" />
-                Session Live
+                Session Live {chunkCount > 0 && `· ${chunkCount} chunks`}
               </span>
             </>
           )}
