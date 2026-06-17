@@ -9,7 +9,7 @@ from model.schemas import DoctorPatientLinkCreate, DoctorPatientLinkUpdate, Doct
 from service.app_mda_doctor_patient_link_service import doctor_patient_link_service
 from util.database import get_db
 
-router = APIRouter(prefix="/doctor_patient_link", tags=["app_mda_doctor_patient_link"])
+router = APIRouter(prefix="/doctor-patient-link", tags=["app_mda_doctor_patient_link"])
 
 
 @router.get("/get-all", response_model=list[DoctorPatientLinkResponse])

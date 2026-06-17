@@ -9,7 +9,7 @@ from model.schemas import FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueu
 from service.app_mda_follow_up_queue_service import follow_up_queue_service
 from util.database import get_db
 
-router = APIRouter(prefix="/follow_up_queue", tags=["app_mda_follow_up_queue"])
+router = APIRouter(prefix="/follow-up-queue", tags=["app_mda_follow_up_queue"])
 
 
 @router.get("/get-all", response_model=list[FollowUpQueueResponse])

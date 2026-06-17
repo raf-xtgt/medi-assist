@@ -9,7 +9,7 @@ from model.schemas import AppointmentSessionCreate, AppointmentSessionUpdate, Ap
 from service.app_mda_appointment_session_service import appointment_session_service
 from util.database import get_db
 
-router = APIRouter(prefix="/appointment_session", tags=["app_mda_appointment_session"])
+router = APIRouter(prefix="/appointment-session", tags=["app_mda_appointment_session"])
 
 
 @router.get("/get-all", response_model=list[AppointmentSessionResponse])

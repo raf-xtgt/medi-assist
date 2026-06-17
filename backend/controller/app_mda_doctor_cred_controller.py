@@ -9,7 +9,7 @@ from model.schemas import DoctorCredCreate, DoctorCredUpdate, DoctorCredResponse
 from service.app_mda_doctor_cred_service import doctor_cred_service
 from util.database import get_db
 
-router = APIRouter(prefix="/doctor_cred", tags=["app_mda_doctor_cred"])
+router = APIRouter(prefix="/doctor-cred", tags=["app_mda_doctor_cred"])
 
 
 @router.get("/get-all", response_model=list[DoctorCredResponse])
