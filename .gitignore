@@ -345,3 +345,4 @@ documentation
 .vscode
 .vercel
 .env*
+creds.json
