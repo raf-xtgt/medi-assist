@@ -330,6 +330,9 @@ class AppointmentSessionCreate(BaseModel):
     appointment_guid: Optional[UUID] = None
     doctor_guid: Optional[UUID] = None
     audio_stream_url: Optional[str] = None
+    transcript: Optional[str] = None
+    transcription_status: Optional[str] = None
+    transcript_metadata: Optional[Any] = None
     is_reviewed_by_doctor: Optional[bool] = None
     status: Optional[str] = None
 
@@ -338,6 +341,9 @@ class AppointmentSessionUpdate(BaseModel):
     appointment_guid: Optional[UUID] = None
     doctor_guid: Optional[UUID] = None
     audio_stream_url: Optional[str] = None
+    transcript: Optional[str] = None
+    transcription_status: Optional[str] = None
+    transcript_metadata: Optional[Any] = None
     is_reviewed_by_doctor: Optional[bool] = None
     status: Optional[str] = None
 
@@ -347,6 +353,9 @@ class AppointmentSessionResponse(BaseModel):
     appointment_guid: Optional[UUID] = None
     doctor_guid: Optional[UUID] = None
     audio_stream_url: Optional[str] = None
+    transcript: Optional[str] = None
+    transcription_status: Optional[str] = None
+    transcript_metadata: Optional[Any] = None
     is_reviewed_by_doctor: Optional[bool] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
