@@ -1,0 +1,13 @@
+export { userService } from "./user-service";
+export { prmnService } from "./prmn-service";
+export { clinicHdrService } from "./clinic-hdr-service";
+export { doctorService } from "./doctor-service";
+export { doctorCredService } from "./doctor-cred-service";
+export { patientLeadService } from "./patient-lead-service";
+export { patientService } from "./patient-service";
+export { doctorPatientLinkService } from "./doctor-patient-link-service";
+export { doctorAvailabilityService } from "./doctor-availability-service";
+export { appointmentService } from "./appointment-service";
+export { appointmentSessionService } from "./appointment-session-service";
+export { prescriptionService } from "./prescription-service";
+export { followUpQueueService } from "./follow-up-queue-service";
