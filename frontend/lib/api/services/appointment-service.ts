@@ -37,19 +37,19 @@ export interface AppointmentResponse {
 
 export const appointmentService = {
   getAll: async (skip = 0, limit = 100): Promise<AppointmentResponse[]> => {
-    const res = await fetch(`${ENDPOINT}/?skip=${skip}&limit=${limit}`);
+    const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`);
     if (!res.ok) throw new Error(`Failed to fetch appointments: ${res.status}`);
     return res.json();
   },
 
   getByGuid: async (guid: string): Promise<AppointmentResponse> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`);
+    const res = await fetch(`${ENDPOINT}/get-by-guid/${guid}`);
     if (!res.ok) throw new Error(`Failed to fetch appointment: ${res.status}`);
     return res.json();
   },
 
   create: async (data: AppointmentCreate): Promise<AppointmentResponse> => {
-    const res = await fetch(`${ENDPOINT}/`, {
+    const res = await fetch(`${ENDPOINT}/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -59,7 +59,7 @@ export const appointmentService = {
   },
 
   update: async (guid: string, data: AppointmentUpdate): Promise<AppointmentResponse> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`, {
+    const res = await fetch(`${ENDPOINT}/update/${guid}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -69,7 +69,7 @@ export const appointmentService = {
   },
 
   delete: async (guid: string): Promise<void> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`, { method: "DELETE" });
+    const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete appointment: ${res.status}`);
   },
 };

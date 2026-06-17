@@ -40,19 +40,19 @@ export interface PatientResponse {
 
 export const patientService = {
   getAll: async (skip = 0, limit = 100): Promise<PatientResponse[]> => {
-    const res = await fetch(`${ENDPOINT}/?skip=${skip}&limit=${limit}`);
+    const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`);
     if (!res.ok) throw new Error(`Failed to fetch patients: ${res.status}`);
     return res.json();
   },
 
   getByGuid: async (guid: string): Promise<PatientResponse> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`);
+    const res = await fetch(`${ENDPOINT}/get-by-guid/${guid}`);
     if (!res.ok) throw new Error(`Failed to fetch patient: ${res.status}`);
     return res.json();
   },
 
   create: async (data: PatientCreate): Promise<PatientResponse> => {
-    const res = await fetch(`${ENDPOINT}/`, {
+    const res = await fetch(`${ENDPOINT}/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -62,7 +62,7 @@ export const patientService = {
   },
 
   update: async (guid: string, data: PatientUpdate): Promise<PatientResponse> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`, {
+    const res = await fetch(`${ENDPOINT}/update/${guid}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -72,7 +72,7 @@ export const patientService = {
   },
 
   delete: async (guid: string): Promise<void> => {
-    const res = await fetch(`${ENDPOINT}/${guid}`, { method: "DELETE" });
+    const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete patient: ${res.status}`);
   },
 };
