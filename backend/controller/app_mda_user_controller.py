@@ -9,7 +9,7 @@ from model.schemas import UserCreate, UserUpdate, UserResponse
 from service.app_mda_user_service import user_service
 from util.database import get_db
 
-router = APIRouter(prefix="/api/app_mda_user", tags=["app_mda_user"])
+router = APIRouter(prefix="/user", tags=["app_mda_user"])
 
 
 @router.get("/", response_model=list[UserResponse])

@@ -37,18 +37,18 @@ app.add_middleware(
 def get_status():
     return {"status": "active"}
 
-
+url_prefix = "/api/mda"
 # Register all table routers
-app.include_router(user_router)
-app.include_router(prmn_router)
-app.include_router(clinic_hdr_router)
-app.include_router(doctor_router)
-app.include_router(doctor_cred_router)
-app.include_router(patient_lead_router)
-app.include_router(patient_router)
-app.include_router(doctor_patient_link_router)
-app.include_router(doctor_availability_router)
-app.include_router(appointment_router)
-app.include_router(appointment_session_router)
-app.include_router(prescription_router)
-app.include_router(follow_up_queue_router)
+app.include_router(user_router, prefix=url_prefix)
+app.include_router(prmn_router, prefix=url_prefix)
+app.include_router(clinic_hdr_router, prefix=url_prefix)
+app.include_router(doctor_router, prefix=url_prefix)
+app.include_router(doctor_cred_router, prefix=url_prefix)
+app.include_router(patient_lead_router, prefix=url_prefix)
+app.include_router(patient_router, prefix=url_prefix)
+app.include_router(doctor_patient_link_router, prefix=url_prefix)
+app.include_router(doctor_availability_router, prefix=url_prefix)
+app.include_router(appointment_router, prefix=url_prefix)
+app.include_router(appointment_session_router, prefix=url_prefix)
+app.include_router(prescription_router, prefix=url_prefix)
+app.include_router(follow_up_queue_router, prefix=url_prefix)

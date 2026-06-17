@@ -9,7 +9,7 @@ from model.schemas import PrmnCreate, PrmnUpdate, PrmnResponse
 from service.app_mda_prmn_service import prmn_service
 from util.database import get_db
 
-router = APIRouter(prefix="/api/app_mda_prmn", tags=["app_mda_prmn"])
+router = APIRouter(prefix="/prmn", tags=["app_mda_prmn"])
 
 
 @router.get("/", response_model=list[PrmnResponse])

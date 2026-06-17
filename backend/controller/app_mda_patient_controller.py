@@ -9,7 +9,7 @@ from model.schemas import PatientCreate, PatientUpdate, PatientResponse
 from service.app_mda_patient_service import patient_service
 from util.database import get_db
 
-router = APIRouter(prefix="/api/app_mda_patient", tags=["app_mda_patient"])
+router = APIRouter(prefix="/patient", tags=["app_mda_patient"])
 
 
 @router.get("/", response_model=list[PatientResponse])

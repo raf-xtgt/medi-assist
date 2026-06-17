@@ -9,7 +9,7 @@ from model.schemas import ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse
 from service.app_mda_clinic_hdr_service import clinic_hdr_service
 from util.database import get_db
 
-router = APIRouter(prefix="/api/app_mda_clinic_hdr", tags=["app_mda_clinic_hdr"])
+router = APIRouter(prefix="/clinic_hdr", tags=["app_mda_clinic_hdr"])
 
 
 @router.get("/", response_model=list[ClinicHdrResponse])

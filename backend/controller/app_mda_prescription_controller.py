@@ -9,7 +9,7 @@ from model.schemas import PrescriptionCreate, PrescriptionUpdate, PrescriptionRe
 from service.app_mda_prescription_service import prescription_service
 from util.database import get_db
 
-router = APIRouter(prefix="/api/app_mda_prescription", tags=["app_mda_prescription"])
+router = APIRouter(prefix="/prescription", tags=["app_mda_prescription"])
 
 
 @router.get("/", response_model=list[PrescriptionResponse])
