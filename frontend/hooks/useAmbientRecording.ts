@@ -169,7 +169,12 @@ export function useAmbientRecording({
 
   const pollTranscript = useCallback(async (sGuid: string): Promise<TranscriptStatus> => {
     const res = await fetch(
-      `${API_BASE_URL}/api/agent/ambient-session/status/${sGuid}`
+      `${API_BASE_URL}/api/agent/ambient-session/status/${sGuid}`,
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      }
     );
     if (!res.ok) {
       throw new Error(`Failed to poll transcript: ${res.status}`);

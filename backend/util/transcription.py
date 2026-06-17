@@ -12,7 +12,7 @@ GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 def transcribe_audio(gcs_uri: str) -> str:
     """Transcribe a merged audio file from GCS using BatchRecognize with Dynamic Batching.
 
-    Uses the 'latest_long' model in global location — designed for long-form audio,
+    Uses the 'long' model in global location — designed for long-form audio,
     available everywhere, and eligible for dynamic batch pricing ($0.003/min).
 
     Args:
@@ -49,10 +49,28 @@ def transcribe_audio(gcs_uri: str) -> str:
     response = operation.result(timeout=600)  # 10 min timeout for long audio
 
     # Extract transcript text from response
+    # The results dict is keyed by the GCS URI, but the key may not match exactly
+    # (different normalization). Iterate all results to be safe.
     transcript_parts = []
-    if gcs_uri in response.results:
-        for result in response.results[gcs_uri].transcript.results:
-            if result.alternatives:
-                transcript_parts.append(result.alternatives[0].transcript)
 
-    return " ".join(transcript_parts)
+    print(f"[Transcription] Response results keys: {list(response.results.keys())}")
+    print(f"[Transcription] Expected key: {gcs_uri}")
+
+    for file_uri, file_result in response.results.items():
+        print(f"[Transcription] Processing file: {file_uri}")
+
+        # Check if inline_result is available
+        if file_result.transcript and file_result.transcript.results:
+            for result in file_result.transcript.results:
+                if result.alternatives:
+                    transcript_parts.append(result.alternatives[0].transcript)
+        elif file_result.cloud_storage_result:
+            print(f"[Transcription] Result stored in GCS: {file_result.cloud_storage_result.uri}")
+        else:
+            print(f"[Transcription] No transcript or cloud_storage_result for {file_uri}")
+            print(f"[Transcription] file_result fields: {file_result}")
+
+    full_transcript = " ".join(transcript_parts)
+    print(f"[Transcription] Final transcript length: {len(full_transcript)} chars")
+    print(f"[Transcription] : {full_transcript}")
+    return full_transcript
