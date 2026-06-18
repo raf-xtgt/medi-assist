@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AmbientScheduler, type Appointment } from "@/components/doctor/AmbientScheduler";
 import { AmbientSessionPanel, type SessionData } from "@/components/doctor/AmbientSessionPanel";
 import { AmbientBrief, type AIBriefData } from "@/components/doctor/AmbientBrief";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bot, CalendarClock, LayoutGrid, Stethoscope } from "lucide-react";
+import { Bot, CalendarClock, LayoutGrid, Stethoscope, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAmbientRecording } from "@/hooks/useAmbientRecording";
+import { useSessionEvents, type SessionEvent } from "@/hooks/useSessionEvents";
+import { toast } from "sonner";
 
 /* ── Mock seed data ──────────────────────────────────────── */
 const INITIAL_APPOINTMENTS: Appointment[] = [
@@ -29,7 +31,77 @@ const EMPTY_SESSION_DATA: SessionData = {
   clinicalNotes: "",
 };
 
-/* ── AI brief generator (simulated) ─────────────────────── */
+/* ── AI brief generator from real report data ────────────── */
+function generateBriefFromReport(
+  appointment: Appointment,
+  data: SessionData,
+  report: Record<string, unknown>,
+  followUpMsg?: string
+): AIBriefData {
+  const clinicalSummary = report.clinical_summary as Record<string, string> | undefined;
+  const keyFindings = (report.key_findings as string[]) || [];
+  const treatmentPlan = (report.treatment_plan as string[]) || [];
+  const medsChanged = (report.medications_changed as Array<Record<string, string>>) || [];
+  const riskFlags = (report.risk_flags as string[]) || [];
+
+  const clinicalInsights: AIBriefData["clinicalInsights"] = [];
+
+  if (clinicalSummary) {
+    clinicalInsights.push({
+      category: "diagnosis",
+      text: `${clinicalSummary.chief_complaint}. Diagnosis: ${clinicalSummary.diagnosis}.`,
+      severity: clinicalSummary.severity === "high" ? "high" : clinicalSummary.severity === "medium" ? "medium" : "low",
+    });
+  }
+
+  keyFindings.forEach((finding) => {
+    clinicalInsights.push({
+      category: "finding",
+      text: finding,
+      severity: "medium",
+    });
+  });
+
+  if (riskFlags.length > 0) {
+    riskFlags.forEach((flag) => {
+      clinicalInsights.push({ category: "risk", text: flag, severity: "high" });
+    });
+  } else {
+    clinicalInsights.push({
+      category: "risk",
+      text: "No acute red flags identified during the consultation.",
+      severity: "low",
+    });
+  }
+
+  const patientInstructions: AIBriefData["patientInstructions"] = [];
+
+  treatmentPlan.forEach((step) => {
+    patientInstructions.push({ icon: "medication", instruction: step });
+  });
+
+  if (followUpMsg) {
+    patientInstructions.push({ icon: "followup", instruction: followUpMsg });
+  }
+
+  // Prescription verification from report
+  const prescriptionVerification = medsChanged.map((med, i) => ({
+    rxIndex: i,
+    medicine: med.medication || "",
+    typedDosage: med.new_dose || "",
+    aiExtracted: `${med.medication} changed from ${med.previous_dose} to ${med.new_dose} — reason: ${med.reason}`,
+    status: "match" as const,
+    flag: undefined,
+  }));
+
+  return {
+    clinicalInsights,
+    patientInstructions,
+    prescriptionVerification,
+  };
+}
+
+/* ── Fallback AI brief generator (simulated) ─────────────── */
 function generateBrief(appointment: Appointment, data: SessionData): AIBriefData {
   const verifications = data.prescriptions.map((rx, i) => {
     const hasFlag = rx.dosage && rx.remarks && rx.remarks.toLowerCase().includes("alcohol");
@@ -120,13 +192,15 @@ export function AmbientCoreWorkspace() {
   const [sessionData, setSessionData] = useState<SessionData>(EMPTY_SESSION_DATA);
   const [brief, setBrief] = useState<AIBriefData | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
+  const [followUpMsg, setFollowUpMsg] = useState<string | null>(null);
+  const [pipelineStep, setPipelineStep] = useState<string | null>(null);
 
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track which session GUID belongs to which appointment ID
+  const sessionToAppointmentRef = useRef<Map<string, string>>(new Map());
 
   const {
     startRecording,
     stopRecording,
-    pollTranscript,
     isRecording,
     sessionGuid,
     chunkCount,
@@ -136,6 +210,113 @@ export function AmbientCoreWorkspace() {
     doctorGuid: HARDCODED_DOCTOR_GUID,
   });
 
+  // ── SSE: Subscribe to real-time events for this doctor ─────────────────
+  const {
+    latestEvent,
+    isConnected: sseConnected,
+    getEventsForSession,
+  } = useSessionEvents({
+    doctorGuid: HARDCODED_DOCTOR_GUID,
+    enabled: true,
+    useProxy: true, // Route through Next.js proxy to avoid CORS issues
+  });
+
+  // ── React to SSE events ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!latestEvent) return;
+
+    console.log("[SSE Event Received]", latestEvent.event, latestEvent);
+
+    const eventSessionGuid = latestEvent.session_guid;
+    const mappedAppointmentId = sessionToAppointmentRef.current.get(eventSessionGuid);
+
+    switch (latestEvent.event) {
+      case "transcription_complete": {
+        setPipelineStep("Transcript ready");
+        toast.success("Transcript Ready", {
+          description: `Transcription completed for session ${eventSessionGuid.slice(0, 8)}...`,
+        });
+        if (latestEvent.transcript) {
+          setTranscript(latestEvent.transcript);
+        }
+        break;
+      }
+      case "report_generated": {
+        setPipelineStep("Report generated");
+        toast.success("AI Report Generated", {
+          description: "Clinical insights and treatment plan are ready.",
+        });
+        // If the active appointment matches this session, update the brief
+        if (activeAppointment && mappedAppointmentId === activeAppointment.id) {
+          if (latestEvent.report) {
+            const generatedBrief = generateBriefFromReport(
+              activeAppointment,
+              sessionData,
+              latestEvent.report,
+              undefined
+            );
+            setBrief(generatedBrief);
+          }
+        }
+        break;
+      }
+      case "followup_queued": {
+        setPipelineStep("Follow-up queued");
+        toast.success("Follow-Up Message Queued", {
+          description: "Patient follow-up notification has been created.",
+        });
+        if (latestEvent.follow_up_msg) {
+          setFollowUpMsg(latestEvent.follow_up_msg);
+        }
+
+        // Pipeline complete — mark session as done
+        setSessionState("complete");
+        if (mappedAppointmentId) {
+          setAppointments((prev) =>
+            prev.map((a) => (a.id === mappedAppointmentId ? { ...a, status: "completed" } : a))
+          );
+          if (activeAppointment?.id === mappedAppointmentId) {
+            setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+          }
+        }
+
+        // Update brief with follow-up message if we have a report
+        if (activeAppointment && mappedAppointmentId === activeAppointment.id && latestEvent.follow_up_msg) {
+          const sessionEvents = getEventsForSession(eventSessionGuid);
+          const reportEvent = sessionEvents.find((e) => e.event === "report_generated");
+          if (reportEvent?.report) {
+            const updatedBrief = generateBriefFromReport(
+              activeAppointment,
+              sessionData,
+              reportEvent.report,
+              latestEvent.follow_up_msg
+            );
+            setBrief(updatedBrief);
+          }
+        }
+        break;
+      }
+      case "pipeline_failed": {
+        setPipelineStep("Pipeline failed");
+        toast.error("Pipeline Failed", {
+          description: latestEvent.error || "An error occurred during processing.",
+        });
+        console.error("[SSE] Pipeline failed:", latestEvent.error);
+        // Fallback to simulated brief
+        if (activeAppointment && mappedAppointmentId === activeAppointment.id) {
+          const generatedBrief = generateBrief(activeAppointment, sessionData);
+          setBrief(generatedBrief);
+          setSessionState("complete");
+          setAppointments((prev) =>
+            prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
+          );
+          setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+        }
+        break;
+      }
+    }
+  }, [latestEvent, activeAppointment, sessionData, getEventsForSession]);
+
   const handleSelectAppointment = useCallback(
     (appt: Appointment) => {
       if (sessionState === "live") return; // don't switch while recording
@@ -143,6 +324,9 @@ export function AmbientCoreWorkspace() {
       setSessionState("idle");
       setSessionData(EMPTY_SESSION_DATA);
       setBrief(null);
+      setTranscript(null);
+      setFollowUpMsg(null);
+      setPipelineStep(null);
     },
     [sessionState]
   );
@@ -169,6 +353,9 @@ export function AmbientCoreWorkspace() {
       return;
     }
 
+    // Map this session GUID to the current appointment ID
+    sessionToAppointmentRef.current.set(sGuid, activeAppointment.id);
+
     setSessionState("live");
     setAppointments((prev) =>
       prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "in-progress" } : a))
@@ -180,59 +367,15 @@ export function AmbientCoreWorkspace() {
     async (data: SessionData) => {
       if (!activeAppointment) return;
       setSessionState("processing");
+      setPipelineStep("Processing started...");
 
-      // Stop recording + trigger backend transcription
+      // Stop recording + trigger backend pipeline (transcription → report → follow-up)
       await stopRecording();
 
-      // Start polling for transcript
-      const currentSessionGuid = sessionGuid;
-      if (currentSessionGuid) {
-        pollIntervalRef.current = setInterval(async () => {
-          try {
-            const status = await pollTranscript(currentSessionGuid);
-            if (status.transcription_status === "completed") {
-              // Transcription done
-              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-              setTranscript(status.transcript);
-
-              // Generate brief (still using simulated AI brief for now)
-              const generatedBrief = generateBrief(activeAppointment, data);
-              setBrief(generatedBrief);
-              setSessionState("complete");
-              setAppointments((prev) =>
-                prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
-              );
-              setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
-            } else if (status.transcription_status === "failed") {
-              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-              console.error("Transcription failed");
-              // Still show brief with what we have
-              const generatedBrief = generateBrief(activeAppointment, data);
-              setBrief(generatedBrief);
-              setSessionState("complete");
-              setAppointments((prev) =>
-                prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
-              );
-              setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
-            }
-          } catch (err) {
-            console.error("Polling error:", err);
-          }
-        }, 5000); // Poll every 5 seconds
-      } else {
-        // No session guid — fallback to simulated brief
-        setTimeout(() => {
-          const generatedBrief = generateBrief(activeAppointment, data);
-          setBrief(generatedBrief);
-          setSessionState("complete");
-          setAppointments((prev) =>
-            prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
-          );
-          setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
-        }, 2800);
-      }
+      // The SSE stream will push updates as each pipeline step completes.
+      // No polling needed — the useEffect above handles incoming events.
     },
-    [activeAppointment, stopRecording, sessionGuid, pollTranscript]
+    [activeAppointment, stopRecording]
   );
 
   const completedCount = appointments.filter((a) => a.status === "completed").length;
@@ -263,6 +406,15 @@ export function AmbientCoreWorkspace() {
             <CalendarClock size={11} />
             {completedCount}/{totalCount} seen today
           </span>
+          {/* SSE connection indicator */}
+          <Separator orientation="vertical" className="h-3" />
+          <span className={cn(
+            "flex items-center gap-1 font-medium",
+            sseConnected ? "text-emerald-600" : "text-muted-foreground"
+          )}>
+            {sseConnected ? <Wifi size={11} /> : <WifiOff size={11} />}
+            {sseConnected ? "Live" : "Offline"}
+          </span>
           {sessionState === "live" && (
             <>
               <Separator orientation="vertical" className="h-3" />
@@ -277,7 +429,7 @@ export function AmbientCoreWorkspace() {
               <Separator orientation="vertical" className="h-3" />
               <span className="flex items-center gap-1 text-amber-600 font-semibold">
                 <Bot size={11} />
-                AI Processing
+                {pipelineStep || "AI Processing"}
               </span>
             </>
           )}

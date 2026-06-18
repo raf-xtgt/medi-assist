@@ -1,7 +1,21 @@
 """FastAPI application entrypoint with all table routers."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from util.pg_notify import start_listener, stop_listener
+
+
+# ─── Lifespan: start/stop the PostgreSQL LISTEN connection ────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage the asyncpg LISTEN connection lifecycle."""
+    conn = await start_listener()
+    app.state.pg_listen_conn = conn
+    yield
+    await stop_listener(conn)
 
 from controller.app_mda_user_controller import router as user_router
 from controller.app_mda_prmn_controller import router as prmn_router
@@ -23,6 +37,7 @@ app = FastAPI(
     title="Medi-Assist API",
     description="Backend API for the Medi-Assist digital health platform",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Allow Postman / frontend / any origin during development
