@@ -497,7 +497,7 @@ export function AmbientSessionPanel({
                           onValueChange={(v) => updatePrescription(row.id, "frequency", v)}
                           disabled={isComplete}
                         >
-                          <SelectTrigger className="mt-0.5 h-7 text-xs">
+                          <SelectTrigger className="mt-0.5 h-7 text-xs bg-background">
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
