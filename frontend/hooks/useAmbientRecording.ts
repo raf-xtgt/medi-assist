@@ -5,6 +5,14 @@ import { API_BASE_URL } from "@/lib/api/constants";
 
 const CHUNK_INTERVAL_MS = 30_000; // 30 seconds per chunk
 
+/**
+ * Gain multiplier for the microphone input.
+ * Ambient room recording (doctor-patient across a desk) typically needs
+ * amplification since the mic isn't close to either speaker.
+ * Value of 2.5 = ~8dB boost. Adjust if clipping occurs.
+ */
+const MIC_GAIN = 2.5;
+
 interface UseAmbientRecordingOptions {
   appointmentGuid: string;
   doctorGuid: string;
@@ -43,6 +51,7 @@ export function useAmbientRecording({
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const chunkIndexRef = useRef(0);
   const sessionGuidRef = useRef<string | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -84,22 +93,45 @@ export function useAmbientRecording({
       setSessionGuid(sGuid);
       sessionGuidRef.current = sGuid;
 
-      // 2. Request microphone access
+      // 2. Request microphone access with constraints optimized for ambient room recording
+      // CRITICAL: noiseSuppression MUST be false for ambient recording.
+      // It treats distant speech as "noise" and attenuates it severely.
+      // autoGainControl helps boost quiet ambient audio automatically.
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: true,
+          channelCount: 1,
           sampleRate: 48000,
         },
       });
       streamRef.current = stream;
 
-      // 3. Create MediaRecorder with timeslice
+      // 3. Route through Web Audio API with GainNode to amplify the signal.
+      // Ambient mics pick up conversation at low levels — we boost before encoding.
+      const audioContext = new AudioContext({ sampleRate: 48000 });
+      audioContextRef.current = audioContext;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = MIC_GAIN;
+
+      const destination = audioContext.createMediaStreamDestination();
+      source.connect(gainNode);
+      gainNode.connect(destination);
+
+      // 4. Create MediaRecorder from the gain-boosted stream
+      const boostedStream = destination.stream;
+
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : "audio/webm";
 
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const recorder = new MediaRecorder(boostedStream, {
+        mimeType,
+        audioBitsPerSecond: 128000, // 128kbps for high quality speech
+      });
       mediaRecorderRef.current = recorder;
       chunkIndexRef.current = 0;
       startTimeRef.current = Date.now();
@@ -119,7 +151,7 @@ export function useAmbientRecording({
         setError("Recording error occurred");
       };
 
-      // 4. Start recording with timeslice (fires ondataavailable every 30s)
+      // 5. Start recording with timeslice (fires ondataavailable every 30s)
       recorder.start(CHUNK_INTERVAL_MS);
       setIsRecording(true);
 
@@ -145,10 +177,16 @@ export function useAmbientRecording({
         streamRef.current = null;
       }
 
+      // Close the AudioContext
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
       setIsRecording(false);
 
       // Give the final chunk a moment to upload
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Trigger end session on backend
       if (sessionGuidRef.current) {
