@@ -14,6 +14,7 @@ from model.app_mda_appointment import AppMdaAppointment
 from model.app_mda_appointment_session import AppMdaAppointmentSession
 from model.app_mda_prescription import AppMdaPrescription
 from model.app_mda_follow_up_queue import AppMdaFollowUpQueue
+from model.app_mda_appointment_note import AppMdaAppointmentNote
 
 __all__ = [
     "Base",
@@ -30,4 +31,5 @@ __all__ = [
     "AppMdaAppointmentSession",
     "AppMdaPrescription",
     "AppMdaFollowUpQueue",
+    "AppMdaAppointmentNote",
 ]

@@ -433,3 +433,49 @@ class FollowUpQueueResponse(BaseModel):
     status: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─── app_mda_appointment_note ────────────────────────────────────────────────
+
+class AppointmentNoteCreate(BaseModel):
+    appointment_guid: Optional[UUID] = None
+    patient_guid: Optional[UUID] = None
+    main_complaint: Optional[str] = None
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    temperature: Optional[float] = None
+    respiratory_rate: Optional[int] = None
+    oxygen_saturation: Optional[float] = None
+    weight: Optional[float] = None
+    status: Optional[str] = None
+
+
+class AppointmentNoteUpdate(BaseModel):
+    appointment_guid: Optional[UUID] = None
+    patient_guid: Optional[UUID] = None
+    main_complaint: Optional[str] = None
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    temperature: Optional[float] = None
+    respiratory_rate: Optional[int] = None
+    oxygen_saturation: Optional[float] = None
+    weight: Optional[float] = None
+    status: Optional[str] = None
+
+
+class AppointmentNoteResponse(BaseModel):
+    guid: UUID
+    appointment_guid: Optional[UUID] = None
+    patient_guid: Optional[UUID] = None
+    main_complaint: Optional[str] = None
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    temperature: Optional[float] = None
+    respiratory_rate: Optional[int] = None
+    oxygen_saturation: Optional[float] = None
+    weight: Optional[float] = None
+    created_date: Optional[datetime] = None
+    updated_date: Optional[datetime] = None
+    status: Optional[str] = None
+
+    model_config = {"from_attributes": True}
