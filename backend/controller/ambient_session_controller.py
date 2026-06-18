@@ -327,10 +327,12 @@ async def session_events_stream(
 
     async def event_generator():
         queue = register_queue(doctor_guid)
+        print(f"[SSE] Client connected for doctor {doctor_guid[:8]}... (queue registered)")
         try:
             while True:
                 # Check if client disconnected
                 if await request.is_disconnected():
+                    print(f"[SSE] Client disconnected for doctor {doctor_guid[:8]}...")
                     break
 
                 try:
@@ -338,12 +340,14 @@ async def session_events_stream(
                     payload = await asyncio.wait_for(queue.get(), timeout=30.0)
                     event_type = payload.get("event", "message")
                     data = json.dumps(payload)
+                    print(f"[SSE] Yielding event: {event_type} to doctor {doctor_guid[:8]}...")
                     yield f"event: {event_type}\ndata: {data}\n\n"
                 except asyncio.TimeoutError:
                     # Send keepalive comment to prevent connection timeout
                     yield ": keepalive\n\n"
         finally:
             unregister_queue(doctor_guid, queue)
+            print(f"[SSE] Queue unregistered for doctor {doctor_guid[:8]}...")
 
     return StreamingResponse(
         event_generator(),

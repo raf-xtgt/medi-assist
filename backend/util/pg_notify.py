@@ -85,11 +85,14 @@ def unregister_queue(doctor_guid: str, q: asyncio.Queue) -> None:
 
 def _dispatch(doctor_guid: str, payload: dict[str, Any]) -> None:
     """Push an event to all queues listening for a given doctor."""
-    for q in _queues.get(doctor_guid, set()):
+    queues = _queues.get(doctor_guid, set())
+    print(f"[pg_notify] _dispatch: doctor={doctor_guid[:8]}..., queues_count={len(queues)}")
+    for q in queues:
         try:
             q.put_nowait(payload)
+            print(f"[pg_notify] _dispatch: event put into queue successfully")
         except asyncio.QueueFull:
-            pass  # Drop if the client is too slow
+            print(f"[pg_notify] _dispatch: WARNING queue full, dropped event")
 
 
 # ─── Notify (called by background tasks after DB commit) ─────────────────────
@@ -143,10 +146,9 @@ def send_notify(db_session, doctor_guid: str, event_type: str, data: dict[str, A
 
 async def _on_notification(conn, pid, channel, payload):
     """Callback when a NOTIFY arrives on the channel."""
-    print(f"[pg_notify] notification received")
     try:
         data = json.loads(payload)
-        print(f"[pg_notify] notification data '{data}'")
+        print(f"[pg_notify] notification data received")
         doctor_guid = data.get("doctor_guid")
         if doctor_guid:
             _dispatch(doctor_guid, data)

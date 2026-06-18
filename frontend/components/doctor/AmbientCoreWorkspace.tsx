@@ -197,6 +197,7 @@ export function AmbientCoreWorkspace() {
 
   // Track which session GUID belongs to which appointment ID
   const sessionToAppointmentRef = useRef<Map<string, string>>(new Map());
+  const lastProcessedEventRef = useRef<SessionEvent | null>(null);
 
   const {
     startRecording,
@@ -224,6 +225,9 @@ export function AmbientCoreWorkspace() {
   // ── React to SSE events ─────────────────────────────────────────────────
   useEffect(() => {
     if (!latestEvent) return;
+    // Skip if we already processed this exact event object
+    if (latestEvent === lastProcessedEventRef.current) return;
+    lastProcessedEventRef.current = latestEvent;
 
     console.log("[SSE Event Received]", latestEvent.event, latestEvent);
 
@@ -246,17 +250,20 @@ export function AmbientCoreWorkspace() {
         toast.success("AI Report Generated", {
           description: "Clinical insights and treatment plan are ready.",
         });
-        // If the active appointment matches this session, update the brief
-        if (activeAppointment && mappedAppointmentId === activeAppointment.id) {
-          if (latestEvent.report) {
-            const generatedBrief = generateBriefFromReport(
-              activeAppointment,
-              sessionData,
-              latestEvent.report,
-              undefined
-            );
-            setBrief(generatedBrief);
-          }
+        if (latestEvent.report && mappedAppointmentId) {
+          // Use a functional update to avoid depending on activeAppointment
+          setActiveAppointment((current) => {
+            if (current && mappedAppointmentId === current.id) {
+              const generatedBrief = generateBriefFromReport(
+                current,
+                sessionData,
+                latestEvent.report!,
+                undefined
+              );
+              setBrief(generatedBrief);
+            }
+            return current;
+          });
         }
         break;
       }
@@ -275,23 +282,31 @@ export function AmbientCoreWorkspace() {
           setAppointments((prev) =>
             prev.map((a) => (a.id === mappedAppointmentId ? { ...a, status: "completed" } : a))
           );
-          if (activeAppointment?.id === mappedAppointmentId) {
-            setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
-          }
+          setActiveAppointment((prev) => {
+            if (prev?.id === mappedAppointmentId) {
+              return { ...prev, status: "completed" };
+            }
+            return prev;
+          });
         }
 
         // Update brief with follow-up message if we have a report
-        if (activeAppointment && mappedAppointmentId === activeAppointment.id && latestEvent.follow_up_msg) {
+        if (latestEvent.follow_up_msg && mappedAppointmentId) {
           const sessionEvents = getEventsForSession(eventSessionGuid);
           const reportEvent = sessionEvents.find((e) => e.event === "report_generated");
           if (reportEvent?.report) {
-            const updatedBrief = generateBriefFromReport(
-              activeAppointment,
-              sessionData,
-              reportEvent.report,
-              latestEvent.follow_up_msg
-            );
-            setBrief(updatedBrief);
+            setActiveAppointment((current) => {
+              if (current && mappedAppointmentId === current.id) {
+                const updatedBrief = generateBriefFromReport(
+                  current,
+                  sessionData,
+                  reportEvent.report!,
+                  latestEvent.follow_up_msg!
+                );
+                setBrief(updatedBrief);
+              }
+              return current;
+            });
           }
         }
         break;
@@ -303,19 +318,31 @@ export function AmbientCoreWorkspace() {
         });
         console.error("[SSE] Pipeline failed:", latestEvent.error);
         // Fallback to simulated brief
-        if (activeAppointment && mappedAppointmentId === activeAppointment.id) {
-          const generatedBrief = generateBrief(activeAppointment, sessionData);
-          setBrief(generatedBrief);
-          setSessionState("complete");
+        setActiveAppointment((current) => {
+          if (current && mappedAppointmentId === current.id) {
+            const generatedBrief = generateBrief(current, sessionData);
+            setBrief(generatedBrief);
+          }
+          return current;
+        });
+        setSessionState("complete");
+        if (mappedAppointmentId) {
           setAppointments((prev) =>
-            prev.map((a) => (a.id === activeAppointment.id ? { ...a, status: "completed" } : a))
+            prev.map((a) => (a.id === mappedAppointmentId ? { ...a, status: "completed" } : a))
           );
-          setActiveAppointment((prev) => (prev ? { ...prev, status: "completed" } : null));
+          setActiveAppointment((prev) => {
+            if (prev?.id === mappedAppointmentId) {
+              return { ...prev, status: "completed" };
+            }
+            return prev;
+          });
         }
         break;
       }
     }
-  }, [latestEvent, activeAppointment, sessionData, getEventsForSession]);
+    // Only depend on latestEvent — use refs/functional updates for everything else
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestEvent]);
 
   const handleSelectAppointment = useCallback(
     (appt: Appointment) => {

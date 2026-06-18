@@ -74,12 +74,11 @@ export function useSessionEvents({
   useEffect(() => {
     if (!enabled || !doctorGuid) return;
 
-    // When useProxy is true, route through the Next.js API route (same origin)
-    // to avoid CORS issues with ngrok/external URLs.
-    // The API route at /api/agent/ambient-session/events/[doctorGuid] proxies
-    // the SSE stream from FastAPI.
-    const baseUrl = useProxy ? "" : API_BASE_URL;
-    const url = `${baseUrl}/api/agent/ambient-session/events/${doctorGuid}`;
+    // Connect directly to FastAPI's local server for SSE streaming.
+    // Next.js API routes and rewrites buffer responses, breaking SSE.
+    // The browser connects directly to FastAPI (localhost:8000) which has
+    // CORS allow_origins=["*"] set, so cross-origin from localhost:3000 works.
+    const url = `http://localhost:8000/api/agent/ambient-session/events/${doctorGuid}`;
 
     console.log("[useSessionEvents] Opening EventSource:", url);
     const es = new EventSource(url);
