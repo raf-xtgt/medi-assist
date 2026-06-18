@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/clinic_hdr`;
+const ENDPOINT = `${API_MDA_PREFIX}/clinic_hdr`;
 
 export interface ClinicHdrCreate {
   name?: string;

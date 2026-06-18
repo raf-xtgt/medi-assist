@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/api/mda/appointment_note`;
+const ENDPOINT = `${API_MDA_PREFIX}/appointment_note`;
 
 export interface AppointmentNoteCreate {
   appointment_guid?: string;

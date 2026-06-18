@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/user`;
+const ENDPOINT = `${API_MDA_PREFIX}/user`;
 
 export interface UserCreate {
   email?: string;

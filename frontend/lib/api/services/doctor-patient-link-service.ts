@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/doctor_patient_link`;
+const ENDPOINT = `${API_MDA_PREFIX}/doctor_patient_link`;
 
 export interface DoctorPatientLinkCreate {
   doctor_guid?: string;

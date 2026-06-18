@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { appointmentNoteService, prescriptionService } from "@/lib/api/services";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +19,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   Activity,
   CheckCircle,
+  Loader2,
   Mic,
   MicOff,
   PlayCircle,
   Plus,
+  Save,
   Stethoscope,
   StopCircle,
   Trash2,
@@ -169,10 +172,61 @@ export function AmbientSessionPanel({
   sessionData,
   onSessionDataChange,
 }: AmbientSessionPanelProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const isLive = sessionState === "live";
   const isProcessing = sessionState === "processing";
   const isComplete = sessionState === "complete";
   const isIdle = sessionState === "idle";
+
+  async function handleSave() {
+    if (!appointment) return;
+    setIsSaving(true);
+    setSaveSuccess(false);
+
+    // Hardcoded GUIDs for now
+    const patient_guid = "a92225f5-d048-4483-b708-f11f7f0d5f03";
+    const appointment_guid = "4e247042-f8f2-4cd5-b026-74fa99409eb7";
+
+    try {
+      // Save appointment note (vitals + chief complaint + clinical notes)
+      await appointmentNoteService.create({
+        appointment_guid,
+        patient_guid,
+        main_complaint: sessionData.chiefComplaint,
+        blood_pressure: sessionData.vitals.bp || undefined,
+        heart_rate: sessionData.vitals.hr ? parseInt(sessionData.vitals.hr) : undefined,
+        temperature: sessionData.vitals.temp ? parseFloat(sessionData.vitals.temp) : undefined,
+        respiratory_rate: sessionData.vitals.rr ? parseInt(sessionData.vitals.rr) : undefined,
+        oxygen_saturation: sessionData.vitals.spo2 ? parseFloat(sessionData.vitals.spo2) : undefined,
+        weight: sessionData.vitals.weight ? parseFloat(sessionData.vitals.weight) : undefined,
+        additional_remarks: sessionData.clinicalNotes || undefined,
+        status: "active",
+      });
+
+      // Save prescriptions
+      for (const rx of sessionData.prescriptions) {
+        if (!rx.medicine) continue;
+        await prescriptionService.create({
+          appointment_guid,
+          patient_guid,
+          medicine_name: rx.medicine,
+          dosage: rx.dosage || undefined,
+          frequency: rx.frequency || undefined,
+          duration: rx.duration || undefined,
+          status: "active",
+        });
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to save session data:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   function updateVitals(field: keyof VitalEntry, value: string) {
     onSessionDataChange({
@@ -498,6 +552,37 @@ export function AmbientSessionPanel({
               className="min-h-[72px] text-xs resize-none"
             />
           </div>
+
+          {/* Save button */}
+          {!isComplete && (
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={cn(
+                "w-full gap-2 h-9 text-sm font-semibold mt-2",
+                saveSuccess
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "bg-[var(--color-brand-blue)] text-white hover:bg-[var(--color-brand-blue-dark)]"
+              )}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving...
+                </>
+              ) : saveSuccess ? (
+                <>
+                  <CheckCircle size={14} />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Save Notes &amp; Prescriptions
+                </>
+              )}
+            </Button>
+          )}
         </div>
       )}
 

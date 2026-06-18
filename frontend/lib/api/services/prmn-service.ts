@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/prmn`;
+const ENDPOINT = `${API_MDA_PREFIX}/prmn`;
 
 export interface PrmnCreate {
   user_guid?: string;

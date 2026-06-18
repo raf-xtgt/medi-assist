@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "../constants";
+import { API_MDA_PREFIX } from "../constants";
 
-const ENDPOINT = `${API_BASE_URL}/follow_up_queue`;
+const ENDPOINT = `${API_MDA_PREFIX}/follow_up_queue`;
 
 export interface FollowUpQueueCreate {
   appointment_guid?: string;
