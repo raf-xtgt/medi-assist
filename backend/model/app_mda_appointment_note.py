@@ -19,6 +19,7 @@ class AppMdaAppointmentNote(Base):
     respiratory_rate = Column(Integer, nullable=True)
     oxygen_saturation = Column(Numeric(4, 1), nullable=True)
     weight = Column(Numeric(5, 2), nullable=True)
+    additional_remarks = Column(Text, nullable=True)
     created_date = Column(DateTime, server_default=func.now())
     updated_date = Column(DateTime, server_default=func.now())
     status = Column(String(50), nullable=True)

@@ -447,6 +447,7 @@ class AppointmentNoteCreate(BaseModel):
     respiratory_rate: Optional[int] = None
     oxygen_saturation: Optional[float] = None
     weight: Optional[float] = None
+    additional_remarks: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -460,6 +461,7 @@ class AppointmentNoteUpdate(BaseModel):
     respiratory_rate: Optional[int] = None
     oxygen_saturation: Optional[float] = None
     weight: Optional[float] = None
+    additional_remarks: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -474,6 +476,7 @@ class AppointmentNoteResponse(BaseModel):
     respiratory_rate: Optional[int] = None
     oxygen_saturation: Optional[float] = None
     weight: Optional[float] = None
+    additional_remarks: Optional[str] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
     status: Optional[str] = None

@@ -12,6 +12,7 @@ export interface AppointmentNoteCreate {
   respiratory_rate?: number;
   oxygen_saturation?: number;
   weight?: number;
+  additional_remarks?: string;
   status?: string;
 }
 
@@ -25,6 +26,7 @@ export interface AppointmentNoteUpdate {
   respiratory_rate?: number;
   oxygen_saturation?: number;
   weight?: number;
+  additional_remarks?: string;
   status?: string;
 }
 
@@ -39,6 +41,7 @@ export interface AppointmentNoteResponse {
   respiratory_rate?: number;
   oxygen_saturation?: number;
   weight?: number;
+  additional_remarks?: string;
   created_date?: string;
   updated_date?: string;
   status?: string;
