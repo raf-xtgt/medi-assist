@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
-from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto
+from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
@@ -198,7 +198,20 @@ def get_patient_report(payload: PatientAppointmentRequestDto, db: Session = Depe
                 appointment_session_transcript=session.transcript if session else None,
                 appointment_session_transcript_status=session.transcription_status if session else None,
                 appointment_session_transcript_metadata=session.transcript_metadata if session else None,
-                appointment_note=note.main_complaint if note else None,
+                appointment_note=AppointmentNoteDto(
+                    guid=note.guid,
+                    appointment_guid=note.appointment_guid,
+                    patient_guid=note.patient_guid,
+                    main_complaint=note.main_complaint,
+                    blood_pressure=note.blood_pressure,
+                    heart_rate=note.heart_rate,
+                    temperature=note.temperature,
+                    respiratory_rate=note.respiratory_rate,
+                    oxygen_saturation=note.oxygen_saturation,
+                    weight=note.weight,
+                    additional_remarks=note.additional_remarks,
+                    status=note.status,
+                ) if note else None,
                 appointment_prescription_medicine_name=prescription.medicine_name if prescription else None,
                 appointment_prescription_dosage=prescription.dosage if prescription else None,
                 appointment_prescription_frequency=prescription.frequency if prescription else None,

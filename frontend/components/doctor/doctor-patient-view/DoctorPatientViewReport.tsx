@@ -176,11 +176,66 @@ export function DoctorPatientViewReport({ patient, onBack }: DoctorPatientViewRe
 
                   <TabsContent value="vitals" className="mt-0">
                     {selectedAppointment.appointment_note ? (
-                      <div className="rounded-md bg-muted/30 p-3 text-sm text-foreground">
-                        <p className="font-medium text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                          Chief Complaint / Notes
-                        </p>
-                        <p>{selectedAppointment.appointment_note}</p>
+                      <div className="space-y-3">
+                        {/* Chief Complaint */}
+                        {selectedAppointment.appointment_note.main_complaint && (
+                          <div className="rounded-md bg-muted/30 p-3">
+                            <p className="font-medium text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                              Chief Complaint
+                            </p>
+                            <p className="text-sm text-foreground">{selectedAppointment.appointment_note.main_complaint}</p>
+                          </div>
+                        )}
+
+                        {/* Vitals grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedAppointment.appointment_note.blood_pressure && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">BP</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.blood_pressure}</p>
+                            </div>
+                          )}
+                          {selectedAppointment.appointment_note.heart_rate != null && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">HR</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.heart_rate} bpm</p>
+                            </div>
+                          )}
+                          {selectedAppointment.appointment_note.temperature != null && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">Temp</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.temperature}°C</p>
+                            </div>
+                          )}
+                          {selectedAppointment.appointment_note.oxygen_saturation != null && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">SpO₂</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.oxygen_saturation}%</p>
+                            </div>
+                          )}
+                          {selectedAppointment.appointment_note.respiratory_rate != null && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">RR</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.respiratory_rate} /min</p>
+                            </div>
+                          )}
+                          {selectedAppointment.appointment_note.weight != null && (
+                            <div className="rounded-md border border-border/60 p-2 text-center">
+                              <p className="text-[10px] text-muted-foreground">Weight</p>
+                              <p className="text-sm font-semibold text-foreground">{selectedAppointment.appointment_note.weight} kg</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Additional remarks */}
+                        {selectedAppointment.appointment_note.additional_remarks && (
+                          <div className="rounded-md bg-muted/30 p-3">
+                            <p className="font-medium text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                              Additional Remarks
+                            </p>
+                            <p className="text-sm text-foreground">{selectedAppointment.appointment_note.additional_remarks}</p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-10 text-center">

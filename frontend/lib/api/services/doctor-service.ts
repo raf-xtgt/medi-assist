@@ -2,7 +2,7 @@ import { API_MDA_PREFIX } from "../constants";
 import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport } from "../model/doctor.model";
 
 export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport };
-export type { PatientAppointmentDetail } from "../model/doctor.model";
+export type { PatientAppointmentDetail, AppointmentNoteDetail } from "../model/doctor.model";
 
 const ENDPOINT = `${API_MDA_PREFIX}/doctor`;
 

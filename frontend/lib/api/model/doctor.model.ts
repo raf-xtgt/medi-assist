@@ -56,6 +56,21 @@ export interface PatientAppointmentRequest {
   patient_guid: string;
 }
 
+export interface AppointmentNoteDetail {
+  guid?: string;
+  appointment_guid?: string;
+  patient_guid?: string;
+  main_complaint?: string;
+  blood_pressure?: string;
+  heart_rate?: number;
+  temperature?: number;
+  respiratory_rate?: number;
+  oxygen_saturation?: number;
+  weight?: number;
+  additional_remarks?: string;
+  status?: string;
+}
+
 export interface PatientAppointmentDetail {
   appointment_guid?: string;
   appointment_start_time?: string;
@@ -63,7 +78,7 @@ export interface PatientAppointmentDetail {
   appointment_session_transcript?: string;
   appointment_session_transcript_status?: string;
   appointment_session_transcript_metadata?: Record<string, unknown>;
-  appointment_note?: string;
+  appointment_note?: AppointmentNoteDetail;
   appointment_prescription_medicine_name?: string;
   appointment_prescription_dosage?: string;
   appointment_prescription_frequency?: string;
