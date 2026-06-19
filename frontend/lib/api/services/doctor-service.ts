@@ -40,6 +40,22 @@ export interface DoctorResponse {
   status?: string;
 }
 
+export interface DoctorPatientRequest {
+  doctor_guid: string;
+  clinic_hdr_guid: string;
+}
+
+export interface DoctorPatientListItem {
+  doctor_guid: string;
+  clinic_hdr_guid: string;
+  patient_guid: string;
+  patient_phone: string;
+  patient_name: string;
+  patient_email: string;
+  patient_address: string;
+  total_completed_appointments: number;
+}
+
 export const doctorService = {
   getAll: async (skip = 0, limit = 100): Promise<DoctorResponse[]> => {
     const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`);
@@ -76,5 +92,15 @@ export const doctorService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete doctor: ${res.status}`);
+  },
+
+  getPatientList: async (data: DoctorPatientRequest): Promise<DoctorPatientListItem[]> => {
+    const res = await fetch(`${ENDPOINT}/patient-list`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch doctor patient list: ${res.status}`);
+    return res.json();
   },
 };
