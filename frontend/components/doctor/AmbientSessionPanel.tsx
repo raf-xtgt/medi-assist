@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Activity,
   CheckCircle,
+  ExternalLink,
   Loader2,
   Mic,
   MicOff,
@@ -30,6 +31,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import type { Appointment } from "./AmbientScheduler";
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -174,6 +176,7 @@ export function AmbientSessionPanel({
 }: AmbientSessionPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const router = useRouter();
 
   const isLive = sessionState === "live";
   const isProcessing = sessionState === "processing";
@@ -606,12 +609,24 @@ export function AmbientSessionPanel({
             End Appointment
           </Button>
         )}
+        {/* Session completion */}
         {isComplete && (
-          <div className="flex items-center justify-center gap-2 py-1">
-            <CheckCircle size={14} className="text-emerald-500" />
-            <span className="text-xs font-medium text-emerald-600">
-              Session complete — AI brief ready
-            </span>
+          <div className="flex flex-col items-center gap-2 py-1">
+            <div className="flex items-center gap-2">
+              <CheckCircle size={14} className="text-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600">
+                Session complete — AI brief ready
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-7"
+              onClick={() => router.push("/doctor/patients")}
+            >
+              View Archived Patient File
+              <ExternalLink size={11} />
+            </Button>
           </div>
         )}
       </div>
