@@ -8,9 +8,13 @@ from sqlalchemy.orm import Session
 
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
+from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
+from model.app_mda_appointment_session import AppMdaAppointmentSession
+from model.app_mda_appointment_note import AppMdaAppointmentNote
+from model.app_mda_prescription import AppMdaPrescription
 from service.app_mda_doctor_service import doctor_service
 from util.database import get_db
 
@@ -117,3 +121,95 @@ def get_patient_list(payload: DoctorPatientRequestDto, db: Session = Depends(get
         )
         for row in results
     ]
+
+
+@router.post("/patient-report", response_model=PatientReportDto)
+def get_patient_report(payload: PatientAppointmentRequestDto, db: Session = Depends(get_db)):
+    """
+    Generate a full patient report with all appointment details.
+
+    Joins appointment → appointment_session, appointment_note, and prescription
+    to build a comprehensive view of each appointment for the given patient.
+    Optimized with LEFT JOINs so appointments without sessions/notes/prescriptions
+    are still included.
+    """
+    patient_guid = payload.patient_guid
+
+    # Get all appointments for this patient, ordered by most recent first
+    appointments = (
+        db.query(AppMdaAppointment)
+        .filter(AppMdaAppointment.patient_guid == patient_guid)
+        .order_by(AppMdaAppointment.scheduled_start.desc())
+        .all()
+    )
+
+    if not appointments:
+        return PatientReportDto(
+            patient_guid=patient_guid,
+            total_appointment_sessions=0,
+            appointment_detail_list=[],
+        )
+
+    # Extract doctor_guid and clinic_guid from the first appointment
+    first_appt = appointments[0]
+    doctor_guid = first_appt.doctor_guid
+    clinic_hdr_guid = first_appt.clinic_guid
+
+    appointment_guids = [appt.guid for appt in appointments]
+
+    # Batch fetch all related data for these appointments
+    sessions = (
+        db.query(AppMdaAppointmentSession)
+        .filter(AppMdaAppointmentSession.appointment_guid.in_(appointment_guids))
+        .all()
+    )
+    sessions_map = {s.appointment_guid: s for s in sessions}
+
+    notes = (
+        db.query(AppMdaAppointmentNote)
+        .filter(AppMdaAppointmentNote.appointment_guid.in_(appointment_guids))
+        .all()
+    )
+    notes_map = {n.appointment_guid: n for n in notes}
+
+    prescriptions = (
+        db.query(AppMdaPrescription)
+        .filter(AppMdaPrescription.appointment_guid.in_(appointment_guids))
+        .all()
+    )
+    # Group prescriptions by appointment — take the first one for the DTO
+    prescriptions_map: dict = {}
+    for p in prescriptions:
+        if p.appointment_guid not in prescriptions_map:
+            prescriptions_map[p.appointment_guid] = p
+
+    # Build the detail list
+    detail_list = []
+    for appt in appointments:
+        session = sessions_map.get(appt.guid)
+        note = notes_map.get(appt.guid)
+        prescription = prescriptions_map.get(appt.guid)
+
+        detail_list.append(
+            PatientAppointmentDto(
+                appointment_guid=appt.guid,
+                appointment_start_time=appt.scheduled_start,
+                appointment_end_time=appt.scheduled_end,
+                appointment_session_transcript=session.transcript if session else None,
+                appointment_session_transcript_status=session.transcription_status if session else None,
+                appointment_session_transcript_metadata=session.transcript_metadata if session else None,
+                appointment_note=note.main_complaint if note else None,
+                appointment_prescription_medicine_name=prescription.medicine_name if prescription else None,
+                appointment_prescription_dosage=prescription.dosage if prescription else None,
+                appointment_prescription_frequency=prescription.frequency if prescription else None,
+                appointment_prescription_duration=prescription.duration if prescription else None,
+            )
+        )
+
+    return PatientReportDto(
+        doctor_guid=doctor_guid,
+        clinic_hdr_guid=clinic_hdr_guid,
+        patient_guid=patient_guid,
+        total_appointment_sessions=len(sessions),
+        appointment_detail_list=detail_list,
+    )

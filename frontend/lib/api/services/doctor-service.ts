@@ -56,6 +56,32 @@ export interface DoctorPatientListItem {
   total_completed_appointments: number;
 }
 
+export interface PatientAppointmentRequest {
+  patient_guid: string;
+}
+
+export interface PatientAppointmentDetail {
+  appointment_guid?: string;
+  appointment_start_time?: string;
+  appointment_end_time?: string;
+  appointment_session_transcript?: string;
+  appointment_session_transcript_status?: string;
+  appointment_session_transcript_metadata?: Record<string, unknown>;
+  appointment_note?: string;
+  appointment_prescription_medicine_name?: string;
+  appointment_prescription_dosage?: string;
+  appointment_prescription_frequency?: string;
+  appointment_prescription_duration?: string;
+}
+
+export interface PatientReport {
+  doctor_guid?: string;
+  clinic_hdr_guid?: string;
+  patient_guid: string;
+  total_appointment_sessions: number;
+  appointment_detail_list: PatientAppointmentDetail[];
+}
+
 export const doctorService = {
   getAll: async (skip = 0, limit = 100): Promise<DoctorResponse[]> => {
     const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`);
@@ -101,6 +127,16 @@ export const doctorService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to fetch doctor patient list: ${res.status}`);
+    return res.json();
+  },
+
+  getPatientReport: async (data: PatientAppointmentRequest): Promise<PatientReport> => {
+    const res = await fetch(`${ENDPOINT}/patient-report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch patient report: ${res.status}`);
     return res.json();
   },
 };
