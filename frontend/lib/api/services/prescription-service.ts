@@ -1,39 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse } from "../model/prescription.model";
+
+export type { PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/prescription`;
-
-export interface PrescriptionCreate {
-  appointment_guid?: string;
-  patient_guid?: string;
-  medicine_name?: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  status?: string;
-}
-
-export interface PrescriptionUpdate {
-  appointment_guid?: string;
-  patient_guid?: string;
-  medicine_name?: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  status?: string;
-}
-
-export interface PrescriptionResponse {
-  guid: string;
-  appointment_guid?: string;
-  patient_guid?: string;
-  medicine_name?: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  created_date?: string;
-  updated_date?: string;
-  status?: string;
-}
 
 export const prescriptionService = {
   getAll: async (skip = 0, limit = 100): Promise<PrescriptionResponse[]> => {

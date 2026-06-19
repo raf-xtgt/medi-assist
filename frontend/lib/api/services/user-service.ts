@@ -1,26 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { UserCreate, UserUpdate, UserResponse } from "../model/user.model";
+
+export type { UserCreate, UserUpdate, UserResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/user`;
-
-export interface UserCreate {
-  email?: string;
-  phone?: string;
-  status?: string;
-}
-
-export interface UserUpdate {
-  email?: string;
-  phone?: string;
-  status?: string;
-}
-
-export interface UserResponse {
-  guid: string;
-  email?: string;
-  phone?: string;
-  created_date?: string;
-  status?: string;
-}
 
 export const userService = {
   getAll: async (skip = 0, limit = 100): Promise<UserResponse[]> => {

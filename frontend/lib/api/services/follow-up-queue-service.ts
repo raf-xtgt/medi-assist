@@ -1,36 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueueResponse } from "../model/follow-up-queue.model";
+
+export type { FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueueResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/follow_up_queue`;
-
-export interface FollowUpQueueCreate {
-  appointment_guid?: string;
-  patient_guid?: string;
-  scheduled_cron?: string;
-  follow_up_msg?: string;
-  follow_up_status?: string;
-  status?: string;
-}
-
-export interface FollowUpQueueUpdate {
-  appointment_guid?: string;
-  patient_guid?: string;
-  scheduled_cron?: string;
-  follow_up_msg?: string;
-  follow_up_status?: string;
-  status?: string;
-}
-
-export interface FollowUpQueueResponse {
-  guid: string;
-  appointment_guid?: string;
-  patient_guid?: string;
-  scheduled_cron?: string;
-  follow_up_msg?: string;
-  follow_up_status?: string;
-  created_date?: string;
-  updated_date?: string;
-  status?: string;
-}
 
 export const followUpQueueService = {
   getAll: async (skip = 0, limit = 100): Promise<FollowUpQueueResponse[]> => {

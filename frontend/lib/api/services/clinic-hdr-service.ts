@@ -1,27 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse } from "../model/clinic-hdr.model";
+
+export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/clinic_hdr`;
-
-export interface ClinicHdrCreate {
-  name?: string;
-  website_url?: string;
-  status?: string;
-}
-
-export interface ClinicHdrUpdate {
-  name?: string;
-  website_url?: string;
-  status?: string;
-}
-
-export interface ClinicHdrResponse {
-  guid: string;
-  name?: string;
-  website_url?: string;
-  created_date?: string;
-  updated_date?: string;
-  status?: string;
-}
 
 export const clinicHdrService = {
   getAll: async (skip = 0, limit = 100): Promise<ClinicHdrResponse[]> => {

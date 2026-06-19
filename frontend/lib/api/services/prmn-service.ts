@@ -1,26 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { PrmnCreate, PrmnUpdate, PrmnResponse } from "../model/prmn.model";
+
+export type { PrmnCreate, PrmnUpdate, PrmnResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/prmn`;
-
-export interface PrmnCreate {
-  user_guid?: string;
-  role?: string;
-  status?: string;
-}
-
-export interface PrmnUpdate {
-  user_guid?: string;
-  role?: string;
-  status?: string;
-}
-
-export interface PrmnResponse {
-  guid: string;
-  user_guid?: string;
-  role?: string;
-  created_date?: string;
-  status?: string;
-}
 
 export const prmnService = {
   getAll: async (skip = 0, limit = 100): Promise<PrmnResponse[]> => {

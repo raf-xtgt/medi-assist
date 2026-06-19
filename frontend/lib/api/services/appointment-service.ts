@@ -1,39 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { AppointmentCreate, AppointmentUpdate, AppointmentResponse } from "../model/appointment.model";
+
+export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/appointment`;
-
-export interface AppointmentCreate {
-  clinic_guid?: string;
-  doctor_guid?: string;
-  patient_guid?: string;
-  scheduled_start?: string;
-  scheduled_end?: string;
-  appointment_status?: string;
-  status?: string;
-}
-
-export interface AppointmentUpdate {
-  clinic_guid?: string;
-  doctor_guid?: string;
-  patient_guid?: string;
-  scheduled_start?: string;
-  scheduled_end?: string;
-  appointment_status?: string;
-  status?: string;
-}
-
-export interface AppointmentResponse {
-  guid: string;
-  clinic_guid?: string;
-  doctor_guid?: string;
-  patient_guid?: string;
-  scheduled_start?: string;
-  scheduled_end?: string;
-  appointment_status?: string;
-  created_date?: string;
-  updated_date?: string;
-  status?: string;
-}
 
 export const appointmentService = {
   getAll: async (skip = 0, limit = 100): Promise<AppointmentResponse[]> => {

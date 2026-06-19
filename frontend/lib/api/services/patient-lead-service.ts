@@ -1,29 +1,9 @@
 import { API_MDA_PREFIX } from "../constants";
+import type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse } from "../model/patient-lead.model";
+
+export type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/patient_lead`;
-
-export interface PatientLeadCreate {
-  phone?: string;
-  name?: string;
-  lead_status?: string;
-  status?: string;
-}
-
-export interface PatientLeadUpdate {
-  phone?: string;
-  name?: string;
-  lead_status?: string;
-  status?: string;
-}
-
-export interface PatientLeadResponse {
-  guid: string;
-  phone?: string;
-  name?: string;
-  created_date?: string;
-  lead_status?: string;
-  status?: string;
-}
 
 export const patientLeadService = {
   getAll: async (skip = 0, limit = 100): Promise<PatientLeadResponse[]> => {
