@@ -16,6 +16,7 @@ class AppMdaAppointment(Base):
     scheduled_start = Column(DateTime, nullable=True)
     scheduled_end = Column(DateTime, nullable=True)
     appointment_status = Column(String(50), nullable=True)
+    running_no = Column(String(255), nullable=True)
     created_date = Column(DateTime, server_default=func.now())
     updated_date = Column(DateTime, server_default=func.now())
     status = Column(String(50), nullable=True)
