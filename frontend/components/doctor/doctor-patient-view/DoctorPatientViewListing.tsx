@@ -6,14 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doctorService } from "@/lib/api/services";
 import type { DoctorPatientListItem } from "@/lib/api/model/doctor.model";
-import { Mail, Phone, MapPin, CalendarCheck, Users } from "lucide-react";
+import { Mail, Phone, MapPin, CalendarCheck, Users, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* Hardcoded GUIDs for now */
 const DOCTOR_GUID = "06f97db0-15dc-41cf-acab-bc278b38f00a";
 const CLINIC_HDR_GUID = "566cff97-f00c-45d7-9794-2e7b9a756bd8";
 
-export function DoctorPatientViewListing() {
+interface DoctorPatientViewListingProps {
+  onSelectPatient: (patient: DoctorPatientListItem) => void;
+}
+
+export function DoctorPatientViewListing({ onSelectPatient }: DoctorPatientViewListingProps) {
   const [patients, setPatients] = useState<DoctorPatientListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,11 +98,13 @@ export function DoctorPatientViewListing() {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {patients.map((patient) => (
-          <div
+          <button
             key={patient.patient_guid}
+            type="button"
+            onClick={() => onSelectPatient(patient)}
             className={cn(
-              "flex items-center gap-4 rounded-lg border border-border/60 bg-card p-3",
-              "transition-colors hover:bg-muted/40"
+              "flex items-center gap-4 rounded-lg border border-border/60 bg-card p-3 w-full text-left",
+              "transition-colors hover:bg-muted/40 cursor-pointer"
             )}
           >
             {/* Avatar */}
@@ -150,7 +156,9 @@ export function DoctorPatientViewListing() {
               <CalendarCheck size={11} aria-hidden="true" />
               {patient.total_completed_appointments}
             </Badge>
-          </div>
+
+            <ChevronRight size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          </button>
         ))}
       </CardContent>
     </Card>
