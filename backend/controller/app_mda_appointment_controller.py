@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from model.schemas import AppointmentCreate, AppointmentUpdate, AppointmentResponse
+from model.app_mda_appointment import AppMdaAppointment
+from model.dto.patient_appointment_dto import PatientAppointmentListingRequestDto, PatientAppointmentListingDto
 from service.app_mda_appointment_service import appointment_service
 from util.database import get_db
 
@@ -42,3 +44,30 @@ def update(guid: UUID, payload: AppointmentUpdate, db: Session = Depends(get_db)
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not appointment_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+@router.post("/get-appointment-list", response_model=list[PatientAppointmentListingDto])
+def get_appointment_list(payload: PatientAppointmentListingRequestDto, db: Session = Depends(get_db)):
+    """Get all appointments between a specific doctor and patient."""
+    results = (
+        db.query(AppMdaAppointment)
+        .filter(
+            AppMdaAppointment.doctor_guid == payload.doctor_guid,
+            AppMdaAppointment.patient_guid == payload.patient_guid,
+        )
+        .order_by(AppMdaAppointment.scheduled_start.desc())
+        .all()
+    )
+
+    return [
+        PatientAppointmentListingDto(
+            doctor_guid=appt.doctor_guid,
+            patient_guid=appt.patient_guid,
+            appointment_guid=appt.guid,
+            appointment_start_time=appt.scheduled_start,
+            appointment_end_time=appt.scheduled_end,
+            appointment_status=appt.appointment_status,
+            appointment_running_no=appt.running_no,
+        )
+        for appt in results
+    ]

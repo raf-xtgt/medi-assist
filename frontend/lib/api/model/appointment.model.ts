@@ -30,3 +30,18 @@ export interface AppointmentResponse {
   updated_date?: string;
   status?: string;
 }
+
+export interface PatientAppointmentListingRequest {
+  doctor_guid: string;
+  patient_guid: string;
+}
+
+export interface PatientAppointmentListingItem {
+  doctor_guid: string;
+  patient_guid: string;
+  appointment_guid?: string;
+  appointment_start_time?: string;
+  appointment_end_time?: string;
+  appointment_status?: string;
+  appointment_running_no?: string;
+}

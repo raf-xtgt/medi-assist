@@ -1,7 +1,7 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { AppointmentCreate, AppointmentUpdate, AppointmentResponse } from "../model/appointment.model";
+import type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem } from "../model/appointment.model";
 
-export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse };
+export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem };
 
 const ENDPOINT = `${API_MDA_PREFIX}/appointment`;
 
@@ -41,5 +41,15 @@ export const appointmentService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete appointment: ${res.status}`);
+  },
+
+  getAppointmentList: async (data: PatientAppointmentListingRequest): Promise<PatientAppointmentListingItem[]> => {
+    const res = await fetch(`${ENDPOINT}/get-appointment-list`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch appointment list: ${res.status}`);
+    return res.json();
   },
 };
