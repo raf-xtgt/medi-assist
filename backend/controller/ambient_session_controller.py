@@ -210,8 +210,8 @@ def _process_session_pipeline(session_guid: str, db_session_factory):
             db, uuid.UUID(session_guid), {"transcription_status": "generating_followup"}
         )
 
-        print(f"[PIPELINE]   Running follow-up agent...")
-        follow_up_msg = generate_follow_up_message(transcript, session_guid)
+        print(f"[PIPELINE]   Running follow-up agent (Gemini 2.5 Flash)...")
+        follow_up_msg = generate_follow_up_message(transcript, session_guid, report)
         print(f"[PIPELINE]   Follow-up message generated ({len(follow_up_msg)} chars)")
 
         # Store in follow_up_queue table

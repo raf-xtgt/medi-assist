@@ -175,3 +175,66 @@ def generate_report_from_llm(transcript: str, appointment_note_str: str) -> dict
                 "patient_comprehension_rating": "",
             },
         }
+
+
+# ─── Follow-Up Message Generation ────────────────────────────────────────────
+
+FOLLOWUP_PROMPT_TEMPLATE = """You are a patient communication assistant for a healthcare clinic. Your task is to generate a short follow-up message for a patient after their appointment.
+
+## Instructions
+- Write a brief follow-up message to the patient based on the clinical report summary below.
+- The message body (excluding greeting and sign-off) must be AT MOST 30 words.
+- Do NOT use any icons, emojis, or special characters.
+- Keep the tone warm, professional, and reassuring.
+- Include the most important action item or reminder from the visit.
+- Use a simple greeting (e.g., "Hi [Patient],") and a brief sign-off (e.g., "- Dr. Clarke's Clinic").
+
+## Format
+Greeting
+[Message body - max 30 words]
+Sign-off
+
+---
+
+## CLINICAL REPORT SUMMARY:
+{report_summary}
+
+---
+
+Generate the follow-up message now."""
+
+
+def generate_followup_from_llm(report_summary_str: str) -> str:
+    """Generate a patient follow-up message using Gemini 2.5 Flash.
+
+    Args:
+        report_summary_str: Parsed report summary as a human-readable string.
+
+    Returns:
+        A short follow-up message string.
+    """
+    prompt = FOLLOWUP_PROMPT_TEMPLATE.format(
+        report_summary=report_summary_str,
+    )
+
+    try:
+        response = _client.models.generate_content(
+            model=REPORT_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+            ),
+        )
+
+        result = response.text.strip()
+        print(f"[InferenceService] Follow-up message generated successfully via {REPORT_MODEL}")
+        return result
+
+    except Exception as e:
+        print(f"[InferenceService] ERROR generating follow-up: {e}")
+        return (
+            "Hi,\n\n"
+            "Thank you for your visit today. Please follow the care plan discussed with your doctor. "
+            "Contact us if you have any concerns.\n\n"
+            "- Dr. Clarke's Clinic"
+        )

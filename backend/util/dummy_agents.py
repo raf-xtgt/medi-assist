@@ -100,29 +100,87 @@ def generate_report(transcript: str, session_guid: str, appointment_note_str: st
     return report
 
 
-def generate_follow_up_message(transcript: str, session_guid: str) -> str:
-    """Return a dummy follow-up message for testing.
+def parse_report_as_string(report: dict) -> str:
+    """Parse a generated report dict into a human-readable string.
 
-    In production: replace with Google ADK FollowUpGeneratorAgent that drafts
-    a patient-friendly SMS/WhatsApp message.
+    Used as input context for the follow-up message LLM call.
 
-    Returns the message text to be stored in `follow_up_msg` column.
+    Args:
+        report: The report dict returned by generate_report().
+
+    Returns:
+        A formatted multi-line string summarizing the report.
     """
-    # Simulate processing delay
-    time.sleep(1)
+    lines = []
 
-    return (
-        "Hi Mrs. Santos 👋\n\n"
-        "This is a reminder from Dr. Clarke's clinic regarding your visit today:\n\n"
-        "✅ Your headaches are improving — great progress!\n"
-        "💊 Medication update: Amlodipine reduced to 5mg (from 10mg). "
-        "Please start the new dose tomorrow morning.\n"
-        "🧂 Try to reduce salt in your diet.\n"
-        "⚠️ Stand up slowly, especially in the mornings, to avoid dizziness.\n\n"
-        "📅 Your follow-up is scheduled in 2 weeks. "
-        "We'll recheck your blood pressure then.\n\n"
-        "If you experience severe dizziness, fainting, or chest pain, "
-        "please contact us immediately or visit the ER.\n\n"
-        "Take care! 🙏\n"
-        "— Dr. Clarke's Clinic"
-    )
+    # Clinical Insights
+    clinical_insights = report.get("clinical_insights", {})
+    summary = clinical_insights.get("summary", "")
+    if summary:
+        lines.append(f"Clinical Insights Summary: {summary}")
+
+    key_observations = clinical_insights.get("key_observations", [])
+    for i, obs in enumerate(key_observations, 1):
+        lines.append(f"Key Observation {i}: {obs}")
+
+    red_flags = clinical_insights.get("red_flags", [])
+    if red_flags:
+        for i, flag in enumerate(red_flags, 1):
+            lines.append(f"Red Flag {i}: {flag}")
+    else:
+        lines.append("Red Flags: None")
+
+    # Patient Instructions
+    patient_instructions = report.get("patient_instructions", {})
+    lifestyle_and_diet = patient_instructions.get("lifestyle_and_diet", [])
+    for i, item in enumerate(lifestyle_and_diet, 1):
+        lines.append(f"Lifestyle and Diet {i}: {item}")
+
+    care_plan_steps = patient_instructions.get("care_plan_steps", [])
+    for i, step in enumerate(care_plan_steps, 1):
+        lines.append(f"Care Plan Step {i}: {step}")
+
+    # Clinical Audit
+    clinical_audit = report.get("clinical_audit", {})
+    form_discrepancies = clinical_audit.get("form_discrepancies", [])
+    if form_discrepancies:
+        for i, discrepancy in enumerate(form_discrepancies, 1):
+            lines.append(f"Form Discrepancy {i}: {discrepancy}")
+    else:
+        lines.append("Form Discrepancies: None")
+
+    patient_comprehension = clinical_audit.get("patient_comprehension_rating", "")
+    if patient_comprehension:
+        lines.append(f"Patient Comprehension Rating: {patient_comprehension}")
+
+    return "\n".join(lines)
+
+
+def generate_follow_up_message(transcript: str, session_guid: str, report: dict | None = None) -> str:
+    """Generate a patient follow-up message using Gemini 2.5 Flash.
+
+    Uses the parsed report string as context for the LLM to generate
+    a concise follow-up message (max 30 words in body, no emojis).
+
+    Args:
+        transcript: The full consultation transcript (unused if report is available).
+        session_guid: The session GUID (for logging).
+        report: The generated report dict. If provided, it's parsed and used as context.
+
+    Returns:
+        The follow-up message text to be stored in `follow_up_msg` column.
+    """
+    from service.app_mda_inference_service import generate_followup_from_llm
+
+    print(f"[generate_follow_up] Calling Gemini 2.5 Flash for session {session_guid[:8]}...")
+
+    # Parse the report into a string for the LLM context
+    if report:
+        report_summary_str = parse_report_as_string(report)
+    else:
+        # Fallback: use transcript directly if no report available
+        report_summary_str = f"Transcript excerpt:\n{transcript[:500]}"
+
+    follow_up_msg = generate_followup_from_llm(report_summary_str)
+
+    return follow_up_msg
