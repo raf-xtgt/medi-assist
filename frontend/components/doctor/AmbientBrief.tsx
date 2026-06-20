@@ -11,6 +11,7 @@ import {
   CircleDot,
   ClipboardCheck,
   Eye,
+  FileSearch,
   FlaskConical,
   Heart,
   Lightbulb,
@@ -29,6 +30,7 @@ export interface AIBriefData {
   clinicalInsights: ClinicalInsight[];
   patientInstructions: PatientInstruction[];
   prescriptionVerification: PrescriptionVerification[];
+  clinicalAudit?: ClinicalAudit;
 }
 
 interface ClinicalInsight {
@@ -49,6 +51,11 @@ interface PrescriptionVerification {
   aiExtracted: string;
   flag?: string;
   status: "match" | "warning" | "mismatch";
+}
+
+export interface ClinicalAudit {
+  formDiscrepancies: string[];
+  patientComprehensionRating: string;
 }
 
 interface AmbientBriefProps {
@@ -147,18 +154,22 @@ export function AmbientBrief({
         <EmptyState state={sessionState} />
       ) : (
         <Tabs defaultValue="insights" className="flex flex-1 flex-col overflow-hidden">
-          <TabsList className="mx-3 mt-2 mb-0 grid w-auto grid-cols-3 h-8 bg-muted/60 rounded-lg shrink-0">
-            <TabsTrigger value="insights" className="text-[11px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <Lightbulb size={11} className="mr-1" />
+          <TabsList className="mx-3 mt-2 mb-0 grid w-auto grid-cols-4 h-8 bg-muted/60 rounded-lg shrink-0">
+            <TabsTrigger value="insights" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Lightbulb size={10} className="mr-0.5" />
               Insights
             </TabsTrigger>
-            <TabsTrigger value="instructions" className="text-[11px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <ListChecks size={11} className="mr-1" />
-              Instructions
+            <TabsTrigger value="instructions" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <ListChecks size={10} className="mr-0.5" />
+              Plan
             </TabsTrigger>
-            <TabsTrigger value="verification" className="text-[11px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <ShieldAlert size={11} className="mr-1" />
-              Rx Verify
+            <TabsTrigger value="audit" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <FileSearch size={10} className="mr-0.5" />
+              Audit
+            </TabsTrigger>
+            <TabsTrigger value="verification" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <ShieldAlert size={10} className="mr-0.5" />
+              Rx
             </TabsTrigger>
           </TabsList>
 
@@ -200,7 +211,7 @@ export function AmbientBrief({
             </ScrollArea>
           </TabsContent>
 
-          {/* ── Tab 2: Patient Instructions ── */}
+          {/* ── Tab 2: Patient Instructions / Care Plan ── */}
           <TabsContent value="instructions" className="flex-1 overflow-hidden mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-3">
@@ -229,7 +240,72 @@ export function AmbientBrief({
             </ScrollArea>
           </TabsContent>
 
-          {/* ── Tab 3: Prescription Verification ── */}
+          {/* ── Tab 3: Clinical Audit ── */}
+          <TabsContent value="audit" className="flex-1 overflow-hidden mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-4 py-3 space-y-4">
+                {brief.clinicalAudit ? (
+                  <>
+                    {/* Form Discrepancies */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <FileSearch size={12} className="text-[var(--color-brand-blue)]" />
+                        <span className="text-[11px] font-semibold text-foreground">
+                          Form vs. Conversation Discrepancies
+                        </span>
+                      </div>
+                      {brief.clinicalAudit.formDiscrepancies.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {brief.clinicalAudit.formDiscrepancies.map((discrepancy, i) => (
+                            <div
+                              key={i}
+                              className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5"
+                            >
+                              <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-500" />
+                              <p className="text-xs text-amber-800 leading-relaxed">{discrepancy}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5">
+                          <CheckCircle size={12} className="shrink-0 text-emerald-500" />
+                          <p className="text-xs text-emerald-700">
+                            No discrepancies found between verbal discussion and form data.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Patient Comprehension */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Eye size={12} className="text-[var(--color-brand-blue)]" />
+                        <span className="text-[11px] font-semibold text-foreground">
+                          Patient Comprehension
+                        </span>
+                      </div>
+                      <div className="rounded-lg border border-border/50 bg-card p-3">
+                        <p className="text-xs text-foreground leading-relaxed">
+                          {brief.clinicalAudit.patientComprehensionRating || "Not assessed"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
+                    <FileSearch size={18} className="text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      Clinical audit data not available for this session.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* ── Tab 4: Prescription Verification ── */}
           <TabsContent value="verification" className="flex-1 overflow-hidden mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-3 space-y-3">

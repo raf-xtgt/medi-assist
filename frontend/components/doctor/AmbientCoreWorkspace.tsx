@@ -31,73 +31,94 @@ const EMPTY_SESSION_DATA: SessionData = {
   clinicalNotes: "",
 };
 
-/* ── AI brief generator from real report data ────────────── */
+/* ── AI brief generator from real LLM report data ────────── */
 function generateBriefFromReport(
   appointment: Appointment,
   data: SessionData,
   report: Record<string, unknown>,
   followUpMsg?: string
 ): AIBriefData {
-  const clinicalSummary = report.clinical_summary as Record<string, string> | undefined;
-  const keyFindings = (report.key_findings as string[]) || [];
-  const treatmentPlan = (report.treatment_plan as string[]) || [];
-  const medsChanged = (report.medications_changed as Array<Record<string, string>>) || [];
-  const riskFlags = (report.risk_flags as string[]) || [];
+  // ── Map from new LLM schema ──
+  // New schema: { clinical_insights, patient_instructions, clinical_audit, generated_by, session_guid }
+  const llmClinicalInsights = report.clinical_insights as Record<string, unknown> | undefined;
+  const llmPatientInstructions = report.patient_instructions as Record<string, unknown> | undefined;
+  const llmClinicalAudit = report.clinical_audit as Record<string, unknown> | undefined;
 
   const clinicalInsights: AIBriefData["clinicalInsights"] = [];
 
-  if (clinicalSummary) {
-    clinicalInsights.push({
-      category: "diagnosis",
-      text: `${clinicalSummary.chief_complaint}. Diagnosis: ${clinicalSummary.diagnosis}.`,
-      severity: clinicalSummary.severity === "high" ? "high" : clinicalSummary.severity === "medium" ? "medium" : "low",
-    });
-  }
+  if (llmClinicalInsights) {
+    // Summary → diagnosis insight
+    const summary = llmClinicalInsights.summary as string;
+    if (summary) {
+      clinicalInsights.push({
+        category: "diagnosis",
+        text: summary,
+        severity: "low",
+      });
+    }
 
-  keyFindings.forEach((finding) => {
-    clinicalInsights.push({
-      category: "finding",
-      text: finding,
-      severity: "medium",
+    // Key observations → finding insights
+    const keyObservations = (llmClinicalInsights.key_observations as string[]) || [];
+    keyObservations.forEach((obs) => {
+      clinicalInsights.push({
+        category: "finding",
+        text: obs,
+        severity: "medium",
+      });
     });
-  });
 
-  if (riskFlags.length > 0) {
-    riskFlags.forEach((flag) => {
-      clinicalInsights.push({ category: "risk", text: flag, severity: "high" });
-    });
-  } else {
-    clinicalInsights.push({
-      category: "risk",
-      text: "No acute red flags identified during the consultation.",
-      severity: "low",
-    });
+    // Red flags → risk insights
+    const redFlags = (llmClinicalInsights.red_flags as string[]) || [];
+    if (redFlags.length > 0) {
+      redFlags.forEach((flag) => {
+        clinicalInsights.push({ category: "risk", text: flag, severity: "high" });
+      });
+    } else {
+      clinicalInsights.push({
+        category: "risk",
+        text: "No acute red flags identified during the consultation.",
+        severity: "low",
+      });
+    }
   }
 
   const patientInstructions: AIBriefData["patientInstructions"] = [];
 
-  treatmentPlan.forEach((step) => {
-    patientInstructions.push({ icon: "medication", instruction: step });
-  });
+  if (llmPatientInstructions) {
+    // Lifestyle and diet → diet instructions
+    const lifestyleAndDiet = (llmPatientInstructions.lifestyle_and_diet as string[]) || [];
+    lifestyleAndDiet.forEach((item) => {
+      patientInstructions.push({ icon: "diet", instruction: item });
+    });
+
+    // Care plan steps → medication instructions
+    const carePlanSteps = (llmPatientInstructions.care_plan_steps as string[]) || [];
+    carePlanSteps.forEach((step) => {
+      patientInstructions.push({ icon: "medication", instruction: step });
+    });
+  }
 
   if (followUpMsg) {
     patientInstructions.push({ icon: "followup", instruction: followUpMsg });
   }
 
-  // Prescription verification from report
-  const prescriptionVerification = medsChanged.map((med, i) => ({
-    rxIndex: i,
-    medicine: med.medication || "",
-    typedDosage: med.new_dose || "",
-    aiExtracted: `${med.medication} changed from ${med.previous_dose} to ${med.new_dose} — reason: ${med.reason}`,
-    status: "match" as const,
-    flag: undefined,
-  }));
+  // Clinical audit
+  let clinicalAudit: AIBriefData["clinicalAudit"] = undefined;
+  if (llmClinicalAudit) {
+    clinicalAudit = {
+      formDiscrepancies: (llmClinicalAudit.form_discrepancies as string[]) || [],
+      patientComprehensionRating: (llmClinicalAudit.patient_comprehension_rating as string) || "",
+    };
+  }
+
+  // Prescription verification — no longer part of LLM report, keep empty
+  const prescriptionVerification: AIBriefData["prescriptionVerification"] = [];
 
   return {
     clinicalInsights,
     patientInstructions,
     prescriptionVerification,
+    clinicalAudit,
   };
 }
 
