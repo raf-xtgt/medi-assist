@@ -1,14 +1,17 @@
-"""Dummy agent functions for testing the end-to-end SSE pipeline.
+"""Agent functions for the ambient session pipeline.
 
-Each function simulates what a real Google ADK SequentialAgent would produce.
-Replace the body of each function with actual agent calls when ready.
+- generate_transcript: Returns dummy transcript (swap to real Speech-to-Text later)
+- parse_appointment_note: Formats an AppMdaAppointmentNote record as a string
+- generate_report: Uses Gemini 2.5 Flash via inference service for real LLM output
+- generate_follow_up_message: Returns dummy follow-up (swap to real agent later)
 """
 
 import time
+from typing import Any
 
 
 def generate_transcript(merged_audio_uri: str) -> str:
-    """Simulate transcript generation from audio.
+    """Return a dummy transcript for testing.
 
     In production: replace with call to `transcribe_audio(merged_audio_uri)`
     from util/transcription.py (Google Cloud Speech-to-Text V2).
@@ -34,57 +37,71 @@ def generate_transcript(merged_audio_uri: str) -> str:
     )
 
 
-def generate_report(transcript: str, session_guid: str) -> dict:
-    """Simulate AI report generation from transcript.
+def parse_appointment_note(note_record: Any) -> str:
+    """Parse an AppMdaAppointmentNote SQLAlchemy record into a human-readable string.
 
-    In production: replace with Google ADK SequentialAgent invocation:
-      - Sub-agent A: AppointmentKeyPointsGenerator
-      - Sub-agent B: PatientFileGeneratorAgent
+    Args:
+        note_record: An AppMdaAppointmentNote ORM instance, or None.
 
-    Returns a dict suitable for storing in `transcript_metadata` JSON column.
+    Returns:
+        A formatted string representation of the appointment note fields.
+        If no record is provided, returns a message indicating unavailability.
     """
-    # Simulate processing delay
-    time.sleep(2)
+    if note_record is None:
+        return "No appointment note form available for this appointment."
 
-    return {
-        "clinical_summary": {
-            "chief_complaint": "Follow-up consultation — headache improvement, new onset morning dizziness",
-            "diagnosis": "Orthostatic hypotension (positional blood pressure drop)",
-            "severity": "mild",
-        },
-        "vitals_extracted": {
-            "bp_sitting": "128/82 mmHg",
-            "bp_standing": "110/70 mmHg",
-            "positional_drop": True,
-        },
-        "key_findings": [
-            "Headaches significantly improved after medication adjustment",
-            "New symptom: morning dizziness on standing",
-            "Confirmed orthostatic hypotension via positional BP measurement",
-            "Positional drop of 18 mmHg systolic",
-        ],
-        "treatment_plan": [
-            "Reduce Amlodipine 10mg → 5mg daily",
-            "Low-sodium diet recommendation",
-            "Patient education: slow positional changes",
-            "Follow-up in 2 weeks for BP recheck",
-        ],
-        "medications_changed": [
-            {
-                "medication": "Amlodipine",
-                "previous_dose": "10mg daily",
-                "new_dose": "5mg daily",
-                "reason": "Orthostatic hypotension management",
-            }
-        ],
-        "risk_flags": [],
-        "generated_by": "dummy_agent",
-        "session_guid": session_guid,
+    fields = {
+        "Main Complaint": note_record.main_complaint,
+        "Blood Pressure": note_record.blood_pressure,
+        "Heart Rate": str(note_record.heart_rate) if note_record.heart_rate is not None else None,
+        "Temperature": str(note_record.temperature) if note_record.temperature is not None else None,
+        "Respiratory Rate": str(note_record.respiratory_rate) if note_record.respiratory_rate is not None else None,
+        "Oxygen Saturation": str(note_record.oxygen_saturation) if note_record.oxygen_saturation is not None else None,
+        "Weight": str(note_record.weight) if note_record.weight is not None else None,
+        "Additional Remarks": note_record.additional_remarks,
     }
+
+    lines = []
+    for label, value in fields.items():
+        display_value = value if value else "Not recorded"
+        lines.append(f"{label}: {display_value}")
+
+    return "\n".join(lines)
+
+
+def generate_report(transcript: str, session_guid: str, appointment_note_str: str = "") -> dict:
+    """Generate a structured clinical report using Gemini 2.5 Flash via Vertex AI.
+
+    Calls the inference service which sends the transcript and appointment note
+    to the LLM and receives a structured JSON report back.
+
+    Args:
+        transcript: The full consultation transcript text.
+        session_guid: The session GUID (for logging/tagging).
+        appointment_note_str: Parsed appointment note form as a string.
+
+    Returns:
+        A dict matching the report schema for storing in transcript_metadata.
+    """
+    from service.app_mda_inference_service import generate_report_from_llm
+
+    print(f"[generate_report] Calling Gemini 2.5 Flash for session {session_guid[:8]}...")
+
+    # If no appointment note string is provided, use a default message
+    if not appointment_note_str:
+        appointment_note_str = "No appointment note form available for this appointment."
+
+    report = generate_report_from_llm(transcript, appointment_note_str)
+
+    # Tag with metadata
+    report["generated_by"] = "gemini-2.5-flash"
+    report["session_guid"] = session_guid
+
+    return report
 
 
 def generate_follow_up_message(transcript: str, session_guid: str) -> str:
-    """Simulate follow-up message generation from transcript.
+    """Return a dummy follow-up message for testing.
 
     In production: replace with Google ADK FollowUpGeneratorAgent that drafts
     a patient-friendly SMS/WhatsApp message.

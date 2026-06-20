@@ -19,7 +19,8 @@ from service.app_mda_follow_up_queue_service import follow_up_queue_service
 from util.database import get_db
 from util.gcs import upload_chunk, compose_chunks
 from util.pg_notify import register_queue, unregister_queue, send_notify
-from util.dummy_agents import generate_transcript, generate_report, generate_follow_up_message
+from util.dummy_agents import generate_transcript, generate_report, generate_follow_up_message, parse_appointment_note
+from model.app_mda_appointment_note import AppMdaAppointmentNote
 
 router = APIRouter(prefix="/ambient-session", tags=["ambient_session"])
 
@@ -168,8 +169,21 @@ def _process_session_pipeline(session_guid: str, db_session_factory):
             db, uuid.UUID(session_guid), {"transcription_status": "generating_report"}
         )
 
-        print(f"[PIPELINE]   Running report agent...")
-        report = generate_report(transcript, session_guid)
+        # Fetch appointment note record for clinical audit context
+        print(f"[PIPELINE]   Fetching appointment note for appointment {appointment_guid[:8]}...")
+        appointment_note_record = (
+            db.query(AppMdaAppointmentNote)
+            .filter(AppMdaAppointmentNote.appointment_guid == uuid.UUID(appointment_guid))
+            .first()
+        )
+        appointment_note_str = parse_appointment_note(appointment_note_record)
+        if appointment_note_record:
+            print(f"[PIPELINE]   ✓ Appointment note found")
+        else:
+            print(f"[PIPELINE]   ⚠ No appointment note found (will note in audit)")
+
+        print(f"[PIPELINE]   Running report agent (Gemini 2.5 Flash)...")
+        report = generate_report(transcript, session_guid, appointment_note_str)
         print(f"[PIPELINE]   Report generated with keys: {list(report.keys())}")
 
         # Commit report to DB (stored in transcript_metadata JSON column)
