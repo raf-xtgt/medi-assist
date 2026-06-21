@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
+from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
@@ -51,6 +52,32 @@ def update(guid: UUID, payload: DoctorUpdate, db: Session = Depends(get_db)):
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not doctor_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+@router.post("/search", response_model=PatientPortalSearchResultDto)
+def search_doctors(payload: PatientPortalSearchRequestDto, db: Session = Depends(get_db)):
+    """
+    Fuzzy search for doctors by name, specialty, or email.
+    Used by the patient portal to find doctors.
+    """
+    results = doctor_service.fuzzy_search(db, payload.search_string)
+    return PatientPortalSearchResultDto(
+        search_string=payload.search_string,
+        found_doctor=len(results) > 0,
+        doctor_results=[
+            DoctorSearchResult(
+                guid=doc.guid,
+                name=doc.name,
+                specialty=doc.specialty,
+                phone=doc.phone,
+                email=doc.email,
+                about=doc.about,
+                image_url=doc.image_url,
+                clinic_hdr_guid=doc.clinic_hdr_guid,
+            )
+            for doc in results
+        ],
+    )
 
 
 @router.post("/patient-list", response_model=list[DoctorPatientListDto])
