@@ -23,7 +23,7 @@ class AppMdaClinicalReport(Base):
 
     # Clinical Audit Block
     form_discrepancies = Column(ARRAY(Text), server_default="{}")
-    patient_comprehension_rating = Column(String(50), nullable=True)
+    patient_comprehension_rating = Column(Text, nullable=True)
 
     # System Metadata Block
     generated_by = Column(String(50), nullable=True)

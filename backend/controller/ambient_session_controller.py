@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from model.app_mda_appointment_session import AppMdaAppointmentSession
 from service.app_mda_appointment_session_service import appointment_session_service
 from service.app_mda_follow_up_queue_service import follow_up_queue_service
+from service.app_mda_clinical_report_service import clinical_report_service
 from util.database import get_db
 from util.gcs import upload_chunk, compose_chunks
 from util.pg_notify import register_queue, unregister_queue, send_notify
@@ -186,14 +187,30 @@ def _process_session_pipeline(session_guid: str, db_session_factory):
         report = generate_report(transcript, session_guid, appointment_note_str)
         print(f"[PIPELINE]   Report generated with keys: {list(report.keys())}")
 
-        # Commit report to DB (stored in transcript_metadata JSON column)
+        # Create a record in app_mda_clinical_report table
+        clinical_insights = report.get("clinical_insights", {})
+        patient_instructions = report.get("patient_instructions", {})
+        clinical_audit = report.get("clinical_audit", {})
+
+        clinical_report_data = {
+            "appointment_session_guid": uuid.UUID(session_guid),
+            "summary": clinical_insights.get("summary", ""),
+            "key_observations": clinical_insights.get("key_observations", []),
+            "red_flags": clinical_insights.get("red_flags", []),
+            "lifestyle_and_diet": patient_instructions.get("lifestyle_and_diet", []),
+            "care_plan_steps": patient_instructions.get("care_plan_steps", []),
+            "form_discrepancies": clinical_audit.get("form_discrepancies", []),
+            "patient_comprehension_rating": clinical_audit.get("patient_comprehension_rating", ""),
+            "generated_by": report.get("generated_by", "gemini-2.5-flash"),
+        }
+        clinical_report_record = clinical_report_service.create(db, clinical_report_data)
+        print(f"[PIPELINE]   ✓ Clinical report record created: {clinical_report_record.guid}")
+
+        # Update session status
         appointment_session_service.update(
-            db, uuid.UUID(session_guid), {
-                "transcript_metadata": report,
-                "transcription_status": "report_complete",
-            }
+            db, uuid.UUID(session_guid), {"transcription_status": "report_complete"}
         )
-        print(f"[PIPELINE]   ✓ Report saved to DB (transcript_metadata)")
+        print(f"[PIPELINE]   ✓ Session status updated to report_complete")
 
         # Fire NOTIFY → SSE for report completion
         print(f"[PIPELINE]   Firing pg_notify: report_generated")
@@ -201,6 +218,7 @@ def _process_session_pipeline(session_guid: str, db_session_factory):
             "session_guid": session_guid,
             "appointment_guid": appointment_guid,
             "report": report,
+            "clinical_report_guid": str(clinical_report_record.guid),
         })
         print(f"[PIPELINE]   ✓ NOTIFY sent for report_generated")
 
