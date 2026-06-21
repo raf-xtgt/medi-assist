@@ -33,6 +33,7 @@ from controller.app_mda_follow_up_queue_controller import router as follow_up_qu
 from controller.app_mda_appointment_note_controller import router as appointment_note_router
 from controller.ambient_session_controller import router as ambient_session_router
 from controller.app_mda_inferencing_controller import router as inferencing_router
+from controller.app_mda_clinical_report_controller import router as clinical_report_router
 
 app = FastAPI(
     title="Medi-Assist API",
@@ -71,5 +72,6 @@ app.include_router(appointment_session_router, prefix=url_prefix)
 app.include_router(prescription_router, prefix=url_prefix)
 app.include_router(follow_up_queue_router, prefix=url_prefix)
 app.include_router(appointment_note_router, prefix=url_prefix)
+app.include_router(clinical_report_router, prefix=url_prefix)
 app.include_router(ambient_session_router, prefix="/api/agent")
 app.include_router(inferencing_router, prefix="/api/agent")

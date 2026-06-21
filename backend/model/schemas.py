@@ -482,3 +482,46 @@ class AppointmentNoteResponse(BaseModel):
     status: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─── app_mda_clinical_report ─────────────────────────────────────────────────
+
+class ClinicalReportCreate(BaseModel):
+    appointment_session_guid: Optional[UUID] = None
+    summary: Optional[str] = None
+    key_observations: Optional[list[str]] = None
+    red_flags: Optional[list[str]] = None
+    lifestyle_and_diet: Optional[list[str]] = None
+    care_plan_steps: Optional[list[str]] = None
+    form_discrepancies: Optional[list[str]] = None
+    patient_comprehension_rating: Optional[str] = None
+    generated_by: Optional[str] = None
+
+
+class ClinicalReportUpdate(BaseModel):
+    appointment_session_guid: Optional[UUID] = None
+    summary: Optional[str] = None
+    key_observations: Optional[list[str]] = None
+    red_flags: Optional[list[str]] = None
+    lifestyle_and_diet: Optional[list[str]] = None
+    care_plan_steps: Optional[list[str]] = None
+    form_discrepancies: Optional[list[str]] = None
+    patient_comprehension_rating: Optional[str] = None
+    generated_by: Optional[str] = None
+
+
+class ClinicalReportResponse(BaseModel):
+    guid: UUID
+    appointment_session_guid: Optional[UUID] = None
+    summary: Optional[str] = None
+    key_observations: Optional[list[str]] = None
+    red_flags: Optional[list[str]] = None
+    lifestyle_and_diet: Optional[list[str]] = None
+    care_plan_steps: Optional[list[str]] = None
+    form_discrepancies: Optional[list[str]] = None
+    patient_comprehension_rating: Optional[str] = None
+    generated_by: Optional[str] = None
+    created_date: Optional[datetime] = None
+    updated_date: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
