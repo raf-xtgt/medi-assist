@@ -193,6 +193,7 @@ def get_patient_report(payload: PatientAppointmentRequestDto, db: Session = Depe
         detail_list.append(
             PatientAppointmentDto(
                 appointment_guid=appt.guid,
+                appointment_session_guid=session.guid if session else None,
                 appointment_start_time=appt.scheduled_start,
                 appointment_end_time=appt.scheduled_end,
                 appointment_session_transcript=session.transcript if session else None,

@@ -45,6 +45,7 @@ class AppointmentNoteDto(BaseModel):
 
 class PatientAppointmentDto(BaseModel):
     appointment_guid: Optional[UUID] = None
+    appointment_session_guid: Optional[UUID] = None
     appointment_start_time: Optional[datetime] = None
     appointment_end_time: Optional[datetime] = None
     appointment_session_transcript: Optional[str] = None
