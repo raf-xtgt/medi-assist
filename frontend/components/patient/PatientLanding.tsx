@@ -33,11 +33,11 @@ export function PatientLanding() {
         </div>
 
         {/* Primary CTAs */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           {/* CTA A — Book Appointment */}
           <button
             onClick={() => router.push("/patient/book")}
-            className="group relative flex w-full flex-col items-start overflow-hidden rounded-2xl bg-[var(--color-brand-teal)] px-6 py-6 text-left transition-all active:scale-[0.98] hover:bg-[var(--color-brand-teal-dark)]"
+            className="group relative flex w-full md:flex-1 flex-col items-start overflow-hidden rounded-2xl bg-[var(--color-brand-teal)] px-6 py-6 text-left transition-all active:scale-[0.98] hover:bg-[var(--color-brand-teal-dark)]"
             aria-label="Book an appointment"
           >
             {/* Background decoration */}
@@ -68,7 +68,7 @@ export function PatientLanding() {
           {/* CTA B — Ask / Triage */}
           <button
             onClick={() => router.push("/patient/triage")}
-            className="group relative flex w-full flex-col items-start overflow-hidden rounded-2xl border-2 border-[var(--color-brand-blue)] bg-[var(--color-brand-blue-light)] px-6 py-6 text-left transition-all active:scale-[0.98] hover:bg-[var(--color-brand-blue-light)]"
+            className="group relative flex w-full md:flex-1 flex-col items-start overflow-hidden rounded-2xl border-2 border-[var(--color-brand-blue)] bg-[var(--color-brand-blue-light)] px-6 py-6 text-left transition-all active:scale-[0.98] hover:bg-[var(--color-brand-blue-light)]"
             aria-label="Ask a health question or start AI triage"
           >
             {/* Background decoration */}
