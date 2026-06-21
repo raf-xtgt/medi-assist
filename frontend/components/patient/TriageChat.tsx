@@ -28,44 +28,44 @@ const triageScript: Array<{
   delay: number;
   isIntentPivot?: boolean;
 }> = [
-  {
-    id: "t0",
-    from: "bot",
-    text: "Hello! I'm your medi-assist health assistant. I'm here to help you understand your symptoms and find the right doctor. What's been bothering you today?",
-    delay: 600,
-  },
-  {
-    id: "t1",
-    from: "bot",
-    text: "I see. How long have you been experiencing these symptoms?",
-    delay: 1200,
-  },
-  {
-    id: "t2",
-    from: "bot",
-    text: "On a scale of 1–10, how would you rate the severity right now?",
-    delay: 1200,
-  },
-  {
-    id: "t3",
-    from: "bot",
-    text: "Have you experienced this before, or is this the first time?",
-    delay: 1200,
-  },
-  {
-    id: "t4",
-    from: "bot",
-    text: "Based on what you've told me, this sounds like it could be related to **General Practice** concerns. I'd recommend you see **Dr. Priya Nair** — she has excellent experience in this area and has availability as early as tomorrow.",
-    delay: 1600,
-  },
-  {
-    id: "t5",
-    from: "bot",
-    text: "Would you like me to pull up Dr. Priya Nair's calendar so you can lock in a slot right now? She's booked up fast this week.",
-    delay: 1400,
-    isIntentPivot: true,
-  },
-];
+    {
+      id: "t0",
+      from: "bot",
+      text: "Hello! I'm your medi-assist health assistant. I'm here to help you understand your symptoms and find the right doctor. What's been bothering you today?",
+      delay: 600,
+    },
+    {
+      id: "t1",
+      from: "bot",
+      text: "I see. How long have you been experiencing these symptoms?",
+      delay: 1200,
+    },
+    {
+      id: "t2",
+      from: "bot",
+      text: "On a scale of 1–10, how would you rate the severity right now?",
+      delay: 1200,
+    },
+    {
+      id: "t3",
+      from: "bot",
+      text: "Have you experienced this before, or is this the first time?",
+      delay: 1200,
+    },
+    {
+      id: "t4",
+      from: "bot",
+      text: "Based on what you've told me, this sounds like it could be related to **General Practice** concerns. I'd recommend you see **Dr. Priya Nair** — she has excellent experience in this area and has availability as early as tomorrow.",
+      delay: 1600,
+    },
+    {
+      id: "t5",
+      from: "bot",
+      text: "Would you like me to pull up Dr. Priya Nair's calendar so you can lock in a slot right now? She's booked up fast this week.",
+      delay: 1400,
+      isIntentPivot: true,
+    },
+  ];
 
 interface Message {
   id: string;
@@ -375,7 +375,7 @@ export function TriageChat() {
 
   /* ── Chat view ───────────────────────────────────────────── */
   return (
-    <div className="flex flex-col" style={{ height: "100dvh" }}>
+    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:border-x md:border-border bg-background" style={{ height: "100dvh" }}>
       {/* Chat header */}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
         <button
@@ -434,7 +434,7 @@ export function TriageChat() {
                 className={cn(
                   "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                   msg.from === "bot"
-                    ? "rounded-tl-sm bg-muted text-foreground"
+                    ? "rounded-tl-sm bg-[var(--color-brand-blue-light)] text-foreground"
                     : "rounded-tr-sm bg-[var(--color-brand-teal)] text-white"
                 )}
               >
@@ -477,7 +477,7 @@ export function TriageChat() {
             <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-blue)] mt-0.5">
               <Bot size={13} className="text-white" aria-hidden="true" />
             </div>
-            <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
+            <div className="rounded-2xl rounded-tl-sm bg-[var(--color-brand-blue-light)] px-4 py-3">
               <span className="flex gap-1" aria-label="Assistant is typing">
                 {[0, 1, 2].map((i) => (
                   <span
