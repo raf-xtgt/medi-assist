@@ -110,9 +110,11 @@ interface SelectedSlot {
 interface BookingFlowProps {
   preselectedDoctorId?: string;
   onConfirmed?: (info: { name: string; mobile: string; doctor: string; slot: SelectedSlot }) => void;
+  /** Custom back handler for when embedded in unified view */
+  onBack?: () => void;
 }
 
-export function BookingFlow({ preselectedDoctorId, onConfirmed }: BookingFlowProps) {
+export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack }: BookingFlowProps) {
   const router = useRouter();
   const [view, setView] = useState<View>(preselectedDoctorId ? "calendar" : "directory");
   const [selectedDoctor, setSelectedDoctor] = useState(
@@ -179,7 +181,7 @@ export function BookingFlow({ preselectedDoctorId, onConfirmed }: BookingFlowPro
         <div className="mx-auto max-w-md">
           <div className="mb-5 flex items-center gap-3">
             <button
-              onClick={() => router.push("/patient/landing")}
+              onClick={() => onBack ? onBack() : router.push("/patient/landing")}
               className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
               aria-label="Go back"
             >
@@ -524,7 +526,7 @@ export function BookingFlow({ preselectedDoctorId, onConfirmed }: BookingFlowPro
           We&apos;ll send a confirmation SMS to your mobile number.
         </p>
         <Button
-          onClick={() => router.push("/patient/landing")}
+          onClick={() => onBack ? onBack() : router.push("/patient/landing")}
           className="w-full h-12 rounded-xl bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white font-semibold"
         >
           Back to Home

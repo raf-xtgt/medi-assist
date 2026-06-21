@@ -76,13 +76,20 @@ interface Message {
 
 type ChatPhase = "gate" | "chat" | "morphing" | "booking" | "done";
 
-export function TriageChat() {
+interface TriageChatProps {
+  /** If provided, skip the gate and inject this as the first user message */
+  initialMessage?: string;
+  /** Custom back handler (used when embedded in unified view) */
+  onBack?: () => void;
+}
+
+export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
   const router = useRouter();
 
   /* ── Gate state ─────────────────────────────────────────── */
   const [gateName, setGateName] = useState("");
   const [gateMobile, setGateMobile] = useState("");
-  const [phase, setPhase] = useState<ChatPhase>("gate");
+  const [phase, setPhase] = useState<ChatPhase>(initialMessage ? "chat" : "gate");
 
   /* ── Chat state ─────────────────────────────────────────── */
   const [messages, setMessages] = useState<Message[]>([]);
@@ -107,8 +114,29 @@ export function TriageChat() {
     const first = triageScript[0];
     const timeout = setTimeout(() => {
       setIsTyping(false);
-      setMessages([{ id: first.id, from: "bot", text: first.text }]);
-      setScriptIdx(1);
+      if (initialMessage) {
+        // Inject bot greeting + initial user message, then advance script
+        setMessages([
+          { id: first.id, from: "bot", text: first.text },
+          { id: `u-init-${Date.now()}`, from: "user", text: initialMessage },
+        ]);
+        setScriptIdx(1);
+        // Trigger the next bot reply after a short delay
+        setTimeout(() => {
+          const next = triageScript[1];
+          if (next) {
+            setIsTyping(true);
+            setTimeout(() => {
+              setIsTyping(false);
+              setMessages((prev) => [...prev, { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot }]);
+              setScriptIdx(2);
+            }, next.delay);
+          }
+        }, 400);
+      } else {
+        setMessages([{ id: first.id, from: "bot", text: first.text }]);
+        setScriptIdx(1);
+      }
     }, first.delay);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -363,7 +391,7 @@ export function TriageChat() {
             Your appointment is confirmed. We&apos;ll send updates to {gateMobile}.
           </p>
           <Button
-            onClick={() => router.push("/patient/landing")}
+            onClick={() => onBack ? onBack() : router.push("/patient/landing")}
             className="w-full h-12 rounded-xl bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white font-semibold"
           >
             Back to Home
@@ -379,7 +407,7 @@ export function TriageChat() {
       {/* Chat header */}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
         <button
-          onClick={() => router.push("/patient/landing")}
+          onClick={() => onBack ? onBack() : router.push("/patient/landing")}
           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
           aria-label="Go back"
         >
