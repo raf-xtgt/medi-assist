@@ -19,7 +19,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+    # GIN trigram indexes for fast ILIKE and similarity searches
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_doctor_name_trgm ON app_mda_doctor USING GIN (name gin_trgm_ops);"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_doctor_specialty_trgm ON app_mda_doctor USING GIN (specialty gin_trgm_ops);"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_doctor_email_trgm ON app_mda_doctor USING GIN (email gin_trgm_ops);"
+    )
 
 
 def downgrade() -> None:
+    op.execute("DROP INDEX IF EXISTS idx_doctor_email_trgm;")
+    op.execute("DROP INDEX IF EXISTS idx_doctor_specialty_trgm;")
+    op.execute("DROP INDEX IF EXISTS idx_doctor_name_trgm;")
     op.execute("DROP EXTENSION IF EXISTS pg_trgm;")
