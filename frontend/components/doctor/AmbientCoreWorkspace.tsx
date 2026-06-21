@@ -38,80 +38,103 @@ function generateBriefFromReport(
   report: Record<string, unknown>,
   followUpMsg?: string
 ): AIBriefData {
-  // ── Map from new LLM schema ──
-  // New schema: { clinical_insights, patient_instructions, clinical_audit, generated_by, session_guid }
-  const llmClinicalInsights = report.clinical_insights as Record<string, unknown> | undefined;
-  const llmPatientInstructions = report.patient_instructions as Record<string, unknown> | undefined;
-  const llmClinicalAudit = report.clinical_audit as Record<string, unknown> | undefined;
+  // Supports two schemas:
+  // 1. Nested (from SSE pg_notify payload): { clinical_insights: {...}, patient_instructions: {...}, clinical_audit: {...} }
+  // 2. Flat (from app_mda_clinical_report table): { summary, key_observations, red_flags, lifestyle_and_diet, care_plan_steps, form_discrepancies, patient_comprehension_rating }
 
+  const isFlat = "summary" in report && !("clinical_insights" in report);
+
+  let summary = "";
+  let keyObservations: string[] = [];
+  let redFlags: string[] = [];
+  let lifestyleAndDiet: string[] = [];
+  let carePlanSteps: string[] = [];
+  let formDiscrepancies: string[] = [];
+  let patientComprehensionRating = "";
+
+  if (isFlat) {
+    // Flat schema (from clinical_report table record)
+    summary = (report.summary as string) || "";
+    keyObservations = (report.key_observations as string[]) || [];
+    redFlags = (report.red_flags as string[]) || [];
+    lifestyleAndDiet = (report.lifestyle_and_diet as string[]) || [];
+    carePlanSteps = (report.care_plan_steps as string[]) || [];
+    formDiscrepancies = (report.form_discrepancies as string[]) || [];
+    patientComprehensionRating = (report.patient_comprehension_rating as string) || "";
+  } else {
+    // Nested schema (from SSE payload / LLM output)
+    const llmClinicalInsights = report.clinical_insights as Record<string, unknown> | undefined;
+    const llmPatientInstructions = report.patient_instructions as Record<string, unknown> | undefined;
+    const llmClinicalAudit = report.clinical_audit as Record<string, unknown> | undefined;
+
+    if (llmClinicalInsights) {
+      summary = (llmClinicalInsights.summary as string) || "";
+      keyObservations = (llmClinicalInsights.key_observations as string[]) || [];
+      redFlags = (llmClinicalInsights.red_flags as string[]) || [];
+    }
+    if (llmPatientInstructions) {
+      lifestyleAndDiet = (llmPatientInstructions.lifestyle_and_diet as string[]) || [];
+      carePlanSteps = (llmPatientInstructions.care_plan_steps as string[]) || [];
+    }
+    if (llmClinicalAudit) {
+      formDiscrepancies = (llmClinicalAudit.form_discrepancies as string[]) || [];
+      patientComprehensionRating = (llmClinicalAudit.patient_comprehension_rating as string) || "";
+    }
+  }
+
+  // ── Build clinicalInsights ──
   const clinicalInsights: AIBriefData["clinicalInsights"] = [];
 
-  if (llmClinicalInsights) {
-    // Summary → diagnosis insight
-    const summary = llmClinicalInsights.summary as string;
-    if (summary) {
-      clinicalInsights.push({
-        category: "diagnosis",
-        text: summary,
-        severity: "low",
-      });
-    }
-
-    // Key observations → finding insights
-    const keyObservations = (llmClinicalInsights.key_observations as string[]) || [];
-    keyObservations.forEach((obs) => {
-      clinicalInsights.push({
-        category: "finding",
-        text: obs,
-        severity: "medium",
-      });
+  if (summary) {
+    clinicalInsights.push({
+      category: "diagnosis",
+      text: summary,
+      severity: "low",
     });
-
-    // Red flags → risk insights
-    const redFlags = (llmClinicalInsights.red_flags as string[]) || [];
-    if (redFlags.length > 0) {
-      redFlags.forEach((flag) => {
-        clinicalInsights.push({ category: "risk", text: flag, severity: "high" });
-      });
-    } else {
-      clinicalInsights.push({
-        category: "risk",
-        text: "No acute red flags identified during the consultation.",
-        severity: "low",
-      });
-    }
   }
 
+  keyObservations.forEach((obs) => {
+    clinicalInsights.push({
+      category: "finding",
+      text: obs,
+      severity: "medium",
+    });
+  });
+
+  if (redFlags.length > 0) {
+    redFlags.forEach((flag) => {
+      clinicalInsights.push({ category: "risk", text: flag, severity: "high" });
+    });
+  } else {
+    clinicalInsights.push({
+      category: "risk",
+      text: "No acute red flags identified during the consultation.",
+      severity: "low",
+    });
+  }
+
+  // ── Build patientInstructions ──
   const patientInstructions: AIBriefData["patientInstructions"] = [];
 
-  if (llmPatientInstructions) {
-    // Lifestyle and diet → diet instructions
-    const lifestyleAndDiet = (llmPatientInstructions.lifestyle_and_diet as string[]) || [];
-    lifestyleAndDiet.forEach((item) => {
-      patientInstructions.push({ icon: "diet", instruction: item });
-    });
+  lifestyleAndDiet.forEach((item) => {
+    patientInstructions.push({ icon: "diet", instruction: item });
+  });
 
-    // Care plan steps → medication instructions
-    const carePlanSteps = (llmPatientInstructions.care_plan_steps as string[]) || [];
-    carePlanSteps.forEach((step) => {
-      patientInstructions.push({ icon: "medication", instruction: step });
-    });
-  }
+  carePlanSteps.forEach((step) => {
+    patientInstructions.push({ icon: "medication", instruction: step });
+  });
 
   if (followUpMsg) {
     patientInstructions.push({ icon: "followup", instruction: followUpMsg });
   }
 
-  // Clinical audit
-  let clinicalAudit: AIBriefData["clinicalAudit"] = undefined;
-  if (llmClinicalAudit) {
-    clinicalAudit = {
-      formDiscrepancies: (llmClinicalAudit.form_discrepancies as string[]) || [],
-      patientComprehensionRating: (llmClinicalAudit.patient_comprehension_rating as string) || "",
-    };
-  }
+  // ── Build clinicalAudit ──
+  const clinicalAudit: AIBriefData["clinicalAudit"] = {
+    formDiscrepancies,
+    patientComprehensionRating,
+  };
 
-  // Prescription verification — no longer part of LLM report, keep empty
+  // Prescription verification — not part of LLM report
   const prescriptionVerification: AIBriefData["prescriptionVerification"] = [];
 
   return {
