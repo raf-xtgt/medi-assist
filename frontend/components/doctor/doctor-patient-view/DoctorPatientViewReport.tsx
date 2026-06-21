@@ -8,14 +8,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { doctorService } from "@/lib/api/services";
+import { clinicalReportService, type ClinicalReportResponse } from "@/lib/api/services/clinical-report-service";
 import type { DoctorPatientListItem, PatientReport, PatientAppointmentDetail } from "@/lib/api/model/doctor.model";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
+  CheckCircle,
+  Eye,
+  FileSearch,
   FileText,
   Heart,
+  Lightbulb,
   MessageSquare,
   Pill,
+  ShieldAlert,
   Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +37,8 @@ export function DoctorPatientViewReport({ patient, onBack }: DoctorPatientViewRe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointmentDetail | null>(null);
+  const [clinicalReport, setClinicalReport] = useState<ClinicalReportResponse | null>(null);
+  const [clinicalReportLoading, setClinicalReportLoading] = useState(false);
 
   useEffect(() => {
     async function fetchReport() {
@@ -50,6 +59,27 @@ export function DoctorPatientViewReport({ patient, onBack }: DoctorPatientViewRe
     }
     fetchReport();
   }, [patient.patient_guid]);
+
+  // Fetch clinical report when selected appointment changes
+  useEffect(() => {
+    async function fetchClinicalReport() {
+      if (!selectedAppointment?.appointment_session_guid) {
+        setClinicalReport(null);
+        return;
+      }
+      setClinicalReportLoading(true);
+      try {
+        const reports = await clinicalReportService.getBySession(selectedAppointment.appointment_session_guid);
+        setClinicalReport(reports.length > 0 ? reports[0] : null);
+      } catch (err) {
+        console.error("Failed to fetch clinical report:", err);
+        setClinicalReport(null);
+      } finally {
+        setClinicalReportLoading(false);
+      }
+    }
+    fetchClinicalReport();
+  }, [selectedAppointment]);
 
   if (loading) {
     return (
@@ -303,68 +333,144 @@ export function DoctorPatientViewReport({ patient, onBack }: DoctorPatientViewRe
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Insights from transcript metadata */}
-                {selectedAppointment.appointment_session_transcript_metadata ? (
+                {clinicalReportLoading ? (
                   <div className="space-y-3">
-                    {(() => {
-                      const meta = selectedAppointment.appointment_session_transcript_metadata as Record<string, unknown>;
-                      const clinicalSummary = meta?.clinical_summary as Record<string, string> | undefined;
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ) : clinicalReport ? (
+                  <div className="space-y-4">
+                    {/* Clinical Summary */}
+                    {clinicalReport.summary && (
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Stethoscope size={12} className="text-[var(--color-brand-blue)]" aria-hidden="true" />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Summary
+                          </p>
+                        </div>
+                        <p className="text-sm text-foreground leading-relaxed">{clinicalReport.summary}</p>
+                      </div>
+                    )}
 
-                      if (!clinicalSummary) return null;
+                    {/* Key Observations */}
+                    {clinicalReport.key_observations && clinicalReport.key_observations.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Lightbulb size={12} className="text-[var(--color-brand-blue)]" aria-hidden="true" />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Key Observations
+                          </p>
+                        </div>
+                        <ul className="space-y-1">
+                          {clinicalReport.key_observations.map((obs, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--color-brand-blue)]" />
+                              {obs}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-                      return (
-                        <>
-                          {clinicalSummary.chief_complaint && (
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                                Chief Complaint
-                              </p>
-                              <p className="text-sm text-foreground">{clinicalSummary.chief_complaint}</p>
+                    {/* Red Flags */}
+                    {clinicalReport.red_flags && clinicalReport.red_flags.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <ShieldAlert size={12} className="text-red-500" aria-hidden="true" />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-red-600">
+                            Red Flags
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          {clinicalReport.red_flags.map((flag, i) => (
+                            <div key={i} className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-2">
+                              <AlertTriangle size={11} className="mt-0.5 shrink-0 text-red-500" aria-hidden="true" />
+                              <p className="text-xs text-red-800">{flag}</p>
                             </div>
-                          )}
-                          {clinicalSummary.diagnosis && (
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                                Diagnosis
-                              </p>
-                              <p className="text-sm text-foreground">{clinicalSummary.diagnosis}</p>
-                            </div>
-                          )}
-                          {clinicalSummary.treatment_plan && (
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                                Treatment Plan
-                              </p>
-                              <p className="text-sm text-foreground">{clinicalSummary.treatment_plan}</p>
-                            </div>
-                          )}
-                          {clinicalSummary.follow_up_instructions && (
-                            <>
-                              <Separator />
-                              <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                                  Follow-up Instructions
-                                </p>
-                                <p className="text-sm text-foreground">{clinicalSummary.follow_up_instructions}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    {/* Patient Instructions */}
+                    {((clinicalReport.lifestyle_and_diet && clinicalReport.lifestyle_and_diet.length > 0) ||
+                      (clinicalReport.care_plan_steps && clinicalReport.care_plan_steps.length > 0)) && (
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Heart size={12} className="text-[var(--color-brand-teal)]" aria-hidden="true" />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Patient Instructions
+                          </p>
+                        </div>
+                        <ul className="space-y-1">
+                          {clinicalReport.lifestyle_and_diet?.map((item, i) => (
+                            <li key={`diet-${i}`} className="flex items-start gap-2 text-xs text-foreground">
+                              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--color-brand-teal)]" />
+                              {item}
+                            </li>
+                          ))}
+                          {clinicalReport.care_plan_steps?.map((step, i) => (
+                            <li key={`care-${i}`} className="flex items-start gap-2 text-xs text-foreground">
+                              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--color-brand-teal)]" />
+                              {step}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    {/* Clinical Audit */}
+                    {(clinicalReport.form_discrepancies?.length || clinicalReport.patient_comprehension_rating) && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <FileSearch size={12} className="text-[var(--color-brand-blue)]" aria-hidden="true" />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Clinical Audit
+                          </p>
+                        </div>
+
+                        {clinicalReport.form_discrepancies && clinicalReport.form_discrepancies.length > 0 ? (
+                          <div className="space-y-1">
+                            {clinicalReport.form_discrepancies.map((d, i) => (
+                              <div key={i} className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2">
+                                <AlertTriangle size={11} className="mt-0.5 shrink-0 text-amber-500" aria-hidden="true" />
+                                <p className="text-xs text-amber-800">{d}</p>
                               </div>
-                            </>
-                          )}
-                          {clinicalSummary.patient_friendly_summary && (
-                            <>
-                              <Separator />
-                              <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                                  Patient SMS
-                                </p>
-                                <div className="rounded-md bg-muted/40 p-2.5 text-xs text-foreground italic">
-                                  &ldquo;{clinicalSummary.patient_friendly_summary}&rdquo;
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2">
+                            <CheckCircle size={11} className="shrink-0 text-emerald-500" aria-hidden="true" />
+                            <p className="text-xs text-emerald-700">No discrepancies found.</p>
+                          </div>
+                        )}
+
+                        {clinicalReport.patient_comprehension_rating && (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Eye size={11} className="text-[var(--color-brand-blue)]" aria-hidden="true" />
+                              <p className="text-[10px] font-medium text-muted-foreground">Comprehension</p>
+                            </div>
+                            <p className="text-xs text-foreground">{clinicalReport.patient_comprehension_rating}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Generated by badge */}
+                    {clinicalReport.generated_by && (
+                      <div className="pt-1">
+                        <Badge variant="secondary" className="text-[10px]">
+                          Generated by {clinicalReport.generated_by}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-center">

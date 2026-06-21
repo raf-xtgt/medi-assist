@@ -73,6 +73,7 @@ export interface AppointmentNoteDetail {
 
 export interface PatientAppointmentDetail {
   appointment_guid?: string;
+  appointment_session_guid?: string;
   appointment_start_time?: string;
   appointment_end_time?: string;
   appointment_session_transcript?: string;
