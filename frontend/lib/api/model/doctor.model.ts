@@ -93,3 +93,24 @@ export interface PatientReport {
   total_appointment_sessions: number;
   appointment_detail_list: PatientAppointmentDetail[];
 }
+
+export interface DoctorSearchRequest {
+  search_string: string;
+}
+
+export interface DoctorSearchResultItem {
+  guid: string;
+  name?: string;
+  specialty?: string;
+  phone?: string;
+  email?: string;
+  about?: string;
+  image_url?: string;
+  clinic_hdr_guid?: string;
+}
+
+export interface DoctorSearchResponse {
+  search_string: string;
+  found_doctor: boolean;
+  doctor_results: DoctorSearchResultItem[];
+}
