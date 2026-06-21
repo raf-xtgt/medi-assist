@@ -12,3 +12,4 @@ export type { AppointmentSessionCreate, AppointmentSessionUpdate, AppointmentSes
 export type { PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse } from "./prescription.model";
 export type { FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueueResponse } from "./follow-up-queue.model";
 export type { AppointmentNoteCreate, AppointmentNoteUpdate, AppointmentNoteResponse } from "./appointment-note.model";
+export type { ClinicalReportCreate, ClinicalReportUpdate, ClinicalReportResponse } from "./clinical-report.model";
