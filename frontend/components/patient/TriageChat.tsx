@@ -353,9 +353,9 @@ export function TriageChat({
 
   /* ── Chat view ───────────────────────────────────────────── */
   return (
-    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:border-x md:border-border bg-background" style={{ height: "100dvh" }}>
+    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:border md:border-border md:rounded-2xl md:my-6 md:shadow-sm bg-background">
       {/* Chat header */}
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
+      <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4 md:rounded-t-2xl">
         <button
           onClick={handleBack}
           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
@@ -381,12 +381,12 @@ export function TriageChat({
         )}
       </div>
 
-      {/* Messages */}
+      {/* Messages — grows dynamically, no nested scroll */}
       <div
         role="log"
         aria-live="polite"
         aria-label="Chat messages"
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+        className="px-4 py-4 flex flex-col gap-3"
       >
         {messages.map((msg) => (
           <div
@@ -484,7 +484,7 @@ export function TriageChat({
       </div>
 
       {/* Input bar */}
-      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 pb-safe">
+      <div className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 md:rounded-b-2xl">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex items-center gap-2"
