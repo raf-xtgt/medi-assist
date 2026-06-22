@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
 from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult
+from model.dto.doctor_cv_ingestion_dto import DoctorCVExtraction
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
@@ -17,6 +18,7 @@ from model.app_mda_appointment_session import AppMdaAppointmentSession
 from model.app_mda_appointment_note import AppMdaAppointmentNote
 from model.app_mda_prescription import AppMdaPrescription
 from service.app_mda_doctor_service import doctor_service
+from service.doctor_cv_ingestion_inference_service import extract_doctor_cv
 from util.database import get_db
 
 router = APIRouter(prefix="/doctor", tags=["app_mda_doctor"])
@@ -254,3 +256,46 @@ def get_patient_report(payload: PatientAppointmentRequestDto, db: Session = Depe
         total_appointment_sessions=len(sessions),
         appointment_detail_list=detail_list,
     )
+
+# ─── CV Upload & Ingestion ────────────────────────────────────────────────────
+
+@router.post("/upload-cv/{doctor_guid}", response_model=DoctorCVExtraction)
+async def upload_doctor_cv(doctor_guid: UUID, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    Upload a doctor's CV (PDF) and extract profile information using Gemini 2.5 Flash.
+
+    1. Validates the uploaded file is a PDF.
+    2. Sends the PDF to Gemini for structured extraction (name, specialty, about).
+    3. Updates the doctor record's 'specialty' and 'about' columns.
+    4. Returns the extracted data.
+    """
+    # Validate file type
+    if file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only PDF files are accepted. Received: {file.content_type}"
+        )
+
+    # Get the doctor record
+    doctor = doctor_service.get_by_guid(db, doctor_guid)
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
+    # Read the PDF bytes
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    # Extract data from CV using LLM
+    try:
+        extraction = extract_doctor_cv(pdf_bytes)
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Update doctor record with extracted data
+    doctor.specialty = extraction.specialty
+    doctor.about = extraction.about
+    db.commit()
+    db.refresh(doctor)
+
+    return extraction
