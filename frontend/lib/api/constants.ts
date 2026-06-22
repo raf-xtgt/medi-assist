@@ -4,7 +4,7 @@
  * Paste your ngrok URL here after running: ngrok http 8000
  * Example: "https://abcd-1234.ngrok-free.app"
  */
-export const API_BASE_URL = "https://342b-2400-c600-357f-2240-21b9-35ae-d04c-bcaf.ngrok-free.app";
+export const API_BASE_URL = "https://e3dd-103-120-202-172.ngrok-free.app";
 
 /**
  * CRUD endpoint prefix — all table routers are mounted under this path.
