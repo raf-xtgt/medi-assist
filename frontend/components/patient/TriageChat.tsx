@@ -403,9 +403,9 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
 
   /* ── Chat view ───────────────────────────────────────────── */
   return (
-    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:border-x md:border-border bg-background" style={{ height: "100dvh" }}>
+    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:my-10 md:rounded-[2rem] md:border md:border-border md:shadow-2xl bg-background md:overflow-hidden min-h-screen md:min-h-0">
       {/* Chat header */}
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
+      <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
         <button
           onClick={() => onBack ? onBack() : router.push("/patient/landing")}
           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
@@ -434,7 +434,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
         role="log"
         aria-live="polite"
         aria-label="Chat messages"
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+        className="px-4 py-6 flex flex-col gap-4"
       >
         {messages.map((msg) => (
           <div
@@ -532,7 +532,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
       </div>
 
       {/* Input bar */}
-      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 pb-safe">
+      <div className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-4 pb-safe">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex items-center gap-2"
