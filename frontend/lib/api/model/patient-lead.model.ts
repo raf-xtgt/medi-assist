@@ -20,3 +20,15 @@ export interface PatientLeadResponse {
   lead_status?: string;
   status?: string;
 }
+
+export interface PatientLeadConversionRequest {
+  doctor_guid: string;
+  lead_guid: string;
+}
+
+export interface PatientLeadConversionResponse {
+  patient_guid: string;
+  doctor_patient_link_guid: string;
+  lead_guid: string;
+  doctor_guid: string;
+}

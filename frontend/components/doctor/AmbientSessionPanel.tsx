@@ -31,6 +31,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TESTING_PATIENT_GUID, TESTING_APPOINTMENT_GUID } from "@/lib/api/model/testing-guid.model";
 import { useRouter } from "next/navigation";
 import type { Appointment } from "./AmbientScheduler";
 
@@ -188,9 +189,9 @@ export function AmbientSessionPanel({
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Hardcoded GUIDs for now
-    const patient_guid = "a92225f5-d048-4483-b708-f11f7f0d5f03";
-    const appointment_guid = "4e247042-f8f2-4cd5-b026-74fa99409eb7";
+    // Testing GUIDs
+    const patient_guid = TESTING_PATIENT_GUID;
+    const appointment_guid = TESTING_APPOINTMENT_GUID;
 
     try {
       // Save appointment note (vitals + chief complaint + clinical notes)

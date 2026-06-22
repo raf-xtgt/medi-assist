@@ -18,6 +18,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { BookingFlow } from "@/components/patient/BookingFlow";
 import { leadChatTranscriptService } from "@/lib/api/services/lead-chat-transcript-service";
+import { patientLeadService } from "@/lib/api/services/patient-lead-service";
+import { appointmentService } from "@/lib/api/services/appointment-service";
+import { TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 
 /* ─── Triage script ─────────────────────────────────────────── */
 const triageScript: Array<{
@@ -109,6 +112,8 @@ export function TriageChat({
   const [isTyping, setIsTyping] = useState(false);
   const [awaitingPivotReply, setAwaitingPivotReply] = useState(false);
   const [phase, setPhase] = useState<ChatPhase>("chat");
+  const [processingStep, setProcessingStep] = useState<string | null>(null);
+  const [convertedPatientGuid, setConvertedPatientGuid] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -218,15 +223,39 @@ export function TriageChat({
   }
 
   /* ── Intent pivot: YES ──────────────────────────────────── */
-  function handlePivotYes() {
+  async function handlePivotYes() {
     setAwaitingPivotReply(false);
     const text = "Yes, please show me her availability!";
     const userMsg: Message = { id: `u-yes-${Date.now()}`, from: "user", text };
     setMessages((prev) => [...prev, userMsg]);
     recordTranscript(text, "patient");
-    // Trigger morphing animation
-    setTimeout(() => setPhase("morphing"), 500);
-    setTimeout(() => setPhase("booking"), 1600);
+
+    // Show processing UI
+    setPhase("morphing");
+    setProcessingStep("Processing appointment…");
+
+    try {
+      // Convert lead to patient
+      if (leadGuid) {
+        setProcessingStep("Setting up your patient profile…");
+        const conversionResult = await patientLeadService.convertLeadToPatient({
+          doctor_guid: TESTING_DOCTOR_GUID,
+          lead_guid: leadGuid,
+        });
+        // Store patient_guid for use in BookingFlow's appointment creation
+        setConvertedPatientGuid(conversionResult.patient_guid);
+      }
+
+      setProcessingStep("Opening calendar…");
+      // Brief delay so user sees the message transition
+      await new Promise((r) => setTimeout(r, 800));
+      setProcessingStep(null);
+      setPhase("booking");
+    } catch {
+      // On failure, fall back to booking flow anyway
+      setProcessingStep(null);
+      setPhase("booking");
+    }
   }
 
   /* ── Intent pivot: NO ───────────────────────────────────── */
@@ -280,8 +309,10 @@ export function TriageChat({
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-white/20">
               <CalendarCheck size={32} className="text-white" strokeWidth={1.8} aria-hidden="true" />
             </div>
-            <p className="text-white font-bold text-xl mb-1">Opening calendar…</p>
-            <p className="text-white/70 text-sm">Dr. Priya Nair · Finding available slots</p>
+            <p className="text-white font-bold text-xl mb-1">
+              {processingStep || "Opening calendar…"}
+            </p>
+            <p className="text-white/70 text-sm">Dr. Priya Nair</p>
           </div>
         </div>
       </div>
@@ -319,7 +350,28 @@ export function TriageChat({
           preselectedDoctorId="priya-nair"
           prefillName={userName}
           prefillMobile={userMobile}
-          onConfirmed={() => {
+          onConfirmed={async () => {
+            // Create appointment record after slot selection and confirmation
+            try {
+              // Use tomorrow 9:00 AM as the scheduled time (matching triage recommendation)
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              tomorrow.setHours(9, 0, 0, 0);
+              const endTime = new Date(tomorrow);
+              endTime.setMinutes(endTime.getMinutes() + 30);
+
+              await appointmentService.create({
+                doctor_guid: TESTING_DOCTOR_GUID,
+                patient_guid: convertedPatientGuid ?? undefined,
+                scheduled_start: tomorrow.toISOString(),
+                scheduled_end: endTime.toISOString(),
+                appointment_status: "scheduled",
+                status: "active",
+              });
+            } catch {
+              console.error("Failed to create appointment record");
+            }
+
             if (onBookingConfirmed) onBookingConfirmed();
             else setPhase("done");
           }}

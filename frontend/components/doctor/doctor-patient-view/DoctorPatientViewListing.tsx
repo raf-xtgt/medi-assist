@@ -8,10 +8,11 @@ import { doctorService } from "@/lib/api/services";
 import type { DoctorPatientListItem } from "@/lib/api/model/doctor.model";
 import { Mail, Phone, MapPin, CalendarCheck, Users, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TESTING_DOCTOR_GUID, TESTING_CLINIC_HDR_GUID } from "@/lib/api/model/testing-guid.model";
 
-/* Hardcoded GUIDs for now */
-const DOCTOR_GUID = "06f97db0-15dc-41cf-acab-bc278b38f00a";
-const CLINIC_HDR_GUID = "566cff97-f00c-45d7-9794-2e7b9a756bd8";
+/* Testing GUIDs */
+const DOCTOR_GUID = TESTING_DOCTOR_GUID;
+const CLINIC_HDR_GUID = TESTING_CLINIC_HDR_GUID;
 
 interface DoctorPatientViewListingProps {
   onSelectPatient: (patient: DoctorPatientListItem) => void;

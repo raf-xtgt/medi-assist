@@ -1,7 +1,7 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse } from "../model/patient-lead.model";
+import type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse, PatientLeadConversionRequest, PatientLeadConversionResponse } from "../model/patient-lead.model";
 
-export type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse };
+export type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse, PatientLeadConversionRequest, PatientLeadConversionResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/patient-lead`;
 
@@ -41,5 +41,15 @@ export const patientLeadService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete patient lead: ${res.status}`);
+  },
+
+  convertLeadToPatient: async (data: PatientLeadConversionRequest): Promise<PatientLeadConversionResponse> => {
+    const res = await fetch(`${ENDPOINT}/convert-lead-to-patient`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to convert lead to patient: ${res.status}`);
+    return res.json();
   },
 };

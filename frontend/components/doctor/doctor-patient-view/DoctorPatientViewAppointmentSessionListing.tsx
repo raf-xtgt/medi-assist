@@ -10,9 +10,10 @@ import type { PatientAppointmentListingItem } from "@/lib/api/model/appointment.
 import type { DoctorPatientListItem } from "@/lib/api/model/doctor.model";
 import { ArrowLeft, Calendar, ChevronRight, Clock, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 
-/* Hardcoded doctor GUID for now */
-const DOCTOR_GUID = "06f97db0-15dc-41cf-acab-bc278b38f00a";
+/* Testing GUID */
+const DOCTOR_GUID = TESTING_DOCTOR_GUID;
 
 interface DoctorPatientViewAppointmentSessionListingProps {
   patient: DoctorPatientListItem;

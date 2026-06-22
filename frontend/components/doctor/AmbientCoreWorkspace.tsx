@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Bot, CalendarClock, LayoutGrid, Stethoscope, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TESTING_APPOINTMENT_GUID, TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 import { useAmbientRecording } from "@/hooks/useAmbientRecording";
 import { useSessionEvents, type SessionEvent } from "@/hooks/useSessionEvents";
 import { toast } from "sonner";
@@ -224,9 +225,9 @@ function generateBrief(appointment: Appointment, data: SessionData): AIBriefData
   };
 }
 
-/* ── Hardcoded GUIDs for MVP ──────────────────────────────── */
-const HARDCODED_APPOINTMENT_GUID = "4e247042-f8f2-4cd5-b026-74fa99409eb7";
-const HARDCODED_DOCTOR_GUID = "06f97db0-15dc-41cf-acab-bc278b38f00a";
+/* ── Testing GUIDs for MVP ──────────────────────────────── */
+const HARDCODED_APPOINTMENT_GUID = TESTING_APPOINTMENT_GUID;
+const HARDCODED_DOCTOR_GUID = TESTING_DOCTOR_GUID;
 
 /* ── Main Component ─────────────────────────────────────── */
 export function AmbientCoreWorkspace() {
