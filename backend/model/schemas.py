@@ -525,3 +525,48 @@ class ClinicalReportResponse(BaseModel):
     updated_date: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─── app_mda_lead_chat_hdr ───────────────────────────────────────────────────
+
+class LeadChatHdrCreate(BaseModel):
+    lead_guid: Optional[UUID] = None
+    triage_summary: Optional[str] = None
+
+
+class LeadChatHdrUpdate(BaseModel):
+    lead_guid: Optional[UUID] = None
+    triage_summary: Optional[str] = None
+
+
+class LeadChatHdrResponse(BaseModel):
+    guid: UUID
+    lead_guid: Optional[UUID] = None
+    triage_summary: Optional[str] = None
+    created_date: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ─── app_mda_lead_chat_transcript ────────────────────────────────────────────
+
+class LeadChatTranscriptCreate(BaseModel):
+    chat_hdr_guid: Optional[UUID] = None
+    msg_content: Optional[str] = None
+    sender: Optional[str] = None
+
+
+class LeadChatTranscriptUpdate(BaseModel):
+    chat_hdr_guid: Optional[UUID] = None
+    msg_content: Optional[str] = None
+    sender: Optional[str] = None
+
+
+class LeadChatTranscriptResponse(BaseModel):
+    guid: UUID
+    chat_hdr_guid: Optional[UUID] = None
+    msg_content: Optional[str] = None
+    sender: Optional[str] = None
+    created_date: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
