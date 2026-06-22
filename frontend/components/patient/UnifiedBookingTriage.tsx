@@ -5,31 +5,65 @@ import { ArrowLeft, Search, MessageCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { doctorService } from "@/lib/api/services/doctor-service";
+import { patientLeadService } from "@/lib/api/services/patient-lead-service";
+import { leadChatHdrService } from "@/lib/api/services/lead-chat-hdr-service";
 import type { DoctorSearchResultItem } from "@/lib/api/model/doctor.model";
 import { BookingFlow } from "@/components/patient/BookingFlow";
 import { TriageChat } from "@/components/patient/TriageChat";
 
 /**
  * Unified view states:
- * - "idle"       → search bar + quick actions visible
- * - "searching"  → loading state while API call runs
- * - "booking"    → doctor found, show BookingFlow with that doctor
- * - "triage"     → no doctor found OR user clicked triage CTA, show TriageChat
- * - "directory"  → user clicked "Browse All Doctors", show full BookingFlow directory
+ * - "idle"         → search bar + quick actions visible
+ * - "searching"    → loading state while API call runs
+ * - "booking"      → doctor found, show BookingFlow with that doctor
+ * - "triage"       → no doctor found OR user clicked triage CTA, show TriageChat
+ * - "directory"    → user clicked "Browse All Doctors", show full BookingFlow directory
  */
 type UnifiedView = "idle" | "searching" | "booking" | "triage" | "directory";
 
 interface UnifiedBookingTriageProps {
+  /** User identity — already collected at PatientLanding level */
+  userName: string;
+  userMobile: string;
+  /** Patient lead guid — already created at PatientLanding level */
+  leadGuid?: string;
   onBack?: () => void;
 }
 
-export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
+export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLeadGuid, onBack }: UnifiedBookingTriageProps) {
   const [view, setView] = useState<UnifiedView>("idle");
   const [searchValue, setSearchValue] = useState("");
   const [foundDoctor, setFoundDoctor] = useState<DoctorSearchResultItem | null>(null);
   const [initialTriageMessage, setInitialTriageMessage] = useState<string | undefined>(undefined);
 
-  const handleSearch = useCallback(async () => {
+  // Patient lead tracking
+  const [leadGuid] = useState<string | undefined>(initialLeadGuid);
+  const [chatHdrGuid, setChatHdrGuid] = useState<string | null>(null);
+
+  /** Create a lead_chat_hdr record and return the guid */
+  const createChatHdr = async (): Promise<string | null> => {
+    if (!leadGuid) return null;
+    try {
+      const hdr = await leadChatHdrService.create({ lead_guid: leadGuid });
+      return hdr.guid;
+    } catch {
+      console.error("Failed to create chat header");
+      return null;
+    }
+  };
+
+  /** Update patient_lead status on booking */
+  const updateLeadOnBooking = async () => {
+    if (!leadGuid) return;
+    try {
+      await patientLeadService.update(leadGuid, { lead_status: "booked" });
+    } catch {
+      console.error("Failed to update patient lead");
+    }
+  };
+
+  /* ── Execute search ─────────────────────────────────────── */
+  const executeSearch = async () => {
     const query = searchValue.trim();
     if (!query) return;
 
@@ -39,19 +73,28 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
       const result = await doctorService.search({ search_string: query });
 
       if (result.found_doctor && result.doctor_results.length > 0) {
-        // Doctor found — show booking calendar
         setFoundDoctor(result.doctor_results[0]);
         setView("booking");
       } else {
-        // No doctor found — treat as symptom/triage query
+        // No doctor found — create chat header for triage
+        const hdrGuid = await createChatHdr();
+        if (hdrGuid) setChatHdrGuid(hdrGuid);
         setInitialTriageMessage(query);
         setView("triage");
       }
     } catch {
       // On error, fall back to triage
+      const hdrGuid = await createChatHdr();
+      if (hdrGuid) setChatHdrGuid(hdrGuid);
       setInitialTriageMessage(query);
       setView("triage");
     }
+  };
+
+  /* ── Trigger actions ────────────────────────────────────── */
+  const handleSearch = useCallback(() => {
+    executeSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -61,8 +104,10 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
     }
   };
 
-  const handleTriageClick = () => {
+  const handleTriageClick = async () => {
     setInitialTriageMessage(undefined);
+    const hdrGuid = await createChatHdr();
+    if (hdrGuid) setChatHdrGuid(hdrGuid);
     setView("triage");
   };
 
@@ -75,6 +120,12 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
     setFoundDoctor(null);
     setInitialTriageMessage(undefined);
     setSearchValue("");
+  };
+
+  /* ── Booking confirmed callback ─────────────────────────── */
+  const handleBookingConfirmed = async () => {
+    await updateLeadOnBooking();
+    handleBackToIdle();
   };
 
   /* ── Searching state ─────────────────────────────────────── */
@@ -132,7 +183,10 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
         </div>
         <BookingFlow
           preselectedDoctorId={foundDoctor.guid}
-          onConfirmed={handleBackToIdle}
+          prefillName={userName}
+          prefillMobile={userMobile}
+          onConfirmed={handleBookingConfirmed}
+          onBack={handleBackToIdle}
         />
       </div>
     );
@@ -144,7 +198,12 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-400 h-full">
         <TriageChat
           initialMessage={initialTriageMessage}
+          userName={userName}
+          userMobile={userMobile}
+          chatHdrGuid={chatHdrGuid ?? undefined}
+          leadGuid={leadGuid}
           onBack={handleBackToIdle}
+          onBookingConfirmed={handleBookingConfirmed}
         />
       </div>
     );
@@ -154,7 +213,12 @@ export function UnifiedBookingTriage({ onBack }: UnifiedBookingTriageProps) {
   if (view === "directory") {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-400">
-        <BookingFlow onBack={handleBackToIdle} />
+        <BookingFlow
+          prefillName={userName}
+          prefillMobile={userMobile}
+          onConfirmed={handleBookingConfirmed}
+          onBack={handleBackToIdle}
+        />
       </div>
     );
   }

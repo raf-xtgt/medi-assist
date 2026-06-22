@@ -112,9 +112,13 @@ interface BookingFlowProps {
   onConfirmed?: (info: { name: string; mobile: string; doctor: string; slot: SelectedSlot }) => void;
   /** Custom back handler for when embedded in unified view */
   onBack?: () => void;
+  /** Pre-fill name in the confirmation sheet */
+  prefillName?: string;
+  /** Pre-fill mobile in the confirmation sheet */
+  prefillMobile?: string;
 }
 
-export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack }: BookingFlowProps) {
+export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack, prefillName, prefillMobile }: BookingFlowProps) {
   const router = useRouter();
   const [view, setView] = useState<View>(preselectedDoctorId ? "calendar" : "directory");
   const [selectedDoctor, setSelectedDoctor] = useState(
@@ -122,8 +126,8 @@ export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack }: Bookin
   );
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [name, setName] = useState(prefillName ?? "");
+  const [mobile, setMobile] = useState(prefillMobile ?? "");
   const [submitting, setSubmitting] = useState(false);
 
   // Calendar state

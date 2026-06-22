@@ -8,7 +8,6 @@ import {
   Bot,
   CalendarCheck,
   CheckCircle2,
-  Phone,
   Send,
   Sparkles,
   User,
@@ -16,9 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { BookingFlow } from "@/components/patient/BookingFlow";
+import { leadChatTranscriptService } from "@/lib/api/services/lead-chat-transcript-service";
 
 /* ─── Triage script ─────────────────────────────────────────── */
 const triageScript: Array<{
@@ -74,22 +73,34 @@ interface Message {
   isIntentPivot?: boolean;
 }
 
-type ChatPhase = "gate" | "chat" | "morphing" | "booking" | "done";
+type ChatPhase = "chat" | "morphing" | "booking" | "done";
 
 interface TriageChatProps {
-  /** If provided, skip the gate and inject this as the first user message */
+  /** If provided, inject this as the first user message */
   initialMessage?: string;
-  /** Custom back handler (used when embedded in unified view) */
+  /** User identity (already collected by UnifiedBookingTriage gate) */
+  userName?: string;
+  userMobile?: string;
+  /** Chat header guid for recording transcripts */
+  chatHdrGuid?: string;
+  /** Lead guid for tracking */
+  leadGuid?: string;
+  /** Custom back handler */
   onBack?: () => void;
+  /** Called when booking is confirmed from within triage */
+  onBookingConfirmed?: () => void;
 }
 
-export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
+export function TriageChat({
+  initialMessage,
+  userName = "",
+  userMobile = "",
+  chatHdrGuid,
+  leadGuid,
+  onBack,
+  onBookingConfirmed,
+}: TriageChatProps) {
   const router = useRouter();
-
-  /* ── Gate state ─────────────────────────────────────────── */
-  const [gateName, setGateName] = useState("");
-  const [gateMobile, setGateMobile] = useState("");
-  const [phase, setPhase] = useState<ChatPhase>(initialMessage ? "chat" : "gate");
 
   /* ── Chat state ─────────────────────────────────────────── */
   const [messages, setMessages] = useState<Message[]>([]);
@@ -97,7 +108,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
   const [scriptIdx, setScriptIdx] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [awaitingPivotReply, setAwaitingPivotReply] = useState(false);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [phase, setPhase] = useState<ChatPhase>("chat");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -106,10 +117,23 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  /* ── Boot triage when gate dismissed ───────────────────── */
+  /* ── Record transcript to backend ───────────────────────── */
+  const recordTranscript = async (content: string, sender: "patient" | "bot") => {
+    if (!chatHdrGuid) return;
+    try {
+      await leadChatTranscriptService.create({
+        chat_hdr_guid: chatHdrGuid,
+        msg_content: content,
+        sender,
+      });
+    } catch {
+      // Non-blocking — don't disrupt chat UX
+      console.error("Failed to record transcript");
+    }
+  };
+
+  /* ── Boot triage on mount ──────────────────────────────── */
   useEffect(() => {
-    if (phase !== "chat") return;
-    // Fire first bot message
     setIsTyping(true);
     const first = triageScript[0];
     const timeout = setTimeout(() => {
@@ -121,6 +145,9 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
           { id: `u-init-${Date.now()}`, from: "user", text: initialMessage },
         ]);
         setScriptIdx(1);
+        // Record both messages
+        recordTranscript(first.text, "bot");
+        recordTranscript(initialMessage, "patient");
         // Trigger the next bot reply after a short delay
         setTimeout(() => {
           const next = triageScript[1];
@@ -130,20 +157,22 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
               setIsTyping(false);
               setMessages((prev) => [...prev, { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot }]);
               setScriptIdx(2);
+              recordTranscript(next.text, "bot");
             }, next.delay);
           }
         }, 400);
       } else {
         setMessages([{ id: first.id, from: "bot", text: first.text }]);
         setScriptIdx(1);
+        recordTranscript(first.text, "bot");
       }
     }, first.delay);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, []);
 
   /* ── Advance bot script after user sends a message ─────── */
-  function advanceBot(autoChain = false) {
+  function advanceBot() {
     if (scriptIdx >= triageScript.length) return;
     const next = triageScript[scriptIdx];
     setIsTyping(true);
@@ -153,6 +182,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
         ...prev,
         { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot },
       ]);
+      recordTranscript(next.text, "bot");
       const nextIdx = scriptIdx + 1;
       setScriptIdx(nextIdx);
       if (next.isIntentPivot) {
@@ -168,6 +198,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
               ...prev,
               { id: pivot.id, from: "bot", text: pivot.text, isIntentPivot: pivot.isIntentPivot },
             ]);
+            recordTranscript(pivot.text, "bot");
             setScriptIdx(nextIdx + 1);
             setAwaitingPivotReply(true);
           }, pivot.delay);
@@ -182,14 +213,17 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
     const userMsg: Message = { id: `u-${Date.now()}`, from: "user", text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
+    recordTranscript(trimmed, "patient");
     setTimeout(advanceBot, 400);
   }
 
   /* ── Intent pivot: YES ──────────────────────────────────── */
   function handlePivotYes() {
     setAwaitingPivotReply(false);
-    const userMsg: Message = { id: `u-yes-${Date.now()}`, from: "user", text: "Yes, please show me her availability!" };
+    const text = "Yes, please show me her availability!";
+    const userMsg: Message = { id: `u-yes-${Date.now()}`, from: "user", text };
     setMessages((prev) => [...prev, userMsg]);
+    recordTranscript(text, "patient");
     // Trigger morphing animation
     setTimeout(() => setPhase("morphing"), 500);
     setTimeout(() => setPhase("booking"), 1600);
@@ -198,110 +232,22 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
   /* ── Intent pivot: NO ───────────────────────────────────── */
   function handlePivotNo() {
     setAwaitingPivotReply(false);
-    const userMsg: Message = { id: `u-no-${Date.now()}`, from: "user", text: "Maybe later." };
-    const botReply: Message = {
-      id: `b-ok-${Date.now()}`,
-      from: "bot",
-      text: "No problem! You can always book through the main menu. Is there anything else I can help you with?",
-    };
+    const userText = "Maybe later.";
+    const botText = "No problem! You can always book through the main menu. Is there anything else I can help you with?";
+    const userMsg: Message = { id: `u-no-${Date.now()}`, from: "user", text: userText };
+    const botReply: Message = { id: `b-ok-${Date.now()}`, from: "bot", text: botText };
     setMessages((prev) => [...prev, userMsg, botReply]);
+    recordTranscript(userText, "patient");
+    recordTranscript(botText, "bot");
   }
 
-  /* ── Gate submit ────────────────────────────────────────── */
-  function handleGateSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!gateName.trim() || !gateMobile.trim()) return;
-    setPhase("chat");
-  }
+  const handleBack = () => {
+    onBack ? onBack() : router.push("/patient/landing");
+  };
 
   /* ────────────────────────────────────────────────────────── */
   /* RENDER                                                      */
   /* ────────────────────────────────────────────────────────── */
-
-  /* ── Disconnection gate — un-dismissible modal ──────────── */
-  if (phase === "gate") {
-    return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-5 bg-background">
-        {/* Blurred backdrop hint of the chat behind */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden opacity-20">
-          <div className="flex flex-col gap-3 p-5 pt-16">
-            {[80, 60, 72, 55, 90].map((w, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-8 rounded-2xl bg-muted",
-                  i % 2 === 0 ? "self-start" : "self-end"
-                )}
-                style={{ width: `${w}%` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Modal card */}
-        <div className="relative z-10 w-full max-w-sm rounded-3xl bg-background border border-border shadow-2xl px-6 py-7">
-          {/* Icon */}
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--color-brand-blue-light)]">
-            <Sparkles size={26} className="text-[var(--color-brand-blue)]" strokeWidth={1.8} aria-hidden="true" />
-          </div>
-
-          <h2 className="text-xl font-bold text-foreground text-center mb-1">Save your progress</h2>
-          <p className="text-sm text-muted-foreground text-center mb-6 leading-relaxed">
-            Enter your details so we can restore this conversation if you get disconnected.
-          </p>
-
-          <form onSubmit={handleGateSubmit} className="flex flex-col gap-4">
-            <div>
-              <Label htmlFor="gate-name" className="text-sm font-medium mb-1.5 block">
-                Your Name
-              </Label>
-              <div className="relative">
-                <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input
-                  id="gate-name"
-                  placeholder="Full name"
-                  value={gateName}
-                  onChange={(e) => setGateName(e.target.value)}
-                  required
-                  className="pl-9 h-11 rounded-xl"
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="gate-mobile" className="text-sm font-medium mb-1.5 block">
-                Mobile Number
-              </Label>
-              <div className="relative">
-                <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input
-                  id="gate-mobile"
-                  type="tel"
-                  placeholder="+1 555 000 0000"
-                  value={gateMobile}
-                  onChange={(e) => setGateMobile(e.target.value)}
-                  required
-                  className="pl-9 h-11 rounded-xl"
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={!gateName.trim() || !gateMobile.trim()}
-              className="h-12 w-full rounded-xl bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-dark)] text-white font-semibold mt-1 disabled:opacity-40"
-            >
-              Start Chat
-            </Button>
-
-            <p className="text-center text-[11px] text-muted-foreground">
-              We&apos;ll only use this to restore your session.
-            </p>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   /* ── Morphing transition ─────────────────────────────────── */
   if (phase === "morphing") {
@@ -325,7 +271,6 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
               }
             `}</style>
 
-            {/* Pulse ring */}
             <span
               aria-hidden="true"
               className="absolute inset-0 rounded-3xl border-4 border-white/30"
@@ -372,7 +317,12 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
         </div>
         <BookingFlow
           preselectedDoctorId="priya-nair"
-          onConfirmed={() => setPhase("done")}
+          prefillName={userName}
+          prefillMobile={userMobile}
+          onConfirmed={() => {
+            if (onBookingConfirmed) onBookingConfirmed();
+            else setPhase("done");
+          }}
         />
       </div>
     );
@@ -386,12 +336,12 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
           <div className="mx-auto mb-6 flex size-24 items-center justify-center rounded-full bg-[var(--color-brand-teal-light)]">
             <CheckCircle2 size={52} className="text-[var(--color-brand-teal)]" strokeWidth={1.6} aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">All set, {gateName}!</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">All set, {userName}!</h1>
           <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-            Your appointment is confirmed. We&apos;ll send updates to {gateMobile}.
+            Your appointment is confirmed. We&apos;ll send updates to {userMobile}.
           </p>
           <Button
-            onClick={() => onBack ? onBack() : router.push("/patient/landing")}
+            onClick={handleBack}
             className="w-full h-12 rounded-xl bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white font-semibold"
           >
             Back to Home
@@ -403,11 +353,11 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
 
   /* ── Chat view ───────────────────────────────────────────── */
   return (
-    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:my-10 md:rounded-[2rem] md:border md:border-border md:shadow-2xl bg-background md:overflow-hidden min-h-screen md:min-h-0">
+    <div className="flex flex-col mx-auto w-full md:max-w-3xl md:border-x md:border-border bg-background" style={{ height: "100dvh" }}>
       {/* Chat header */}
-      <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
         <button
-          onClick={() => onBack ? onBack() : router.push("/patient/landing")}
+          onClick={handleBack}
           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted transition-colors"
           aria-label="Go back"
         >
@@ -423,10 +373,12 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
           </div>
         </div>
         {/* User identity pill */}
-        <div className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-          <User size={10} aria-hidden="true" />
-          {gateName}
-        </div>
+        {userName && (
+          <div className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            <User size={10} aria-hidden="true" />
+            {userName}
+          </div>
+        )}
       </div>
 
       {/* Messages */}
@@ -434,7 +386,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
         role="log"
         aria-live="polite"
         aria-label="Chat messages"
-        className="px-4 py-6 flex flex-col gap-4"
+        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
       >
         {messages.map((msg) => (
           <div
@@ -532,7 +484,7 @@ export function TriageChat({ initialMessage, onBack }: TriageChatProps) {
       </div>
 
       {/* Input bar */}
-      <div className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-4 pb-safe">
+      <div className="shrink-0 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 pb-safe">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex items-center gap-2"

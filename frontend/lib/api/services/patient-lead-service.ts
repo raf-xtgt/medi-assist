@@ -3,7 +3,7 @@ import type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse } from "
 
 export type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse };
 
-const ENDPOINT = `${API_MDA_PREFIX}/patient_lead`;
+const ENDPOINT = `${API_MDA_PREFIX}/patient-lead`;
 
 export const patientLeadService = {
   getAll: async (skip = 0, limit = 100): Promise<PatientLeadResponse[]> => {
