@@ -83,7 +83,7 @@ def generate_report(transcript: str, session_guid: str, appointment_note_str: st
     Returns:
         A dict matching the report schema for storing in transcript_metadata.
     """
-    from service.app_mda_inference_service import generate_report_from_llm
+    from service.inference.app_mda_inference_service import generate_report_from_llm
 
     print(f"[generate_report] Calling Gemini 2.5 Flash for session {session_guid[:8]}...")
 
@@ -170,7 +170,7 @@ def generate_follow_up_message(transcript: str, session_guid: str, report: dict 
     Returns:
         The follow-up message text to be stored in `follow_up_msg` column.
     """
-    from service.app_mda_inference_service import generate_followup_from_llm
+    from service.inference.app_mda_inference_service import generate_followup_from_llm
 
     print(f"[generate_follow_up] Calling Gemini 2.5 Flash for session {session_guid[:8]}...")
 

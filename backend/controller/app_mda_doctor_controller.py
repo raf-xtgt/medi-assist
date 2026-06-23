@@ -18,7 +18,7 @@ from model.app_mda_appointment_session import AppMdaAppointmentSession
 from model.app_mda_appointment_note import AppMdaAppointmentNote
 from model.app_mda_prescription import AppMdaPrescription
 from service.app_mda_doctor_service import doctor_service
-from service.doctor_cv_ingestion_inference_service import extract_doctor_cv
+from service.inference.doctor_cv_ingestion_inference_service import extract_doctor_cv
 from util.database import get_db
 
 router = APIRouter(prefix="/doctor", tags=["app_mda_doctor"])
