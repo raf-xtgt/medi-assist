@@ -16,3 +16,4 @@ class TriageRequestDto(BaseModel):
 
 class TriageResponseDto(BaseModel):
     response_text: str
+    booking_flag: bool = False

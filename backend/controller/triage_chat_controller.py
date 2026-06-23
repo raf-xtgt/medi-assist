@@ -23,6 +23,39 @@ _session_service = InMemorySessionService()
 APP_NAME = "mediassist_triage"
 
 
+def _detect_booking_recommendation(response_text: str) -> bool:
+    """
+    Detect if the agent's response contains a doctor recommendation with a booking prompt.
+
+    Heuristic: if the response mentions both a doctor recommendation keyword
+    and an appointment/booking prompt, set booking_flag to True.
+    """
+    text_lower = response_text.lower()
+    # Check for doctor recommendation signals
+    has_recommendation = any(phrase in text_lower for phrase in [
+        "i'd recommend",
+        "i recommend",
+        "i would recommend",
+        "best match",
+        "good fit",
+        "well-suited",
+        "specializes in",
+        "would be a great",
+        "dr.",
+    ])
+    # Check for booking prompt signals
+    has_booking_prompt = any(phrase in text_lower for phrase in [
+        "book an appointment",
+        "schedule an appointment",
+        "like to book",
+        "set up an appointment",
+        "like me to book",
+        "want to book",
+        "shall i book",
+    ])
+    return has_recommendation and has_booking_prompt
+
+
 def _create_triage_agent(doctors_context_string: str) -> Agent:
     """Create a triage agent with the clinic's doctor roster injected into the prompt."""
     return Agent(
@@ -138,7 +171,10 @@ async def trigger_chat(payload: TriageRequestDto, db: Session = Depends(get_db))
         if not response_text:
             response_text = "I'm sorry, I wasn't able to process your message. Could you please rephrase your symptoms?"
 
-        return TriageResponseDto(response_text=response_text)
+        # Determine booking_flag: if the agent recommends a doctor and asks to book
+        booking_flag = _detect_booking_recommendation(response_text)
+
+        return TriageResponseDto(response_text=response_text, booking_flag=booking_flag)
 
     except Exception as e:
         print(f"[TriageChat] ERROR: {e}")
