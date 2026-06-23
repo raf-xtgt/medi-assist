@@ -241,13 +241,17 @@ export function TriageChat({
     // 3. Buffer the message for debounced bot response
     messageBufferRef.current.push(trimmed);
 
-    // 4. Clear existing debounce timer and start a new one
+    // 4. Show typing indicator immediately (bot is "thinking")
+    setIsTyping(true);
+
+    // 5. Clear existing debounce timer and start a new one
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
       // Timer expired — user has stopped typing. Trigger bot response.
+      setIsTyping(false);
       messageBufferRef.current = []; // Clear buffer
       advanceBot();
     }, DEBOUNCE_DELAY_MS);
