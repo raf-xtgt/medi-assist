@@ -66,6 +66,7 @@ export function TriageChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showBookingButtons, setShowBookingButtons] = useState(false);
   const [phase, setPhase] = useState<ChatPhase>("chat");
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const [convertedPatientGuid, setConvertedPatientGuid] = useState<string | null>(null);
@@ -171,6 +172,11 @@ export function TriageChat({
         text: result.response_text,
       };
       setMessages((prev) => [...prev, botMsg]);
+
+      // If the agent recommends a doctor, show booking buttons
+      if (result.booking_flag) {
+        setShowBookingButtons(true);
+      }
     } catch {
       setIsTyping(false);
       // Show a generic fallback message on failure
@@ -444,6 +450,38 @@ export function TriageChat({
             </div>
           </div>
         ))}
+
+        {/* Booking action buttons — shown when agent recommends a doctor */}
+        {showBookingButtons && (
+          <div className="flex gap-2 self-start ml-9 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <button
+              onClick={() => {
+                setShowBookingButtons(false);
+                handlePivotYes();
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-[var(--color-brand-teal)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-brand-teal-dark)] transition-colors active:scale-95"
+            >
+              <CalendarCheck size={12} aria-hidden="true" />
+              Yes, Book Appointment
+            </button>
+            <button
+              onClick={() => {
+                setShowBookingButtons(false);
+                const userMsg: Message = { id: `u-later-${Date.now()}`, from: "user", text: "Maybe later." };
+                setMessages((prev) => [...prev, userMsg]);
+                // Buffer and flush so the agent knows
+                messageBufferRef.current.push("Maybe later.");
+                setIsTyping(true);
+                debounceTimerRef.current = setTimeout(() => {
+                  flushBufferToBackend();
+                }, DEBOUNCE_DELAY_MS);
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors active:scale-95"
+            >
+              Maybe later
+            </button>
+          </div>
+        )}
 
         {/* Typing indicator */}
         {isTyping && (

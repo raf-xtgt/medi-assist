@@ -12,4 +12,5 @@ export interface TriageRequest {
 
 export interface TriageResponse {
   response_text: string;
+  booking_flag: boolean;
 }
