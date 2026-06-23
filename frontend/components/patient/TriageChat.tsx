@@ -11,7 +11,6 @@ import {
   Send,
   Sparkles,
   User,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,60 +19,18 @@ import { BookingFlow } from "@/components/patient/BookingFlow";
 import { leadChatTranscriptService } from "@/lib/api/services/lead-chat-transcript-service";
 import { patientLeadService } from "@/lib/api/services/patient-lead-service";
 import { appointmentService } from "@/lib/api/services/appointment-service";
+import { triageService } from "@/lib/api/services/triage-service";
+import type { TriageTranscriptItem } from "@/lib/api/model/triage.model";
 import { TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 
-/* ─── Triage script ─────────────────────────────────────────── */
-const triageScript: Array<{
-  id: string;
-  from: "bot";
-  text: string;
-  delay: number;
-  isIntentPivot?: boolean;
-}> = [
-    {
-      id: "t0",
-      from: "bot",
-      text: "Hello! I'm your medi-assist health assistant. I'm here to help you understand your symptoms and find the right doctor. What's been bothering you today?",
-      delay: 600,
-    },
-    {
-      id: "t1",
-      from: "bot",
-      text: "I see. How long have you been experiencing these symptoms?",
-      delay: 1200,
-    },
-    {
-      id: "t2",
-      from: "bot",
-      text: "On a scale of 1–10, how would you rate the severity right now?",
-      delay: 1200,
-    },
-    {
-      id: "t3",
-      from: "bot",
-      text: "Have you experienced this before, or is this the first time?",
-      delay: 1200,
-    },
-    {
-      id: "t4",
-      from: "bot",
-      text: "Based on what you've told me, this sounds like it could be related to **General Practice** concerns. I'd recommend you see **Dr. Priya Nair** — she has excellent experience in this area and has availability as early as tomorrow.",
-      delay: 1600,
-    },
-    {
-      id: "t5",
-      from: "bot",
-      text: "Would you like me to pull up Dr. Priya Nair's calendar so you can lock in a slot right now? She's booked up fast this week.",
-      delay: 1400,
-      isIntentPivot: true,
-    },
-  ];
+/* ─── Initial bot greeting (only message kept from the old script) ──────── */
+const BOT_GREETING =
+  "Hello! I'm your medi-assist health assistant. I'm here to help you understand your symptoms and find the right doctor. What's been bothering you today?";
 
 interface Message {
   id: string;
   from: "bot" | "user";
   text: string;
-  isIntentPivot?: boolean;
 }
 
 type ChatPhase = "chat" | "morphing" | "booking" | "done";
@@ -108,9 +65,7 @@ export function TriageChat({
   /* ── Chat state ─────────────────────────────────────────── */
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [scriptIdx, setScriptIdx] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
-  const [awaitingPivotReply, setAwaitingPivotReply] = useState(false);
   const [phase, setPhase] = useState<ChatPhase>("chat");
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const [convertedPatientGuid, setConvertedPatientGuid] = useState<string | null>(null);
@@ -120,7 +75,7 @@ export function TriageChat({
   /* ── Message Bursting — debounce multiple rapid messages ── */
   const messageBufferRef = useRef<string[]>([]);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const DEBOUNCE_DELAY_MS = 30000;
+  const DEBOUNCE_DELAY_MS = 15000;
 
   /* ── Scroll to bottom ───────────────────────────────────── */
   useEffect(() => {
@@ -136,173 +91,152 @@ export function TriageChat({
     };
   }, []);
 
-  /* ── Record transcript to backend ───────────────────────── */
-  const recordTranscript = async (content: string, sender: "patient" | "bot") => {
+  /* ── Record a single transcript (used only for the bot greeting) ── */
+  const recordGreeting = async (content: string) => {
     if (!chatHdrGuid) return;
     try {
       await leadChatTranscriptService.create({
         chat_hdr_guid: chatHdrGuid,
         msg_content: content,
-        sender,
+        sender: "bot",
       });
     } catch {
-      // Non-blocking — don't disrupt chat UX
-      console.error("Failed to record transcript");
+      console.error("Failed to record greeting transcript");
     }
   };
 
-  /* ── Boot triage on mount ──────────────────────────────── */
+  /* ── Boot triage on mount — show greeting only ─────────── */
   useEffect(() => {
     setIsTyping(true);
-    const first = triageScript[0];
     const timeout = setTimeout(() => {
       setIsTyping(false);
+
       if (initialMessage) {
-        // Inject bot greeting + initial user message, then advance script
+        // Show greeting + inject search string as first user message
         setMessages([
-          { id: first.id, from: "bot", text: first.text },
+          { id: "bot-greeting", from: "bot", text: BOT_GREETING },
           { id: `u-init-${Date.now()}`, from: "user", text: initialMessage },
         ]);
-        setScriptIdx(1);
-        // Record both messages
-        recordTranscript(first.text, "bot");
-        recordTranscript(initialMessage, "patient");
-        // Trigger the next bot reply after a short delay
-        setTimeout(() => {
-          const next = triageScript[1];
-          if (next) {
-            setIsTyping(true);
-            setTimeout(() => {
-              setIsTyping(false);
-              setMessages((prev) => [...prev, { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot }]);
-              setScriptIdx(2);
-              recordTranscript(next.text, "bot");
-            }, next.delay);
-          }
-        }, 400);
+        recordGreeting(BOT_GREETING);
+
+        // Immediately buffer the initial message and trigger the debounce → API call
+        messageBufferRef.current.push(initialMessage);
+        setIsTyping(true);
+        debounceTimerRef.current = setTimeout(() => {
+          flushBufferToBackend();
+        }, DEBOUNCE_DELAY_MS);
       } else {
-        setMessages([{ id: first.id, from: "bot", text: first.text }]);
-        setScriptIdx(1);
-        recordTranscript(first.text, "bot");
+        // Just show the greeting
+        setMessages([{ id: "bot-greeting", from: "bot", text: BOT_GREETING }]);
+        recordGreeting(BOT_GREETING);
       }
-    }, first.delay);
+    }, 600);
+
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Advance bot script after user sends a message ─────── */
-  function advanceBot() {
-    if (scriptIdx >= triageScript.length) return;
-    const next = triageScript[scriptIdx];
-    setIsTyping(true);
-    setTimeout(() => {
+  /* ── Flush buffered messages to the triggerChat endpoint ── */
+  async function flushBufferToBackend() {
+    const bufferedMessages = [...messageBufferRef.current];
+    messageBufferRef.current = [];
+
+    if (bufferedMessages.length === 0) {
       setIsTyping(false);
-      setMessages((prev) => [
-        ...prev,
-        { id: next.id, from: "bot", text: next.text, isIntentPivot: next.isIntentPivot },
-      ]);
-      recordTranscript(next.text, "bot");
-      const nextIdx = scriptIdx + 1;
-      setScriptIdx(nextIdx);
-      if (next.isIntentPivot) {
-        setAwaitingPivotReply(true);
-      } else if (nextIdx < triageScript.length && triageScript[nextIdx].isIntentPivot) {
-        // Auto-chain into the pivot message without waiting for user input
-        setTimeout(() => {
-          const pivot = triageScript[nextIdx];
-          setIsTyping(true);
-          setTimeout(() => {
-            setIsTyping(false);
-            setMessages((prev) => [
-              ...prev,
-              { id: pivot.id, from: "bot", text: pivot.text, isIntentPivot: pivot.isIntentPivot },
-            ]);
-            recordTranscript(pivot.text, "bot");
-            setScriptIdx(nextIdx + 1);
-            setAwaitingPivotReply(true);
-          }, pivot.delay);
-        }, 600);
-      }
-    }, next.delay);
+      return;
+    }
+
+    const combinedMsg = bufferedMessages.join("\n");
+
+    // Build transcript items for the payload
+    const transcripts: TriageTranscriptItem[] = bufferedMessages.map((msg) => ({
+      chat_hdr_guid: chatHdrGuid,
+      msg_content: msg,
+      sender: "patient",
+    }));
+
+    try {
+      const result = await triageService.triggerChat({
+        chat_hdr_guid: chatHdrGuid,
+        transcripts,
+        combined_user_msg: combinedMsg,
+      });
+
+      setIsTyping(false);
+
+      // Render the AI response
+      const botMsg: Message = {
+        id: `bot-${Date.now()}`,
+        from: "bot",
+        text: result.response_text,
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } catch {
+      setIsTyping(false);
+      // Show a generic fallback message on failure
+      const fallbackMsg: Message = {
+        id: `bot-err-${Date.now()}`,
+        from: "bot",
+        text: "I'm sorry, I had trouble processing that. Could you rephrase your symptoms?",
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+    }
   }
 
+  /* ── Handle user message send ───────────────────────────── */
   function handleSend() {
     const trimmed = inputValue.trim();
-    if (!trimmed || awaitingPivotReply) return;
+    if (!trimmed) return;
 
-    // 1. Instantly render in UI for smooth UX
+    // 1. Instantly render in UI
     const userMsg: Message = { id: `u-${Date.now()}`, from: "user", text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
 
-    // 2. Record transcript immediately (non-blocking)
-    recordTranscript(trimmed, "patient");
-
-    // 3. Buffer the message for debounced bot response
+    // 2. Buffer the message (NO individual recordTranscript — triggerChat handles persistence)
     messageBufferRef.current.push(trimmed);
 
-    // 4. Show typing indicator immediately (bot is "thinking")
+    // 3. Show typing indicator
     setIsTyping(true);
 
-    // 5. Clear existing debounce timer and start a new one
+    // 4. Reset debounce timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      // Timer expired — user has stopped typing. Trigger bot response.
-      setIsTyping(false);
-      messageBufferRef.current = []; // Clear buffer
-      advanceBot();
+      flushBufferToBackend();
     }, DEBOUNCE_DELAY_MS);
   }
 
-  /* ── Intent pivot: YES ──────────────────────────────────── */
+  /* ── Intent pivot: YES (triggered programmatically or by future LLM) ── */
   async function handlePivotYes() {
-    setAwaitingPivotReply(false);
     const text = "Yes, please show me her availability!";
     const userMsg: Message = { id: `u-yes-${Date.now()}`, from: "user", text };
     setMessages((prev) => [...prev, userMsg]);
-    recordTranscript(text, "patient");
 
     // Show processing UI
     setPhase("morphing");
     setProcessingStep("Processing appointment…");
 
     try {
-      // Convert lead to patient
       if (leadGuid) {
         setProcessingStep("Setting up your patient profile…");
         const conversionResult = await patientLeadService.convertLeadToPatient({
           doctor_guid: TESTING_DOCTOR_GUID,
           lead_guid: leadGuid,
         });
-        // Store patient_guid for use in BookingFlow's appointment creation
         setConvertedPatientGuid(conversionResult.patient_guid);
       }
 
       setProcessingStep("Opening calendar…");
-      // Brief delay so user sees the message transition
       await new Promise((r) => setTimeout(r, 800));
       setProcessingStep(null);
       setPhase("booking");
     } catch {
-      // On failure, fall back to booking flow anyway
       setProcessingStep(null);
       setPhase("booking");
     }
-  }
-
-  /* ── Intent pivot: NO ───────────────────────────────────── */
-  function handlePivotNo() {
-    setAwaitingPivotReply(false);
-    const userText = "Maybe later.";
-    const botText = "No problem! You can always book through the main menu. Is there anything else I can help you with?";
-    const userMsg: Message = { id: `u-no-${Date.now()}`, from: "user", text: userText };
-    const botReply: Message = { id: `b-ok-${Date.now()}`, from: "bot", text: botText };
-    setMessages((prev) => [...prev, userMsg, botReply]);
-    recordTranscript(userText, "patient");
-    recordTranscript(botText, "bot");
   }
 
   const handleBack = () => {
@@ -358,7 +292,6 @@ export function TriageChat({
   if (phase === "booking") {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
-        {/* Banner: context from chat */}
         <div className="px-4 pt-4">
           <div className="mx-auto max-w-md">
             <div className="flex items-center gap-3 rounded-xl bg-[var(--color-brand-teal-light)] border border-[var(--color-brand-teal)]/20 px-4 py-3 mb-1">
@@ -386,9 +319,7 @@ export function TriageChat({
           prefillName={userName}
           prefillMobile={userMobile}
           onConfirmed={async () => {
-            // Create appointment record after slot selection and confirmation
             try {
-              // Use tomorrow 9:00 AM as the scheduled time (matching triage recommendation)
               const tomorrow = new Date();
               tomorrow.setDate(tomorrow.getDate() + 1);
               tomorrow.setHours(9, 0, 0, 0);
@@ -459,7 +390,6 @@ export function TriageChat({
             <p className="text-[10px] text-[var(--color-brand-teal)] font-medium mt-0.5">AI-powered triage</p>
           </div>
         </div>
-        {/* User identity pill */}
         {userName && (
           <div className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
             <User size={10} aria-hidden="true" />
@@ -468,7 +398,7 @@ export function TriageChat({
         )}
       </div>
 
-      {/* Messages — grows dynamically, no nested scroll */}
+      {/* Messages */}
       <div
         role="log"
         aria-live="polite"
@@ -483,7 +413,6 @@ export function TriageChat({
               msg.from === "user" ? "self-end flex-row-reverse" : "self-start"
             )}
           >
-            {/* Avatar */}
             {msg.from === "bot" && (
               <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-blue)] mt-0.5">
                 <Bot size={13} className="text-white" aria-hidden="true" />
@@ -495,7 +424,6 @@ export function TriageChat({
               </div>
             )}
 
-            {/* Bubble */}
             <div className="flex flex-col gap-2">
               <div
                 className={cn(
@@ -505,7 +433,6 @@ export function TriageChat({
                     : "rounded-tr-sm bg-[var(--color-brand-teal)] text-white"
                 )}
               >
-                {/* Render bold (**text**) inline */}
                 {msg.text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
                   part.startsWith("**") && part.endsWith("**") ? (
                     <strong key={i}>{part.slice(2, -2)}</strong>
@@ -514,26 +441,6 @@ export function TriageChat({
                   )
                 )}
               </div>
-
-              {/* Intent pivot buttons */}
-              {msg.isIntentPivot && awaitingPivotReply && (
-                <div className="flex gap-2 mt-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <button
-                    onClick={handlePivotYes}
-                    className="flex items-center gap-1.5 rounded-xl bg-[var(--color-brand-teal)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-brand-teal-dark)] transition-colors active:scale-95"
-                  >
-                    <CalendarCheck size={12} aria-hidden="true" />
-                    Yes, book now
-                  </button>
-                  <button
-                    onClick={handlePivotNo}
-                    className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors active:scale-95"
-                  >
-                    <X size={12} aria-hidden="true" />
-                    Maybe later
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         ))}
@@ -580,15 +487,14 @@ export function TriageChat({
             ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={awaitingPivotReply ? "Use the buttons above to respond…" : "Describe your symptoms…"}
-            disabled={awaitingPivotReply}
+            placeholder="Describe your symptoms…"
             className="flex-1 h-11 rounded-xl bg-muted border-0 focus-visible:ring-1 focus-visible:ring-[var(--color-brand-teal)] text-sm placeholder:text-muted-foreground/70"
             aria-label="Message input"
           />
           <Button
             type="submit"
             size="icon"
-            disabled={!inputValue.trim() || awaitingPivotReply}
+            disabled={!inputValue.trim()}
             className="size-11 shrink-0 rounded-xl bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white disabled:opacity-40"
             aria-label="Send message"
           >
