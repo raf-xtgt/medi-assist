@@ -117,10 +117,24 @@ export function TriageChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /* ── Message Bursting — debounce multiple rapid messages ── */
+  const messageBufferRef = useRef<string[]>([]);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const DEBOUNCE_DELAY_MS = 30000;
+
   /* ── Scroll to bottom ───────────────────────────────────── */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  /* ── Cleanup debounce timer on unmount ──────────────────── */
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   /* ── Record transcript to backend ───────────────────────── */
   const recordTranscript = async (content: string, sender: "patient" | "bot") => {
@@ -215,11 +229,28 @@ export function TriageChat({
   function handleSend() {
     const trimmed = inputValue.trim();
     if (!trimmed || awaitingPivotReply) return;
+
+    // 1. Instantly render in UI for smooth UX
     const userMsg: Message = { id: `u-${Date.now()}`, from: "user", text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
+
+    // 2. Record transcript immediately (non-blocking)
     recordTranscript(trimmed, "patient");
-    setTimeout(advanceBot, 400);
+
+    // 3. Buffer the message for debounced bot response
+    messageBufferRef.current.push(trimmed);
+
+    // 4. Clear existing debounce timer and start a new one
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      // Timer expired — user has stopped typing. Trigger bot response.
+      messageBufferRef.current = []; // Clear buffer
+      advanceBot();
+    }, DEBOUNCE_DELAY_MS);
   }
 
   /* ── Intent pivot: YES ──────────────────────────────────── */
