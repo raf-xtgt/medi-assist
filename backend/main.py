@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 from controller.app_mda_user_controller import router as user_router
 from controller.app_mda_prmn_controller import router as prmn_router
-from controller.app_mda_clinic_hdr_controller import router as clinic_hdr_router
+from controller.app_mda_clinic_hdr_controller import router as clinic_hdr_router, public_router as clinic_public_router
 from controller.app_mda_doctor_controller import router as doctor_router
 from controller.app_mda_doctor_cred_controller import router as doctor_cred_router
 from controller.app_mda_patient_lead_controller import router as patient_lead_router
@@ -64,6 +64,7 @@ url_prefix = "/api/mda"
 app.include_router(user_router, prefix=url_prefix)
 app.include_router(prmn_router, prefix=url_prefix)
 app.include_router(clinic_hdr_router, prefix=url_prefix)
+app.include_router(clinic_public_router, prefix="/api")
 app.include_router(doctor_router, prefix=url_prefix)
 app.include_router(doctor_cred_router, prefix=url_prefix)
 app.include_router(patient_lead_router, prefix=url_prefix)

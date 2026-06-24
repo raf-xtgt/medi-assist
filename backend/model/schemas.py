@@ -60,12 +60,16 @@ class PrmnResponse(BaseModel):
 class ClinicHdrCreate(BaseModel):
     name: Optional[str] = None
     website_url: Optional[str] = None
+    slug: Optional[str] = None
+    site_metadata: Optional[dict] = None
     status: Optional[str] = None
 
 
 class ClinicHdrUpdate(BaseModel):
     name: Optional[str] = None
     website_url: Optional[str] = None
+    slug: Optional[str] = None
+    site_metadata: Optional[dict] = None
     status: Optional[str] = None
 
 
@@ -73,6 +77,8 @@ class ClinicHdrResponse(BaseModel):
     guid: UUID
     name: Optional[str] = None
     website_url: Optional[str] = None
+    slug: Optional[str] = None
+    site_metadata: Optional[dict] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
     status: Optional[str] = None

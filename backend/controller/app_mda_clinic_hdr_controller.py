@@ -42,3 +42,15 @@ def update(guid: UUID, payload: ClinicHdrUpdate, db: Session = Depends(get_db)):
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not clinic_hdr_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+# Public clinic lookup endpoint
+public_router = APIRouter(prefix="/public/clinic", tags=["public"])
+
+
+@public_router.get("/{slug}", response_model=ClinicHdrResponse)
+def get_by_slug(slug: str, db: Session = Depends(get_db)):
+    obj = clinic_hdr_service.get_by_slug(db, slug)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Clinic not found")
+    return obj
