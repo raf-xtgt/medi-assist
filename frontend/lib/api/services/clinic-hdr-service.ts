@@ -4,6 +4,7 @@ import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse } from "../mod
 export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/clinic_hdr`;
+const PUBLIC_ENDPOINT = "/api/public/clinic";
 
 export const clinicHdrService = {
   getAll: async (skip = 0, limit = 100): Promise<ClinicHdrResponse[]> => {
@@ -15,6 +16,12 @@ export const clinicHdrService = {
   getByGuid: async (guid: string): Promise<ClinicHdrResponse> => {
     const res = await fetch(`${ENDPOINT}/get-by-guid/${guid}`);
     if (!res.ok) throw new Error(`Failed to fetch clinic: ${res.status}`);
+    return res.json();
+  },
+
+  getBySlug: async (slug: string): Promise<ClinicHdrResponse> => {
+    const res = await fetch(`${PUBLIC_ENDPOINT}/${slug}`);
+    if (!res.ok) throw new Error(`Failed to fetch clinic by slug: ${res.status}`);
     return res.json();
   },
 
