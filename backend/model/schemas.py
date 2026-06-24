@@ -4,7 +4,7 @@ from datetime import datetime, time
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ─── app_mda_user ────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ class PrmnResponse(BaseModel):
 class ClinicHdrCreate(BaseModel):
     name: Optional[str] = None
     website_url: Optional[str] = None
-    slug: Optional[str] = None
+    slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
     status: Optional[str] = None
 
@@ -68,7 +68,7 @@ class ClinicHdrCreate(BaseModel):
 class ClinicHdrUpdate(BaseModel):
     name: Optional[str] = None
     website_url: Optional[str] = None
-    slug: Optional[str] = None
+    slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
     status: Optional[str] = None
 
@@ -77,7 +77,7 @@ class ClinicHdrResponse(BaseModel):
     guid: UUID
     name: Optional[str] = None
     website_url: Optional[str] = None
-    slug: Optional[str] = None
+    slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None

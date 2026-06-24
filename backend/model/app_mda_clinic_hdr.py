@@ -12,7 +12,7 @@ class AppMdaClinicHdr(Base):
     guid = Column(UUID(as_uuid=True), primary_key=True)
     name = Column(String(255), nullable=True)
     website_url = Column(Text, nullable=True)
-    slug = Column(String(10), nullable=True)
+    slug = Column(String(100), nullable=True)
     site_metadata = Column(JSON, nullable=True)
     created_date = Column(DateTime, server_default=func.now())
     updated_date = Column(DateTime, server_default=func.now())
