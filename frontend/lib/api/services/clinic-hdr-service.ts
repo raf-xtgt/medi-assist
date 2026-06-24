@@ -1,10 +1,10 @@
-import { API_MDA_PREFIX } from "../constants";
+import { API_BASE_URL, API_MDA_PREFIX } from "../constants";
 import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse } from "../model/clinic-hdr.model";
 
 export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse };
 
-const ENDPOINT = `${API_MDA_PREFIX}/clinic_hdr`;
-const PUBLIC_ENDPOINT = "/api/public/clinic";
+const ENDPOINT = `${API_MDA_PREFIX}/clinic-hdr`;
+const PUBLIC_ENDPOINT = `${API_BASE_URL}/api/public/clinic`;
 
 export const clinicHdrService = {
   getAll: async (skip = 0, limit = 100): Promise<ClinicHdrResponse[]> => {
