@@ -283,6 +283,106 @@ export default async function ClinicPage({ params }: PageProps) {
     );
   }
 
+  // Template: holistic_wellness
+  if (config.template_id === "holistic_wellness") {
+    return (
+      <div
+        style={dynamicStyles}
+        className={`${branding.font_style} bg-[var(--bg-custom)] text-[var(--text-main)] min-h-screen`}
+      >
+        {/* Header */}
+        <header className="border-b border-[var(--text-muted)]/10">
+          <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={`${branding.layout_shape} w-12 h-12 flex items-center justify-center text-white text-xl`}
+                style={{ backgroundColor: "var(--primary)" }}
+              >
+                {content.header.logo_text.charAt(0)}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[var(--text-main)]">
+                  {content.header.logo_text}
+                </h1>
+                <p className="text-sm text-[var(--text-muted)]">
+                  {content.header.tagline}
+                </p>
+              </div>
+            </div>
+            <nav className="flex items-center gap-6">
+              <a href="/patient/triage" className="text-sm font-medium hover:opacity-80">
+                Get Care
+              </a>
+              <a
+                href="/patient/book"
+                className={`${branding.layout_shape} ${branding.border_style} px-5 py-2.5 text-sm font-medium text-white`}
+                style={{ backgroundColor: "var(--primary)" }}
+              >
+                Book Now
+              </a>
+            </nav>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <main>
+          <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+              {content.body.hero_title}
+            </h2>
+            <p className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
+              {content.body.hero_description}
+            </p>
+            <div className="flex flex-col items-center gap-3">
+              <a
+                href="/patient/triage"
+                className={`${branding.layout_shape} ${branding.border_style} px-8 py-4 text-lg font-semibold transition-colors text-white`}
+                style={{ backgroundColor: "var(--primary)" }}
+              >
+                {content.cta.text}
+              </a>
+              <p className="text-sm text-[var(--text-muted)]">{content.cta.subtext}</p>
+            </div>
+          </section>
+
+          {/* Features Section */}
+          <section className="py-20" style={{ backgroundColor: "var(--surface)" }}>
+            <div className="max-w-5xl mx-auto px-6">
+              <h3 className="text-2xl font-bold text-center mb-12">
+                {content.body.features_headline}
+              </h3>
+              <div className="grid md:grid-cols-3 gap-8">
+                {content.body.features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className={`${branding.layout_shape} ${branding.border_style} p-8 bg-white`}
+                  >
+                    <div
+                      className={`w-14 h-14 ${branding.layout_shape} flex items-center justify-center mb-5 text-white text-2xl font-bold`}
+                      style={{ backgroundColor: "var(--accent)" }}
+                    >
+                      {index + 1}
+                    </div>
+                    <p className="text-[var(--text-main)] font-medium leading-relaxed">
+                      {feature}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-[var(--text-muted)]/10 py-8">
+          <div className="max-w-6xl mx-auto px-6 text-center text-sm text-[var(--text-muted)]">
+            {content.footer.text}
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   // Fallback for unknown templates - render basic content
   return (
     <div
