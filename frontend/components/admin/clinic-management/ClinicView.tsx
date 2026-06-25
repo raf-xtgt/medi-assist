@@ -15,9 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { clinicHdrService } from "@/lib/api/services/clinic-hdr-service";
 import type { ClinicHdrResponse } from "@/lib/api/model/clinic-hdr.model";
 import templateConfigs from "./ClinicTemplate.json";
+import { ClinicDoctorListing } from "./ClinicDoctorListing";
 
 const TEMPLATES = [
   { id: "clinical_professional", label: "Clinical Professional", image: "/clinic-site-templates/clinical-professional-template.png" },
@@ -131,99 +133,121 @@ export function ClinicView({ clinic, onSaved, onClose }: ClinicViewProps) {
         </Button>
       </div>
 
-      {/* Form fields */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="clinic-name">Clinic Name</Label>
-          <Input
-            id="clinic-name"
-            placeholder="e.g. Good Health Clinic"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+      {/* Tabs */}
+      <Tabs defaultValue="details" className="flex flex-col flex-1 overflow-hidden">
+        <TabsList className="w-fit">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="doctors">Doctors</TabsTrigger>
+        </TabsList>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="clinic-address">Address</Label>
-          <Textarea
-            id="clinic-address"
-            placeholder="Enter full clinic address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            rows={2}
-          />
-        </div>
+        {/* Details Tab */}
+        <TabsContent value="details" className="flex flex-col gap-5 flex-1 overflow-y-auto">
+          {/* Form fields */}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clinic-name">Clinic Name</Label>
+              <Input
+                id="clinic-name"
+                placeholder="e.g. Good Health Clinic"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="clinic-website-name">Website Name</Label>
-          <Input
-            id="clinic-website-name"
-            placeholder="e.g. good-health-clinic"
-            value={websiteName}
-            onChange={(e) => handleWebsiteNameChange(e.target.value)}
-          />
-          <p className="text-[11px] text-muted-foreground">
-            Lowercase letters, numbers, and hyphens only. URL: <span className="font-mono">/clinic/{websiteName || "..."}</span>
-          </p>
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clinic-address">Address</Label>
+              <Textarea
+                id="clinic-address"
+                placeholder="Enter full clinic address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                rows={2}
+              />
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="clinic-template">Template</Label>
-          <Select value={templateId} onValueChange={setTemplateId}>
-            <SelectTrigger id="clinic-template" className="bg-background">
-              <SelectValue placeholder="Choose a template" />
-            </SelectTrigger>
-            <SelectContent>
-              {TEMPLATES.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clinic-website-name">Website Name</Label>
+              <Input
+                id="clinic-website-name"
+                placeholder="e.g. good-health-clinic"
+                value={websiteName}
+                onChange={(e) => handleWebsiteNameChange(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Lowercase letters, numbers, and hyphens only. URL: <span className="font-mono">/clinic/{websiteName || "..."}</span>
+              </p>
+            </div>
 
-      {/* Template preview */}
-      {selectedTemplate ? (
-        <div className="flex flex-col gap-2 flex-1">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Preview
-          </span>
-          <div className="relative w-full flex-1 min-h-[420px] rounded-lg border border-border/60 overflow-hidden bg-muted/20">
-            <Image
-              src={selectedTemplate.image}
-              alt={`${selectedTemplate.label} template preview`}
-              fill
-              className="object-cover object-top"
-              sizes="(max-width: 1024px) 100vw, 40vw"
-            />
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clinic-template">Template</Label>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger id="clinic-template" className="bg-background">
+                  <SelectValue placeholder="Choose a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEMPLATES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex-1 min-h-[200px] rounded-lg border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground">
-          Select a template to see a preview
-        </div>
-      )}
 
-      {/* Save button */}
-      <Button
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full"
-      >
-        {saving ? (
-          <>
-            <Loader2 size={16} className="animate-spin mr-2" aria-hidden="true" />
-            Saving…
-          </>
-        ) : (
-          <>
-            <Save size={16} className="mr-2" aria-hidden="true" />
-            Save
-          </>
-        )}
-      </Button>
+          {/* Template preview */}
+          {selectedTemplate ? (
+            <div className="flex flex-col gap-2 flex-1">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Preview
+              </span>
+              <div className="relative w-full flex-1 min-h-[420px] rounded-lg border border-border/60 overflow-hidden bg-muted/20">
+                <Image
+                  src={selectedTemplate.image}
+                  alt={`${selectedTemplate.label} template preview`}
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-[200px] rounded-lg border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground">
+              Select a template to see a preview
+            </div>
+          )}
+
+          {/* Save button */}
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full"
+          >
+            {saving ? (
+              <>
+                <Loader2 size={16} className="animate-spin mr-2" aria-hidden="true" />
+                Saving…
+              </>
+            ) : (
+              <>
+                <Save size={16} className="mr-2" aria-hidden="true" />
+                Save
+              </>
+            )}
+          </Button>
+        </TabsContent>
+
+        {/* Doctors Tab */}
+        <TabsContent value="doctors" className="flex-1 overflow-y-auto">
+          {clinic ? (
+            <ClinicDoctorListing clinicGuid={clinic.guid} />
+          ) : (
+            <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+              Save the clinic first to manage doctors.
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
