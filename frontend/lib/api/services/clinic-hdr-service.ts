@@ -1,7 +1,7 @@
 import { API_BASE_URL, API_MDA_PREFIX } from "../constants";
-import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse } from "../model/clinic-hdr.model";
+import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest } from "../model/clinic-hdr.model";
 
-export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse };
+export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest };
 
 const ENDPOINT = `${API_MDA_PREFIX}/clinic-hdr`;
 const PUBLIC_ENDPOINT = `${API_BASE_URL}/api/public/clinic`;
@@ -22,6 +22,16 @@ export const clinicHdrService = {
   getBySlug: async (slug: string): Promise<ClinicHdrResponse> => {
     const res = await fetch(`${PUBLIC_ENDPOINT}/${slug}`);
     if (!res.ok) throw new Error(`Failed to fetch clinic by slug: ${res.status}`);
+    return res.json();
+  },
+
+  getByCriteria: async (data: ClinicHdrCriteriaRequest): Promise<ClinicHdrResponse[]> => {
+    const res = await fetch(`${ENDPOINT}/get-by-criteria`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch clinics by criteria: ${res.status}`);
     return res.json();
   },
 

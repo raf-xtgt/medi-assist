@@ -4,6 +4,8 @@ export interface ClinicHdrCreate {
   /** Max 100 characters */
   slug?: string;
   site_metadata?: Record<string, unknown>;
+  created_by_guid?: string;
+  address?: string;
   status?: string;
 }
 
@@ -13,6 +15,8 @@ export interface ClinicHdrUpdate {
   /** Max 100 characters */
   slug?: string;
   site_metadata?: Record<string, unknown>;
+  created_by_guid?: string;
+  address?: string;
   status?: string;
 }
 
@@ -23,7 +27,13 @@ export interface ClinicHdrResponse {
   /** Max 100 characters */
   slug?: string;
   site_metadata?: Record<string, unknown>;
+  created_by_guid?: string;
+  address?: string;
   created_date?: string;
   updated_date?: string;
   status?: string;
+}
+
+export interface ClinicHdrCriteriaRequest {
+  user_guid: string;
 }
