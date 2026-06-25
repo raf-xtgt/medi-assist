@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { clinicHdrService } from "@/lib/api/services/clinic-hdr-service";
 import { useSession } from "@/hooks/useSession";
-import { TESTING_CLINIC_HDR_GUID } from "@/lib/api/model/testing-guid.model";
+import { TESTING_CLINIC_USER_GUID } from "@/lib/api/model/testing-guid.model";
 import type { ClinicHdrResponse } from "@/lib/api/model/clinic-hdr.model";
 import { ClinicView } from "./ClinicView";
 
@@ -22,7 +22,7 @@ export function ClinicListing() {
   const fetchClinics = async () => {
     setLoading(true);
     try {
-      const userGuid = user?.id ?? TESTING_CLINIC_HDR_GUID;
+      const userGuid = TESTING_CLINIC_USER_GUID;
       const data = await clinicHdrService.getByCriteria({ user_guid: userGuid });
       setClinics(data);
     } catch {
