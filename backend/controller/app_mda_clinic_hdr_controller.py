@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from model.schemas import ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse
+from model.schemas import ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, DoctorResponse
+from model.dto.clinic_doctor_list_dto import ClinicDoctorListRequestDto
 from service.app_mda_clinic_hdr_service import clinic_hdr_service
 from util.database import get_db
 
@@ -54,6 +55,11 @@ class ClinicHdrCriteriaRequest(BaseModel):
 @router.post("/get-by-criteria", response_model=list[ClinicHdrResponse])
 def get_by_criteria(payload: ClinicHdrCriteriaRequest, db: Session = Depends(get_db)):
     return clinic_hdr_service.get_by_criteria(db, payload.user_guid, limit=100)
+
+
+@router.post("/get-clinic-doctors", response_model=list[DoctorResponse])
+def get_clinic_doctors(payload: ClinicDoctorListRequestDto, db: Session = Depends(get_db)):
+    return clinic_hdr_service.get_clinic_doctors(db, payload.clinic_guid)
 
 
 # Public clinic lookup endpoint

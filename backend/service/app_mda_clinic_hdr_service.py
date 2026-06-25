@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from model.app_mda_clinic_hdr import AppMdaClinicHdr
+from model.app_mda_doctor import AppMdaDoctor
 from service.base_service import BaseService
 
 
@@ -25,6 +26,14 @@ class AppMdaClinicHdrService(BaseService):
             .filter(AppMdaClinicHdr.created_by_guid == user_guid)
             .order_by(desc(AppMdaClinicHdr.created_date))
             .limit(limit)
+            .all()
+        )
+
+    def get_clinic_doctors(self, db: Session, clinic_guid: UUID) -> List[AppMdaDoctor]:
+        return (
+            db.query(AppMdaDoctor)
+            .filter(AppMdaDoctor.clinic_hdr_guid == clinic_guid)
+            .order_by(desc(AppMdaDoctor.created_date))
             .all()
         )
 
