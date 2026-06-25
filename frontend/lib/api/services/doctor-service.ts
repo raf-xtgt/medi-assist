@@ -1,8 +1,10 @@
 import { API_MDA_PREFIX } from "../constants";
 import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse } from "../model/doctor.model";
+import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
 export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
+export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
 const ENDPOINT = `${API_MDA_PREFIX}/doctor`;
 
@@ -71,6 +73,17 @@ export const doctorService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to search doctors: ${res.status}`);
+    return res.json();
+  },
+
+  triggerFileIngestion: async (doctorGuid: string, file: File): Promise<DoctorCVExtractionResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${ENDPOINT}/upload-cv/${doctorGuid}`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) throw new Error(`Failed to upload doctor CV: ${res.status}`);
     return res.json();
   },
 };

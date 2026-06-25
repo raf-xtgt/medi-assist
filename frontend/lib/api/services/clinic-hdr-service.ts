@@ -1,7 +1,8 @@
 import { API_BASE_URL, API_MDA_PREFIX } from "../constants";
-import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest } from "../model/clinic-hdr.model";
+import type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest, ClinicDoctorListRequest } from "../model/clinic-hdr.model";
+import type { DoctorResponse } from "../model/doctor.model";
 
-export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest };
+export type { ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse, ClinicHdrCriteriaRequest, ClinicDoctorListRequest };
 
 const ENDPOINT = `${API_MDA_PREFIX}/clinic-hdr`;
 const PUBLIC_ENDPOINT = `${API_BASE_URL}/api/public/clinic`;
@@ -58,5 +59,15 @@ export const clinicHdrService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete clinic: ${res.status}`);
+  },
+
+  getClinicDoctors: async (data: ClinicDoctorListRequest): Promise<DoctorResponse[]> => {
+    const res = await fetch(`${ENDPOINT}/get-clinic-doctors`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch clinic doctors: ${res.status}`);
+    return res.json();
   },
 };

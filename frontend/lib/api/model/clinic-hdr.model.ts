@@ -37,3 +37,18 @@ export interface ClinicHdrResponse {
 export interface ClinicHdrCriteriaRequest {
   user_guid: string;
 }
+
+export interface ClinicDoctorListRequest {
+  clinic_guid: string;
+}
+
+export interface DoctorCVIngestionRequest {
+  doctor_guid: string;
+  file: File;
+}
+
+export interface DoctorCVExtractionResponse {
+  name: string;
+  specialty: string;
+  about: string;
+}
