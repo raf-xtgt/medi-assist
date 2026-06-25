@@ -1,0 +1,122 @@
+[
+  {
+    "template_id": "modern_minimalist",
+    "branding": {
+      "font_style": "font-sans tracking-tight",
+      "layout_shape": "rounded-md",
+      "border_style": "border-none",
+      "colors": {
+        "primary": "#059669",
+        "primary_hover": "#047857",
+        "accent": "#10b981",
+        "surface": "#ffffff",
+        "background": "#fafafa",
+        "text_main": "#18181b",
+        "text_muted": "#71717a"
+      }
+    },
+    "content": {
+      "header": {
+        "logo_text": "Apex Health",
+        "tagline": "Care Redefined."
+      },
+      "body": {
+        "hero_title": "Healthcare that moves at the speed of your life.",
+        "hero_description": "Skip the hold music. Consult with our intelligent triage helpdesk to find the right care track and secure your appointment instantly.",
+        "features_headline": "Direct. Digital. Frictionless.",
+        "features": [
+          "24/7 AI-Powered Symptom Inquiries",
+          "Real-time Instant Scheduling",
+          "Direct-to-Doctor Communication Channels"
+        ]
+      },
+      "cta": {
+        "text": "Launch Digital Triage",
+        "subtext": "Takes less than 60 seconds"
+      },
+      "footer": {
+        "text": "© 2026 Apex Health Clinic. Powered by Medi-Assist."
+      }
+    }
+  },
+  {
+    "template_id": "clinical_professional",
+    "branding": {
+      "font_style": "font-sans antialiased",
+      "layout_shape": "rounded-none",
+      "border_style": "border border-slate-200 shadow-sm",
+      "colors": {
+        "primary": "#1e3a8a",
+        "primary_hover": "#1e40af",
+        "accent": "#3b82f6",
+        "surface": "#ffffff",
+        "background": "#f8fafc",
+        "text_main": "#0f172a",
+        "text_muted": "#64748b"
+      }
+    },
+    "content": {
+      "header": {
+        "logo_text": "Metro Medical Partners",
+        "tagline": "Evidence-Based Clinical Excellence"
+      },
+      "body": {
+        "hero_title": "Dedicated medical professionals. Specialized modern care.",
+        "hero_description": "We blend years of clinical expertise with advanced patient systems. Use our automated onboarding engine to check doctor availability or request an immediate triage review.",
+        "features_headline": "Our Clinical Commitments",
+        "features": [
+          "Board-Certified Medical Practice",
+          "Comprehensive Automated Triage Support",
+          "Seamless Continuity of Patient Care"
+        ]
+      },
+      "cta": {
+        "text": "Schedule Clinical Appointment",
+        "subtext": "Check certified doctor availability"
+      },
+      "footer": {
+        "text": "© 2026 Metro Medical Partners. All rights reserved. Managed via Medi-Assist."
+      }
+    }
+  },
+  {
+    "template_id": "holistic_wellness",
+    "branding": {
+      "font_style": "font-serif tracking-normal",
+      "layout_shape": "rounded-2xl",
+      "border_style": "border-none shadow-md",
+      "colors": {
+        "primary": "#b45309",
+        "primary_hover": "#92400e",
+        "accent": "#f59e0b",
+        "surface": "#fffbeb",
+        "background": "#fafaf9",
+        "text_main": "#44403c",
+        "text_muted": "#78716c"
+      }
+    },
+    "content": {
+      "header": {
+        "logo_text": "Sanctuary Integrative Care",
+        "tagline": "Balance, Health, & Longevity"
+      },
+      "body": {
+        "hero_title": "Your journey back to complete wellness starts right here.",
+        "hero_description": "Healthcare should feel supportive, not stressful. Share your symptoms comfortably with our empathetic digital triage guide to set up your next visit.",
+        "features_headline": "A Wholesome Approach to Healing",
+        "features": [
+          "Patient-Centered Treatment Philosophies",
+          "Stress-Free Guided Appointment Booking",
+          "Mindful, Comprehensive Care Logistics"
+        ]
+      },
+      "cta": {
+        "text": "Speak with Our Wellness Assistant",
+        "subtext": "A gentle, private assessment"
+      },
+      "footer": {
+        "text": "© 2026 Sanctuary Wellness. Cultivated beautifully with Medi-Assist."
+      }
+    }
+  }
+]
