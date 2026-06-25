@@ -1,8 +1,10 @@
 """Controller for app_mda_clinic_hdr endpoints."""
 
 from uuid import UUID
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from model.schemas import ClinicHdrCreate, ClinicHdrUpdate, ClinicHdrResponse
@@ -42,6 +44,16 @@ def update(guid: UUID, payload: ClinicHdrUpdate, db: Session = Depends(get_db)):
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not clinic_hdr_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+# Request/Response schemas for get-by-criteria
+class ClinicHdrCriteriaRequest(BaseModel):
+    user_guid: UUID
+
+
+@router.post("/get-by-criteria", response_model=list[ClinicHdrResponse])
+def get_by_criteria(payload: ClinicHdrCriteriaRequest, db: Session = Depends(get_db)):
+    return clinic_hdr_service.get_by_criteria(db, payload.user_guid, limit=100)
 
 
 # Public clinic lookup endpoint

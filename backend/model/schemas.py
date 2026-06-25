@@ -62,6 +62,8 @@ class ClinicHdrCreate(BaseModel):
     website_url: Optional[str] = None
     slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
+    created_by_guid: Optional[UUID] = None
+    address: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -70,6 +72,8 @@ class ClinicHdrUpdate(BaseModel):
     website_url: Optional[str] = None
     slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
+    created_by_guid: Optional[UUID] = None
+    address: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -79,6 +83,8 @@ class ClinicHdrResponse(BaseModel):
     website_url: Optional[str] = None
     slug: Optional[str] = Field(None, max_length=100)  # max 100 characters
     site_metadata: Optional[dict] = None
+    created_by_guid: Optional[UUID] = None
+    address: Optional[str] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
     status: Optional[str] = None

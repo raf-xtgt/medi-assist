@@ -14,6 +14,8 @@ class AppMdaClinicHdr(Base):
     website_url = Column(Text, nullable=True)
     slug = Column(String(100), nullable=True)
     site_metadata = Column(JSON, nullable=True)
+    created_by_guid = Column(UUID(as_uuid=True), nullable=True)
+    address = Column(Text, nullable=True)
     created_date = Column(DateTime, server_default=func.now())
     updated_date = Column(DateTime, server_default=func.now())
     status = Column(String(50), nullable=True)
@@ -24,4 +26,5 @@ class AppMdaClinicHdr(Base):
         Index("idx_app_mda_clinic_hdr_created_date", "created_date"),
         Index("idx_app_mda_clinic_hdr_updated_date", "updated_date"),
         Index("idx_app_mda_clinic_hdr_slug", "slug"),
+        Index("idx_app_mda_clinic_hdr_created_by", "created_by_guid"),
     )
