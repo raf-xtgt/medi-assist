@@ -139,11 +139,19 @@ export function ClinicListing() {
                       </Badge>
                     )}
                   </div>
+                  {/* clinic slug */}
                   {clinic.slug && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <a
+                      href={`/clinic/${clinic.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`View public site for ${clinic.name || "clinic"}`}
+                    >
                       <Globe size={12} aria-hidden="true" />
                       <span className="truncate">/clinic/{clinic.slug}</span>
-                    </div>
+                    </a>
                   )}
                   {clinic.address && !panelOpen && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
