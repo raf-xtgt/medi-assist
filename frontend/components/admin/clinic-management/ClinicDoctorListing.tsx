@@ -43,9 +43,15 @@ export function ClinicDoctorListing({ clinicGuid }: ClinicDoctorListingProps) {
     setShowDoctorView(true);
   };
 
-  const handleDoctorSaved = () => {
-    setShowDoctorView(false);
-    setSelectedDoctor(null);
+  const handleDoctorSaved = (savedDoctor?: DoctorResponse) => {
+    if (savedDoctor) {
+      // New doctor created — stay in edit mode with the created doctor
+      setSelectedDoctor(savedDoctor);
+    } else {
+      // Existing doctor updated — go back to listing
+      setShowDoctorView(false);
+      setSelectedDoctor(null);
+    }
     fetchDoctors();
   };
 

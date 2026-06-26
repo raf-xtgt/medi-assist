@@ -12,11 +12,12 @@ import type { DoctorResponse } from "@/lib/api/model/doctor.model";
 import { DoctorAvailabilityEditor } from "./DoctorAvailabilityEditor";
 
 type SaveStep = "idle" | "creating" | "ingesting" | "updating" | "done";
+type DoctorTab = "details" | "schedule";
 
 interface ClinicDoctorViewProps {
   clinicGuid: string;
   doctor: DoctorResponse | null;
-  onSaved: () => void;
+  onSaved: (savedDoctor?: DoctorResponse) => void;
   onClose: () => void;
 }
 
@@ -30,6 +31,7 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
   const [specialty, setSpecialty] = useState(doctor?.specialty ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [saveStep, setSaveStep] = useState<SaveStep>("idle");
+  const [activeTab, setActiveTab] = useState<DoctorTab>("details");
 
   const stepMessages: Record<SaveStep, string> = {
     idle: "",
@@ -66,6 +68,8 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
           specialty: specialty.trim() || undefined,
         });
         toast.success("Doctor updated successfully.");
+        setSaveStep("done");
+        onSaved();
       } else {
         // Create new doctor
         setSaveStep("creating");
@@ -88,13 +92,17 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
             about: extraction.about,
             specialty: extraction.specialty,
           });
+
+          // Merge extracted data into the created response for local state
+          created.about = extraction.about;
+          created.specialty = extraction.specialty;
         }
 
         toast.success("Doctor created successfully.");
+        setSaveStep("done");
+        // Pass created doctor back so ClinicDoctorListing switches to edit mode
+        onSaved(created);
       }
-
-      setSaveStep("done");
-      onSaved();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to save doctor.";
       toast.error(message);
@@ -125,144 +133,173 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
             {isEditing ? "Update doctor information." : "Add a new doctor to this clinic."}
           </p>
         </div>
-      </div>
 
-      {/* Form fields */}
-      <div className="flex flex-col gap-4 flex-1">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="doctor-name">Name</Label>
-          <Input
-            id="doctor-name"
-            placeholder="e.g. Dr. Jane Smith"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isSaving}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="doctor-email">Email</Label>
-          <Input
-            id="doctor-email"
-            type="email"
-            placeholder="e.g. jane@clinic.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isSaving}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="doctor-phone">Phone</Label>
-          <Input
-            id="doctor-phone"
-            type="tel"
-            placeholder="e.g. +1 555-0123"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={isSaving}
-          />
-        </div>
-
-        {/* Show file upload only when creating (not editing) */}
-        {!isEditing && (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="doctor-cv">Doctor CV (PDF)</Label>
-            <label
-              htmlFor="doctor-cv"
-              className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-border cursor-pointer hover:bg-muted/30 transition-colors"
+        {/* Sub-tab for Schedule — only in edit mode */}
+        {isEditing && (
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              type="button"
+              variant={activeTab === "details" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs px-3"
+              onClick={() => setActiveTab("details")}
             >
-              {file ? (
-                <>
-                  <FileText size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
-                  <span className="text-sm text-foreground truncate">{file.name}</span>
-                </>
-              ) : (
-                <>
-                  <Upload size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
-                  <span className="text-sm text-muted-foreground">Click to upload PDF</span>
-                </>
-              )}
-            </label>
-            <input
-              id="doctor-cv"
-              type="file"
-              accept="application/pdf"
-              className="sr-only"
-              onChange={handleFileChange}
-              disabled={isSaving}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Upload the doctor&apos;s CV to auto-extract specialty and about info.
-            </p>
+              Details
+            </Button>
+            <Button
+              type="button"
+              variant={activeTab === "schedule" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs px-3"
+              onClick={() => setActiveTab("schedule")}
+            >
+              Schedule
+            </Button>
           </div>
         )}
+      </div>
 
-        {/* Show about and specialty fields when editing */}
-        {isEditing && (
-          <>
+      {/* Tab content */}
+      {activeTab === "details" ? (
+        <>
+          {/* Form fields */}
+          <div className="flex flex-col gap-4 flex-1">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="doctor-specialty">Specialty</Label>
+              <Label htmlFor="doctor-name">Name</Label>
               <Input
-                id="doctor-specialty"
-                placeholder="e.g. Cardiology, Internal Medicine"
-                value={specialty}
-                onChange={(e) => setSpecialty(e.target.value)}
+                id="doctor-name"
+                placeholder="e.g. Dr. Jane Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 disabled={isSaving}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="doctor-about">About</Label>
-              <Textarea
-                id="doctor-about"
-                placeholder="Doctor bio / background"
-                value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                rows={4}
+              <Label htmlFor="doctor-email">Email</Label>
+              <Input
+                id="doctor-email"
+                type="email"
+                placeholder="e.g. jane@clinic.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={isSaving}
               />
             </div>
-          </>
-        )}
 
-        {/* Weekly schedule — edit mode only */}
-        {isEditing && doctor && (
-          <div className="border-t border-border pt-4 mt-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="doctor-phone">Phone</Label>
+              <Input
+                id="doctor-phone"
+                type="tel"
+                placeholder="e.g. +1 555-0123"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isSaving}
+              />
+            </div>
+
+            {/* Show file upload only when creating (not editing) */}
+            {!isEditing && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="doctor-cv">Doctor CV (PDF)</Label>
+                <label
+                  htmlFor="doctor-cv"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-border cursor-pointer hover:bg-muted/30 transition-colors"
+                >
+                  {file ? (
+                    <>
+                      <FileText size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
+                      <span className="text-sm text-foreground truncate">{file.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
+                      <span className="text-sm text-muted-foreground">Click to upload PDF</span>
+                    </>
+                  )}
+                </label>
+                <input
+                  id="doctor-cv"
+                  type="file"
+                  accept="application/pdf"
+                  className="sr-only"
+                  onChange={handleFileChange}
+                  disabled={isSaving}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Upload the doctor&apos;s CV to auto-extract specialty and about info.
+                </p>
+              </div>
+            )}
+
+            {/* Show about and specialty fields when editing */}
+            {isEditing && (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="doctor-specialty">Specialty</Label>
+                  <Input
+                    id="doctor-specialty"
+                    placeholder="e.g. Cardiology, Internal Medicine"
+                    value={specialty}
+                    onChange={(e) => setSpecialty(e.target.value)}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="doctor-about">About</Label>
+                  <Textarea
+                    id="doctor-about"
+                    placeholder="Doctor bio / background"
+                    value={about}
+                    onChange={(e) => setAbout(e.target.value)}
+                    rows={4}
+                    disabled={isSaving}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Progress message */}
+          {isSaving && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border">
+              <Loader2 size={14} className="animate-spin text-muted-foreground" aria-hidden="true" />
+              <span className="text-xs text-muted-foreground">{stepMessages[saveStep]}</span>
+            </div>
+          )}
+
+          {/* Save button */}
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="w-full"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 size={16} className="animate-spin mr-2" aria-hidden="true" />
+                {stepMessages[saveStep]}
+              </>
+            ) : (
+              <>
+                <Save size={16} className="mr-2" aria-hidden="true" />
+                Save
+              </>
+            )}
+          </Button>
+        </>
+      ) : (
+        /* Schedule tab — only rendered in edit mode */
+        isEditing && doctor && (
+          <div className="flex-1">
             <DoctorAvailabilityEditor
               doctorGuid={doctor.guid}
               disabled={isSaving}
             />
           </div>
-        )}
-      </div>
-
-      {/* Progress message */}
-      {isSaving && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border">
-          <Loader2 size={14} className="animate-spin text-muted-foreground" aria-hidden="true" />
-          <span className="text-xs text-muted-foreground">{stepMessages[saveStep]}</span>
-        </div>
+        )
       )}
-
-      {/* Save button */}
-      <Button
-        onClick={handleSave}
-        disabled={isSaving}
-        className="w-full"
-      >
-        {isSaving ? (
-          <>
-            <Loader2 size={16} className="animate-spin mr-2" aria-hidden="true" />
-            {stepMessages[saveStep]}
-          </>
-        ) : (
-          <>
-            <Save size={16} className="mr-2" aria-hidden="true" />
-            Save
-          </>
-        )}
-      </Button>
     </div>
   );
 }
