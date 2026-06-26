@@ -20,6 +20,8 @@ import { leadChatTranscriptService } from "@/lib/api/services/lead-chat-transcri
 import { patientLeadService } from "@/lib/api/services/patient-lead-service";
 import { appointmentService } from "@/lib/api/services/appointment-service";
 import { triageService } from "@/lib/api/services/triage-service";
+import { doctorService } from "@/lib/api/services/doctor-service";
+import type { DoctorResponse } from "@/lib/api/model/doctor.model";
 import type { TriageTranscriptItem } from "@/lib/api/model/triage.model";
 import { TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 
@@ -70,6 +72,8 @@ export function TriageChat({
   const [phase, setPhase] = useState<ChatPhase>("chat");
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const [convertedPatientGuid, setConvertedPatientGuid] = useState<string | null>(null);
+  const [recommendedDoctor, setRecommendedDoctor] = useState<DoctorResponse | null>(null);
+  const [recommendedDoctorName, setRecommendedDoctorName] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -175,6 +179,9 @@ export function TriageChat({
 
       // If the agent recommends a doctor, show booking buttons
       if (result.booking_flag) {
+        if (result.recommended_doctor_name) {
+          setRecommendedDoctorName(result.recommended_doctor_name);
+        }
         setShowBookingButtons(true);
       }
     } catch {
@@ -217,7 +224,7 @@ export function TriageChat({
 
   /* ── Intent pivot: YES (triggered programmatically or by future LLM) ── */
   async function handlePivotYes() {
-    const text = "Yes, please show me her availability!";
+    const text = "Yes, please show me their availability!";
     const userMsg: Message = { id: `u-yes-${Date.now()}`, from: "user", text };
     setMessages((prev) => [...prev, userMsg]);
 
@@ -226,10 +233,23 @@ export function TriageChat({
     setProcessingStep("Processing appointment…");
 
     try {
+      // Resolve the recommended doctor by name
+      if (recommendedDoctorName) {
+        setProcessingStep("Finding your doctor…");
+        const searchResult = await doctorService.search({ search_string: recommendedDoctorName });
+        if (searchResult.found_doctor && searchResult.doctor_results.length > 0) {
+          const doc = searchResult.doctor_results[0];
+          // Fetch full doctor record
+          const fullDoctor = await doctorService.getByGuid(doc.guid);
+          setRecommendedDoctor(fullDoctor);
+        }
+      }
+
       if (leadGuid) {
         setProcessingStep("Setting up your patient profile…");
+        const doctorGuid = recommendedDoctor?.guid ?? TESTING_DOCTOR_GUID;
         const conversionResult = await patientLeadService.convertLeadToPatient({
-          doctor_guid: TESTING_DOCTOR_GUID,
+          doctor_guid: doctorGuid,
           lead_guid: leadGuid,
         });
         setConvertedPatientGuid(conversionResult.patient_guid);
@@ -287,7 +307,7 @@ export function TriageChat({
             <p className="text-white font-bold text-xl mb-1">
               {processingStep || "Opening calendar…"}
             </p>
-            <p className="text-white/70 text-sm">Dr. Priya Nair</p>
+            <p className="text-white/70 text-sm">{recommendedDoctor?.name ?? recommendedDoctorName ?? "Your Doctor"}</p>
           </div>
         </div>
       </div>
@@ -296,32 +316,42 @@ export function TriageChat({
 
   /* ── Booking view (post-morph) ───────────────────────────── */
   if (phase === "booking") {
+    const doctorDisplayName = recommendedDoctor?.name ?? recommendedDoctorName ?? "Recommended Doctor";
+    const doctorGuid = recommendedDoctor?.guid ?? TESTING_DOCTOR_GUID;
+    const doctorImageUrl = recommendedDoctor?.image_url;
+
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
         <div className="px-4 pt-4">
           <div className="mx-auto max-w-md">
             <div className="flex items-center gap-3 rounded-xl bg-[var(--color-brand-teal-light)] border border-[var(--color-brand-teal)]/20 px-4 py-3 mb-1">
               <div className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src="/doctors/dr-priya-nair.png"
-                  alt="Dr. Priya Nair"
-                  fill
-                  className="object-cover"
-                  sizes="36px"
-                />
+                {doctorImageUrl ? (
+                  <Image
+                    src={doctorImageUrl}
+                    alt={doctorDisplayName}
+                    fill
+                    className="object-cover"
+                    sizes="36px"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center size-9 bg-[var(--color-brand-teal)] rounded-lg">
+                    <User size={16} className="text-white" aria-hidden="true" />
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-[var(--color-brand-teal)] flex items-center gap-1.5">
                   <Sparkles size={11} aria-hidden="true" />
                   AI recommended
                 </p>
-                <p className="text-sm font-semibold text-foreground truncate">Dr. Priya Nair</p>
+                <p className="text-sm font-semibold text-foreground truncate">{doctorDisplayName}</p>
               </div>
             </div>
           </div>
         </div>
         <BookingFlow
-          preselectedDoctorId="priya-nair"
+          preselectedDoctorId={doctorGuid}
           prefillName={userName}
           prefillMobile={userMobile}
           onConfirmed={async () => {
@@ -333,7 +363,7 @@ export function TriageChat({
               endTime.setMinutes(endTime.getMinutes() + 30);
 
               await appointmentService.create({
-                doctor_guid: TESTING_DOCTOR_GUID,
+                doctor_guid: doctorGuid,
                 patient_guid: convertedPatientGuid ?? undefined,
                 scheduled_start: tomorrow.toISOString(),
                 scheduled_end: endTime.toISOString(),

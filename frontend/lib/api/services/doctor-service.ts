@@ -8,15 +8,20 @@ export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
 const ENDPOINT = `${API_MDA_PREFIX}/doctor`;
 
+/** Headers needed to bypass ngrok's browser warning interstitial in dev */
+const HEADERS: HeadersInit = {
+  "ngrok-skip-browser-warning": "true",
+};
+
 export const doctorService = {
   getAll: async (skip = 0, limit = 100): Promise<DoctorResponse[]> => {
-    const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`);
+    const res = await fetch(`${ENDPOINT}/get-all?skip=${skip}&limit=${limit}`, { headers: HEADERS });
     if (!res.ok) throw new Error(`Failed to fetch doctors: ${res.status}`);
     return res.json();
   },
 
   getByGuid: async (guid: string): Promise<DoctorResponse> => {
-    const res = await fetch(`${ENDPOINT}/get-by-guid/${guid}`);
+    const res = await fetch(`${ENDPOINT}/get-by-guid/${guid}`, { headers: HEADERS });
     if (!res.ok) throw new Error(`Failed to fetch doctor: ${res.status}`);
     return res.json();
   },
@@ -24,7 +29,7 @@ export const doctorService = {
   create: async (data: DoctorCreate): Promise<DoctorResponse> => {
     const res = await fetch(`${ENDPOINT}/create`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to create doctor: ${res.status}`);
@@ -34,7 +39,7 @@ export const doctorService = {
   update: async (guid: string, data: DoctorUpdate): Promise<DoctorResponse> => {
     const res = await fetch(`${ENDPOINT}/update/${guid}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to update doctor: ${res.status}`);
@@ -42,14 +47,14 @@ export const doctorService = {
   },
 
   delete: async (guid: string): Promise<void> => {
-    const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
+    const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE", headers: HEADERS });
     if (!res.ok) throw new Error(`Failed to delete doctor: ${res.status}`);
   },
 
   getPatientList: async (data: DoctorPatientRequest): Promise<DoctorPatientListItem[]> => {
     const res = await fetch(`${ENDPOINT}/patient-list`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to fetch doctor patient list: ${res.status}`);
@@ -59,7 +64,7 @@ export const doctorService = {
   getPatientReport: async (data: PatientAppointmentRequest): Promise<PatientReport> => {
     const res = await fetch(`${ENDPOINT}/patient-report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to fetch patient report: ${res.status}`);
@@ -69,7 +74,7 @@ export const doctorService = {
   search: async (data: DoctorSearchRequest): Promise<DoctorSearchResponse> => {
     const res = await fetch(`${ENDPOINT}/search`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to search doctors: ${res.status}`);
@@ -79,7 +84,7 @@ export const doctorService = {
   searchByDocName: async (data: DoctorSearchByNameRequest): Promise<DoctorSearchByNameResponse> => {
     const res = await fetch(`${ENDPOINT}/search-doc-by-name`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...HEADERS },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to search doctor by name: ${res.status}`);
@@ -91,6 +96,7 @@ export const doctorService = {
     formData.append("file", file);
     const res = await fetch(`${ENDPOINT}/upload-cv/${doctorGuid}`, {
       method: "POST",
+      headers: { ...HEADERS },
       body: formData,
     });
     if (!res.ok) throw new Error(`Failed to upload doctor CV: ${res.status}`);
