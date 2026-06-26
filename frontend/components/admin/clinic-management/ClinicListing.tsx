@@ -141,6 +141,7 @@ export function ClinicListing() {
                   </div>
                   {/* clinic slug */}
                   {clinic.slug && (
+                    // redirect to site preview from the slug
                     <a
                       href={`/clinic/${clinic.slug}`}
                       target="_blank"

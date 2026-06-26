@@ -20,6 +20,7 @@ import { clinicHdrService } from "@/lib/api/services/clinic-hdr-service";
 import type { ClinicHdrResponse } from "@/lib/api/model/clinic-hdr.model";
 import templateConfigs from "./ClinicTemplate.json";
 import { ClinicDoctorListing } from "./ClinicDoctorListing";
+import { ClientGBPView } from "./ClientGBPView";
 
 const TEMPLATES = [
   { id: "clinical_professional", label: "Clinical Professional", image: "/clinic-site-templates/clinical-professional-template.png" },
@@ -179,7 +180,7 @@ export function ClinicView({ clinic, onSaved, onClose }: ClinicViewProps) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="clinic-template">Template</Label>
+              <Label htmlFor="clinic-template">Website Template</Label>
               <Select value={templateId} onValueChange={setTemplateId}>
                 <SelectTrigger id="clinic-template" className="bg-background">
                   <SelectValue placeholder="Choose a template" />
@@ -195,27 +196,48 @@ export function ClinicView({ clinic, onSaved, onClose }: ClinicViewProps) {
             </div>
           </div>
 
-          {/* Template preview */}
-          {selectedTemplate ? (
-            <div className="flex flex-col gap-2 flex-1">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Preview
-              </span>
-              <div className="relative w-full flex-1 min-h-[420px] rounded-lg border border-border/60 overflow-hidden bg-muted/20">
-                <Image
-                  src={selectedTemplate.image}
-                  alt={`${selectedTemplate.label} template preview`}
-                  fill
-                  className="object-cover object-top"
-                  sizes="(max-width: 1024px) 100vw, 40vw"
-                />
+          {/* Preview & Integration Engine */}
+          <div className="flex flex-col gap-2 flex-1">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Preview &amp; Integration Engine
+            </span>
+            <div className="grid grid-cols-2 gap-3 flex-1 min-h-[420px]">
+              {/* Left: Google Maps Card */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Step 1: Patient Discovery (Google Maps)
+                </span>
+                <ClientGBPView clinicName={name} address={address} slug={websiteName} />
+              </div>
+
+              {/* Right: Website Preview */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Step 2: Live Generated Site
+                </span>
+                {selectedTemplate ? (
+                  <div className="relative w-full flex-1 rounded-lg border border-border/60 overflow-hidden bg-muted/20">
+                    <Image
+                      src={selectedTemplate.image}
+                      alt={`${selectedTemplate.label} template preview`}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 1024px) 100vw, 30vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1 rounded-lg border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground">
+                    Select a template to see a preview
+                  </div>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="flex-1 min-h-[200px] rounded-lg border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground">
-              Select a template to see a preview
-            </div>
-          )}
+
+            {/* Connection indicator */}
+            <p className="text-[10px] text-muted-foreground text-center italic">
+              Clicking [Website ↗] on Google Maps drives patients directly to your generated site.
+            </p>
+          </div>
 
           {/* Save button */}
           <Button
