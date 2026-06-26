@@ -277,6 +277,7 @@ class DoctorAvailabilityCreate(BaseModel):
 
 
 class DoctorAvailabilityUpdate(BaseModel):
+    guid: Optional[UUID] = None
     doctor_guid: Optional[UUID] = None
     day_of_week: Optional[str] = None
     start_time: Optional[time] = None

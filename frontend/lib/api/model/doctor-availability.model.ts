@@ -8,6 +8,7 @@ export interface DoctorAvailabilityCreate {
 }
 
 export interface DoctorAvailabilityUpdate {
+  guid?: string;
   doctor_guid?: string;
   day_of_week?: string;
   start_time?: string;
