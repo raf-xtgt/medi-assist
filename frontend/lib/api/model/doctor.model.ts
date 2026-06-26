@@ -114,3 +114,13 @@ export interface DoctorSearchResponse {
   found_doctor: boolean;
   doctor_results: DoctorSearchResultItem[];
 }
+
+export interface DoctorSearchByNameRequest {
+  search_string: string;
+}
+
+export interface DoctorSearchByNameResponse {
+  search_string: string;
+  found_doctor: boolean;
+  doctor_name: string;
+}

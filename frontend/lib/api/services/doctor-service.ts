@@ -1,8 +1,8 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse } from "../model/doctor.model";
+import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse } from "../model/doctor.model";
 import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
-export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse };
+export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
 export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
@@ -73,6 +73,16 @@ export const doctorService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to search doctors: ${res.status}`);
+    return res.json();
+  },
+
+  searchByDocName: async (data: DoctorSearchByNameRequest): Promise<DoctorSearchByNameResponse> => {
+    const res = await fetch(`${ENDPOINT}/search-doc-by-name`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to search doctor by name: ${res.status}`);
     return res.json();
   },
 
