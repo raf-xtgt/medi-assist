@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from model.schemas import DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse
+from model.schemas import DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse, DoctorCalendarRequest, DoctorCalendarResponse
 from service.app_mda_doctor_availability_service import doctor_availability_service
 from util.database import get_db
 
@@ -23,6 +23,11 @@ def get_by_guid(guid: UUID, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(status_code=404, detail="Record not found")
     return obj
+
+
+@router.get("/get-by-doctor/{doctor_guid}", response_model=list[DoctorAvailabilityResponse])
+def get_by_doctor(doctor_guid: UUID, db: Session = Depends(get_db)):
+    return doctor_availability_service.get_by_doctor_guid(db, doctor_guid)
 
 
 @router.post("/create", response_model=DoctorAvailabilityResponse, status_code=201)
@@ -66,3 +71,10 @@ def multi_update(payloads: list[DoctorAvailabilityUpdate], db: Session = Depends
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not doctor_availability_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+@router.post("/calendar", response_model=DoctorCalendarResponse)
+def get_calendar(payload: DoctorCalendarRequest, db: Session = Depends(get_db)):
+    return doctor_availability_service.get_calendar(
+        db, payload.doctor_guid, payload.start_date, payload.end_date
+    )

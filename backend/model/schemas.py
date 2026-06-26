@@ -1,6 +1,6 @@
 """Pydantic schemas for request/response validation."""
 
-from datetime import datetime, time
+from datetime import date, datetime, time
 from typing import Any, Optional
 from uuid import UUID
 
@@ -298,6 +298,20 @@ class DoctorAvailabilityResponse(BaseModel):
     status: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class DoctorCalendarRequest(BaseModel):
+    doctor_guid: UUID
+    start_date: date
+    end_date: date
+
+
+class DoctorCalendarResponse(BaseModel):
+    doctor_guid: UUID
+    start_date: date
+    end_date: date
+    slot_duration_minutes: int
+    available_dates: dict[str, list[str]]
 
 
 # ─── app_mda_appointment ─────────────────────────────────────────────────────
