@@ -101,4 +101,45 @@ class AppMdaDoctorService(BaseService):
         )
 
 
+    def fuzzy_search_doc_name(self, db: Session, search_string: str, limit: int = 20) -> list[AppMdaDoctor]:
+        """
+        Fuzzy search by doctor name only using PostgreSQL pg_trgm GIN indexes.
+
+        Same tokenization logic as fuzzy_search but only matches against the name column.
+        """
+        search_string = search_string.strip()
+        if not search_string:
+            return []
+
+        # Extract meaningful tokens
+        tokens = [
+            t for t in search_string.lower().split()
+            if len(t) >= _MIN_TOKEN_LENGTH and t not in _STOP_WORDS
+        ]
+
+        # Check for "dr" or "dr." prefix
+        raw_tokens = search_string.lower().split()
+        for i, t in enumerate(raw_tokens):
+            if t in ("dr", "dr.", "doctor") and i + 1 < len(raw_tokens):
+                next_token = raw_tokens[i + 1]
+                if next_token not in tokens and len(next_token) >= 2:
+                    tokens.append(next_token)
+
+        if not tokens:
+            return []
+
+        # Build a filter: ANY token matching the name column qualifies the row
+        token_filters = []
+        for token in tokens:
+            pattern = f"%{token}%"
+            token_filters.append(AppMdaDoctor.name.ilike(pattern))
+
+        return (
+            db.query(AppMdaDoctor)
+            .filter(or_(*token_filters))
+            .limit(limit)
+            .all()
+        )
+
+
 doctor_service = AppMdaDoctorService()

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
-from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult
+from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult, PatientPortalSearchDocByNameDto
 from model.dto.doctor_cv_ingestion_dto import DoctorCVExtraction
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
@@ -79,6 +79,21 @@ def search_doctors(payload: PatientPortalSearchRequestDto, db: Session = Depends
             )
             for doc in results
         ],
+    )
+
+
+@router.post("/search-doc-by-name", response_model=PatientPortalSearchDocByNameDto)
+def search_doc_by_name(payload: PatientPortalSearchRequestDto, db: Session = Depends(get_db)):
+    """
+    Fuzzy search for doctors by name only.
+    Used by the triage flow to resolve a recommended doctor name to a record.
+    """
+    results = doctor_service.fuzzy_search_doc_name(db, payload.search_string)
+    first_match = results[0] if results else None
+    return PatientPortalSearchDocByNameDto(
+        search_string=payload.search_string,
+        found_doctor=len(results) > 0,
+        doctor_name=first_match.name or "" if first_match else "",
     )
 
 

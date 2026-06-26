@@ -27,3 +27,8 @@ class PatientPortalSearchResultDto(BaseModel):
     search_string: str
     found_doctor: bool
     doctor_results: list[DoctorSearchResult] = []
+
+class PatientPortalSearchDocByNameDto(BaseModel):
+    search_string: str
+    found_doctor: bool
+    doctor_name: str

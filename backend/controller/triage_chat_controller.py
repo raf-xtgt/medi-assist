@@ -56,6 +56,32 @@ def _detect_booking_recommendation(response_text: str) -> bool:
     return has_recommendation and has_booking_prompt
 
 
+def _extract_recommended_doctor_name(response_text: str) -> str | None:
+    """
+    Extract the recommended doctor's name from the agent response.
+
+    Looks for patterns like "Dr. Jane Smith", "Dr Jane Smith", or
+    names following recommendation phrases.
+    """
+    import re
+
+    # Pattern 1: "Dr." or "Dr" followed by a name (1-3 capitalized words)
+    dr_pattern = re.search(r'\bDr\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})', response_text)
+    if dr_pattern:
+        return f"Dr. {dr_pattern.group(1)}"
+
+    # Pattern 2: After recommendation phrases, look for a proper noun
+    rec_phrases = [
+        r"(?:I(?:'d)?\s+recommend|I\s+would\s+recommend|best\s+match\s+is|good\s+fit\s+would\s+be)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})",
+    ]
+    for pattern in rec_phrases:
+        match = re.search(pattern, response_text)
+        if match:
+            return match.group(1)
+
+    return None
+
+
 def _create_triage_agent(doctors_context_string: str) -> Agent:
     """Create a triage agent with the clinic's doctor roster injected into the prompt."""
     return Agent(
@@ -174,7 +200,16 @@ async def trigger_chat(payload: TriageRequestDto, db: Session = Depends(get_db))
         # Determine booking_flag: if the agent recommends a doctor and asks to book
         booking_flag = _detect_booking_recommendation(response_text)
 
-        return TriageResponseDto(response_text=response_text, booking_flag=booking_flag)
+        # Extract recommended doctor name if booking was detected
+        recommended_doctor_name = None
+        if booking_flag:
+            recommended_doctor_name = _extract_recommended_doctor_name(response_text)
+
+        return TriageResponseDto(
+            response_text=response_text,
+            booking_flag=booking_flag,
+            recommended_doctor_name=recommended_doctor_name,
+        )
 
     except Exception as e:
         print(f"[TriageChat] ERROR: {e}")
