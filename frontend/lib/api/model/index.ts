@@ -6,7 +6,7 @@ export type { DoctorCredCreate, DoctorCredUpdate, DoctorCredResponse } from "./d
 export type { PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse } from "./patient-lead.model";
 export type { PatientCreate, PatientUpdate, PatientResponse } from "./patient.model";
 export type { DoctorPatientLinkCreate, DoctorPatientLinkUpdate, DoctorPatientLinkResponse } from "./doctor-patient-link.model";
-export type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse } from "./doctor-availability.model";
+export type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse, DoctorCalendarRequest, DoctorCalendarResponse } from "./doctor-availability.model";
 export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse } from "./appointment.model";
 export type { AppointmentSessionCreate, AppointmentSessionUpdate, AppointmentSessionResponse } from "./appointment-session.model";
 export type { PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse } from "./prescription.model";

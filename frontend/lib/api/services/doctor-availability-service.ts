@@ -1,7 +1,7 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse } from "../model/doctor-availability.model";
+import type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse, DoctorCalendarRequest, DoctorCalendarResponse } from "../model/doctor-availability.model";
 
-export type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse };
+export type { DoctorAvailabilityCreate, DoctorAvailabilityUpdate, DoctorAvailabilityResponse, DoctorCalendarRequest, DoctorCalendarResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/doctor-availability`;
 
@@ -66,5 +66,21 @@ export const doctorAvailabilityService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE", headers: HEADERS });
     if (!res.ok) throw new Error(`Failed to delete doctor availability: ${res.status}`);
+  },
+
+  getByDoctorGuid: async (doctorGuid: string): Promise<DoctorAvailabilityResponse[]> => {
+    const res = await fetch(`${ENDPOINT}/get-by-doctor/${doctorGuid}`, { headers: HEADERS });
+    if (!res.ok) throw new Error(`Failed to fetch doctor availability: ${res.status}`);
+    return res.json();
+  },
+
+  getCalendar: async (params: DoctorCalendarRequest): Promise<DoctorCalendarResponse> => {
+    const res = await fetch(`${ENDPOINT}/calendar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...HEADERS },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch doctor calendar: ${res.status}`);
+    return res.json();
   },
 };
