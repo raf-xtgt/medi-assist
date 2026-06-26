@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { doctorService } from "@/lib/api/services/doctor-service";
 import type { DoctorResponse } from "@/lib/api/model/doctor.model";
+import { DoctorAvailabilityEditor } from "./DoctorAvailabilityEditor";
 
 type SaveStep = "idle" | "creating" | "ingesting" | "updating" | "done";
 
@@ -223,6 +224,16 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
               />
             </div>
           </>
+        )}
+
+        {/* Weekly schedule — edit mode only */}
+        {isEditing && doctor && (
+          <div className="border-t border-border pt-4 mt-2">
+            <DoctorAvailabilityEditor
+              doctorGuid={doctor.guid}
+              disabled={isSaving}
+            />
+          </div>
         )}
       </div>
 
