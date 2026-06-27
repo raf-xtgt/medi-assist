@@ -157,6 +157,10 @@ class AppMdaDoctorService(BaseService):
 
         Blob path: image/{doctor_guid}/{doctor_name}/{filename}
 
+        The bucket is configured with allUsers → roles/storage.objectViewer
+        at the IAM level, so all objects are publicly readable via their
+        https://storage.googleapis.com/<bucket>/<path> URL.
+
         Returns a dict with doctor_guid, image_url, and blob_path.
         """
         doctor = self.get_by_guid(db, doctor_guid)
@@ -184,7 +188,7 @@ class AppMdaDoctorService(BaseService):
         blob = bucket.blob(blob_path)
         blob.upload_from_string(file_data, content_type=content_type)
 
-        # Build public URL
+        # Public URL — works because the bucket has allUsers objectViewer IAM binding
         image_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{blob_path}"
 
         # Update the doctor record with the image URL

@@ -2,6 +2,7 @@
 
 import os
 from google.cloud import storage
+from google.cloud.storage import Bucket
 
 # GCS bucket name — create this bucket in your GCP project
 GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "medi-assist-recordings")
@@ -12,10 +13,32 @@ def get_gcs_client() -> storage.Client:
     return storage.Client()
 
 
-def get_bucket():
+def get_bucket() -> Bucket:
     """Return the GCS bucket for audio recordings."""
     client = get_gcs_client()
     return client.bucket(GCS_BUCKET_NAME)
+
+
+def make_bucket_public() -> None:
+    """Grant allUsers the Storage Object Viewer role on the bucket.
+
+    This makes ALL objects in the bucket publicly readable via their
+    https://storage.googleapis.com/<bucket>/<path> URLs.
+
+    Works with uniform bucket-level access (IAM-only mode).
+    Only needs to be run once per bucket. Subsequent calls are idempotent
+    — GCS deduplicates identical IAM bindings.
+
+    Reference: https://cloud.google.com/storage/docs/access-control/making-data-public
+    """
+    bucket = get_bucket()
+    policy = bucket.get_iam_policy(requested_policy_version=3)
+    policy.version = 3
+    policy.bindings.append(
+        {"role": "roles/storage.objectViewer", "members": {"allUsers"}}
+    )
+    bucket.set_iam_policy(policy)
+    print(f"[GCS] Bucket '{GCS_BUCKET_NAME}' is now publicly readable.")
 
 
 def upload_chunk(
