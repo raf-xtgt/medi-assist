@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -43,6 +44,14 @@ export default function PatientHomePage() {
     saveSession,
   } = usePatientSession();
 
+  const shouldRedirectLanding = !isLoading && !patientGuid;
+
+  useEffect(() => {
+    if (shouldRedirectLanding) {
+      router.replace("/patient/landing");
+    }
+  }, [shouldRedirectLanding, router]);
+
   /* ── Loading session → brief spinner ──────────────────── */
   if (isLoading) {
     return (
@@ -60,8 +69,7 @@ export default function PatientHomePage() {
   }
 
   /* ── No session → redirect to landing ────────────────── */
-  if (!patientGuid) {
-    router.replace("/patient/landing");
+  if (shouldRedirectLanding) {
     return null;
   }
 

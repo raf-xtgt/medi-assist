@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Zap, CalendarCheck, User, Phone, Sparkles } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
@@ -22,8 +22,15 @@ export function PatientLanding() {
   const [submitting, setSubmitting] = useState(false);
 
   /* ── Returning patient → redirect to home ────────────── */
-  if (!sessionLoading && cachedPatientGuid) {
-    router.replace("/patient/home");
+  const shouldRedirectHome = !sessionLoading && !!cachedPatientGuid;
+
+  useEffect(() => {
+    if (shouldRedirectHome) {
+      router.replace("/patient/home");
+    }
+  }, [shouldRedirectHome, router]);
+
+  if (shouldRedirectHome) {
     return null;
   }
 
