@@ -34,7 +34,16 @@ export interface Appointment {
   triageSummary?: string;
   /** Backend patient GUID */
   patientGuid?: string;
+  /** Backend appointment GUID */
+  appointmentGuid?: string;
+  /** Sequential appointment number e.g. "1034" */
+  runningNo?: string;
+  /** ISO datetime string for appointment start */
+  scheduledStart?: string;
+  /** ISO datetime string for appointment end */
+  scheduledEnd?: string;
 }
+
 
 interface AmbientSchedulerProps {
   appointments: Appointment[];
@@ -155,8 +164,13 @@ export function AmbientScheduler({
                     {appt.time}
                   </span>
                   <span className="mt-0.5 text-[10px] text-muted-foreground">
-                    {appt.durationMin}m
+                    {appt.durationMin > 0 ? `${appt.durationMin}m` : "—"}
                   </span>
+                  {appt.runningNo && (
+                    <span className="mt-0.5 text-[9px] font-medium tabular-nums text-[var(--color-brand-teal)]/70">
+                      #{appt.runningNo}
+                    </span>
+                  )}
                 </div>
 
                 {/* Left accent bar */}

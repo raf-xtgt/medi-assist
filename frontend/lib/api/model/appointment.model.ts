@@ -79,4 +79,10 @@ export interface DoctorAppointmentListItem {
   patient_email?: string;
   patient_address?: string;
   patient_triage_summary?: string;
+  // Appointment fields (one row per appointment)
+  appointment_guid?: string;
+  appointment_status?: string;
+  running_no?: string;
+  scheduled_start?: string;
+  scheduled_end?: string;
 }

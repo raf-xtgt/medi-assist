@@ -245,6 +245,38 @@ export function AmbientCoreWorkspace() {
   // ── Load real appointments from the backend on mount ─────────────────────
   useEffect(() => {
     let cancelled = false;
+
+    /** Normalise backend appointment_status → frontend Appointment status union */
+    function normaliseStatus(raw?: string): Appointment["status"] {
+      if (!raw) return "upcoming";
+      const s = raw.toLowerCase();
+      if (s === "in_progress" || s === "in-progress" || s === "active") return "in-progress";
+      if (s === "completed" || s === "done")                              return "completed";
+      if (s === "cancelled" || s === "canceled")                          return "cancelled";
+      if (s === "rescheduled")                                            return "rescheduled";
+      return "upcoming"; // 'scheduled', 'pending', unknown → upcoming
+    }
+
+    /** Format an ISO datetime string to "HH:MM" in local time */
+    function toTimeLabel(iso?: string): string {
+      if (!iso) return "--:--";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "--:--";
+      return d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+
+    /** Compute duration in minutes between two ISO strings */
+    function toDurationMin(start?: string, end?: string): number {
+      if (!start || !end) return 0;
+      const diff = new Date(end).getTime() - new Date(start).getTime();
+      if (isNaN(diff) || diff <= 0) return 0;
+      return Math.round(diff / 60000);
+    }
+
     async function loadAppointments() {
       setIsLoadingAppointments(true);
       try {
@@ -257,17 +289,21 @@ export function AmbientCoreWorkspace() {
           setIsLoadingAppointments(false);
           return;
         }
-        // Map DoctorAppointmentListItem → Appointment
-        const mapped: Appointment[] = items.map((item, idx) => ({
-          id: item.patient_guid,
+        // Map DoctorAppointmentListItem → Appointment (one row per appointment)
+        const mapped: Appointment[] = items.map((item) => ({
+          id: item.appointment_guid ?? item.patient_guid, // appointment_guid is unique per row
           patientName: item.patient_name ?? "Unknown Patient",
-          patientAge: 0,          // not in getByDoctor response
-          reason: "Appointment",  // not in getByDoctor response
-          time: "--:--",          // not in getByDoctor response
-          durationMin: 30,
-          status: "upcoming" as Appointment["status"],
+          patientAge: 0,           // not in getByDoctor response
+          reason: "Appointment",   // not in getByDoctor response
+          time: toTimeLabel(item.scheduled_start),
+          durationMin: toDurationMin(item.scheduled_start, item.scheduled_end),
+          status: normaliseStatus(item.appointment_status),
           triageSummary: item.patient_triage_summary ?? undefined,
           patientGuid: item.patient_guid,
+          appointmentGuid: item.appointment_guid,
+          runningNo: item.running_no ?? undefined,
+          scheduledStart: item.scheduled_start ?? undefined,
+          scheduledEnd: item.scheduled_end ?? undefined,
         }));
         setAppointments(mapped);
       } catch (err) {
@@ -282,6 +318,7 @@ export function AmbientCoreWorkspace() {
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   // Track which session GUID belongs to which appointment ID
   const sessionToAppointmentRef = useRef<Map<string, string>>(new Map());
@@ -558,7 +595,7 @@ export function AmbientCoreWorkspace() {
         <div
           className={cn(
             "flex w-[220px] shrink-0 flex-col border-r border-border/60 bg-background",
-            "transition-all"
+            "overflow-hidden transition-all"
           )}
         >
           <AmbientScheduler
