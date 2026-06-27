@@ -6,14 +6,15 @@ import { AmbientSessionPanel, type SessionData } from "@/components/doctor/Ambie
 import { AmbientBrief, type AIBriefData } from "@/components/doctor/AmbientBrief";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bot, CalendarClock, LayoutGrid, Stethoscope, Wifi, WifiOff } from "lucide-react";
+import { Bot, CalendarClock, LayoutGrid, Loader2, Stethoscope, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TESTING_APPOINTMENT_GUID, TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 import { useAmbientRecording } from "@/hooks/useAmbientRecording";
 import { useSessionEvents, type SessionEvent } from "@/hooks/useSessionEvents";
 import { toast } from "sonner";
+import { appointmentService } from "@/lib/api/services/appointment-service";
 
-/* ── Mock seed data ──────────────────────────────────────── */
+/* ── Fallback mock data (used when API is unreachable) ───── */
 const INITIAL_APPOINTMENTS: Appointment[] = [
   { id: "1", patientName: "Maria Santos",   patientAge: 34, reason: "Follow-up consultation",  time: "09:00", durationMin: 20, status: "completed" },
   { id: "2", patientName: "James Okafor",   patientAge: 67, reason: "Blood pressure review",   time: "09:30", durationMin: 15, status: "upcoming" },
@@ -232,6 +233,7 @@ const HARDCODED_DOCTOR_GUID = TESTING_DOCTOR_GUID;
 /* ── Main Component ─────────────────────────────────────── */
 export function AmbientCoreWorkspace() {
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [sessionState, setSessionState] = useState<"idle" | "live" | "processing" | "complete">("idle");
   const [sessionData, setSessionData] = useState<SessionData>(EMPTY_SESSION_DATA);
@@ -239,6 +241,47 @@ export function AmbientCoreWorkspace() {
   const [transcript, setTranscript] = useState<string | null>(null);
   const [followUpMsg, setFollowUpMsg] = useState<string | null>(null);
   const [pipelineStep, setPipelineStep] = useState<string | null>(null);
+
+  // ── Load real appointments from the backend on mount ─────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAppointments() {
+      setIsLoadingAppointments(true);
+      try {
+        const items = await appointmentService.getByDoctor({
+          doctor_guid: HARDCODED_DOCTOR_GUID,
+        });
+        if (cancelled) return;
+        if (items.length === 0) {
+          // Backend returned nothing — keep mock fallback
+          setIsLoadingAppointments(false);
+          return;
+        }
+        // Map DoctorAppointmentListItem → Appointment
+        const mapped: Appointment[] = items.map((item, idx) => ({
+          id: item.patient_guid,
+          patientName: item.patient_name ?? "Unknown Patient",
+          patientAge: 0,          // not in getByDoctor response
+          reason: "Appointment",  // not in getByDoctor response
+          time: "--:--",          // not in getByDoctor response
+          durationMin: 30,
+          status: "upcoming" as Appointment["status"],
+          triageSummary: item.patient_triage_summary ?? undefined,
+          patientGuid: item.patient_guid,
+        }));
+        setAppointments(mapped);
+      } catch (err) {
+        if (cancelled) return;
+        console.warn("[AmbientCoreWorkspace] getByDoctor failed — using mock data:", err);
+        // Keep INITIAL_APPOINTMENTS (already the default state)
+      } finally {
+        if (!cancelled) setIsLoadingAppointments(false);
+      }
+    }
+    loadAppointments();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Track which session GUID belongs to which appointment ID
   const sessionToAppointmentRef = useRef<Map<string, string>>(new Map());
@@ -523,6 +566,7 @@ export function AmbientCoreWorkspace() {
             onSelectAppointment={handleSelectAppointment}
             activeAppointmentId={activeAppointment?.id ?? null}
             onStatusChange={handleStatusChange}
+            isLoading={isLoadingAppointments}
           />
         </div>
 

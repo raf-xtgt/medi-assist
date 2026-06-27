@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { TESTING_PATIENT_GUID, TESTING_APPOINTMENT_GUID } from "@/lib/api/model/testing-guid.model";
 import { useRouter } from "next/navigation";
 import type { Appointment } from "./AmbientScheduler";
+import { TriageSummaryBanner } from "./TriageSummaryBanner";
 
 /* ── Types ──────────────────────────────────────────────── */
 export interface VitalEntry {
@@ -379,6 +380,12 @@ export function AmbientSessionPanel({
       {/* ── Active / Idle form ── */}
       {!isProcessing && (
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+        {/* Triage Summary Banner — shown before/between sessions, hides when live */}
+          <TriageSummaryBanner
+            triageSummary={appointment.triageSummary}
+            collapsed={isLive || isProcessing}
+          />
+
           {/* Chief complaint */}
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

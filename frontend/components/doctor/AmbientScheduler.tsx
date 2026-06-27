@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,10 @@ export interface Appointment {
   time: string;
   durationMin: number;
   status: "upcoming" | "in-progress" | "completed" | "cancelled" | "rescheduled";
+  /** AI-generated triage summary from the patient's pre-visit chat */
+  triageSummary?: string;
+  /** Backend patient GUID */
+  patientGuid?: string;
 }
 
 interface AmbientSchedulerProps {
@@ -36,6 +41,8 @@ interface AmbientSchedulerProps {
   onSelectAppointment: (appt: Appointment) => void;
   activeAppointmentId?: string | null;
   onStatusChange: (id: string, status: Appointment["status"]) => void;
+  /** Show skeleton placeholder rows while the API fetch is in progress */
+  isLoading?: boolean;
 }
 
 const statusConfig: Record<
@@ -63,6 +70,7 @@ export function AmbientScheduler({
   onSelectAppointment,
   activeAppointmentId,
   onStatusChange,
+  isLoading = false,
 }: AmbientSchedulerProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -99,13 +107,32 @@ export function AmbientScheduler({
 
       {/* Timeline slots */}
       <ScrollArea className="flex-1">
+        {isLoading ? (
+          <div className="px-3 py-2 space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 px-2 py-2.5">
+                <div className="flex w-12 shrink-0 flex-col gap-1">
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-2.5 w-6" />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-3/4" />
+                  <Skeleton className="h-2.5 w-full" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <ul role="list" className="divide-y divide-border/40 px-2 py-1">
           {appointments.map((appt) => {
             const config = statusConfig[appt.status];
             const isActive = appt.id === activeAppointmentId;
             const isHovered = appt.id === hoveredId;
             const isClickable =
-              appt.status === "upcoming" || appt.status === "in-progress";
+              appt.status === "upcoming" ||
+              appt.status === "in-progress" ||
+              appt.status === "completed";
 
             return (
               <li
@@ -225,6 +252,7 @@ export function AmbientScheduler({
             );
           })}
         </ul>
+        )}
       </ScrollArea>
 
       {/* Footer summary */}
