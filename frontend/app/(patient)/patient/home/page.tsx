@@ -1,50 +1,18 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CalendarCheck,
-  FileText,
+  Clock,
   Heart,
-  MessageCircle,
-  Phone,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-
-export const metadata: Metadata = { title: "Home" };
-
-const quickActions = [
-  {
-    label:      "Book Appointment",
-    icon:       CalendarCheck,
-    href:       "/patient/book",
-    accentBg:   "bg-[var(--color-brand-teal-light)]",
-    accentText: "text-[var(--color-brand-teal)]",
-  },
-  {
-    label:      "AI Triage",
-    icon:       Sparkles,
-    href:       "/patient/triage",
-    accentBg:   "bg-[var(--color-brand-blue-light)]",
-    accentText: "text-[var(--color-brand-blue)]",
-  },
-  {
-    label:      "My Records",
-    icon:       FileText,
-    href:       "/patient/records",
-    accentBg:   "bg-emerald-50",
-    accentText: "text-emerald-600",
-  },
-  {
-    label:      "Emergency",
-    icon:       Phone,
-    href:       "tel:911",
-    accentBg:   "bg-red-50",
-    accentText: "text-red-600",
-  },
-];
+import { usePatientSession } from "@/hooks/usePatientSession";
+import { UnifiedBookingTriage } from "@/components/patient/UnifiedBookingTriage";
 
 const upcomingAppointments = [
   {
@@ -66,6 +34,49 @@ const upcomingAppointments = [
 ];
 
 export default function PatientHomePage() {
+  const router = useRouter();
+  const {
+    patientGuid,
+    patientName,
+    patientPhone,
+    isLoading,
+    saveSession,
+  } = usePatientSession();
+
+  /* ── Loading session → brief spinner ──────────────────── */
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="relative size-10">
+          <span className="absolute inset-0 rounded-full border-4 border-[var(--color-brand-teal)]/20" />
+          <span
+            className="absolute inset-0 rounded-full border-4 border-transparent border-t-[var(--color-brand-teal)]"
+            style={{ animation: "spin 0.8s linear infinite" }}
+          />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── No session → redirect to landing ────────────────── */
+  if (!patientGuid) {
+    router.replace("/patient/landing");
+    return null;
+  }
+
+  /* ── Handle new booking from embedded UnifiedBookingTriage */
+  const handleNewBooking = async (newPatientGuid: string) => {
+    // Patient already in cache — just refresh with the new GUID if different
+    await saveSession({
+      patientGuid: newPatientGuid,
+      patientName: patientName ?? "",
+      patientPhone: patientPhone ?? "",
+    });
+    // Soft refresh to update page state
+    router.refresh();
+  };
+
   return (
     <div className="px-4 py-6">
       <div className="mx-auto max-w-md">
@@ -78,7 +89,9 @@ export default function PatientHomePage() {
             <Heart size={22} className="text-[var(--color-brand-teal)]" strokeWidth={1.8} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Hello, there</h1>
+            <h1 className="text-xl font-bold text-foreground">
+              Hello, {patientName || "there"}
+            </h1>
             <p className="text-sm text-muted-foreground">How are you feeling today?</p>
           </div>
         </div>
@@ -101,7 +114,7 @@ export default function PatientHomePage() {
           </CardContent>
         </Card>
 
-        {/* Quick actions */}
+        {/* Quick actions — UnifiedBookingTriage idle view */}
         <section aria-labelledby="quick-actions-heading" className="mb-6">
           <h2
             id="quick-actions-heading"
@@ -109,21 +122,11 @@ export default function PatientHomePage() {
           >
             Quick Actions
           </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.label}
-                  href={action.href}
-                  className={`flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-xl ${action.accentBg} ${action.accentText} text-xs font-medium transition-opacity hover:opacity-80`}
-                >
-                  <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
-                  {action.label}
-                </Link>
-              );
-            })}
-          </div>
+          <UnifiedBookingTriage
+            userName={patientName ?? ""}
+            userMobile={patientPhone ?? ""}
+            onPatientBookingComplete={handleNewBooking}
+          />
         </section>
 
         {/* Upcoming appointments */}
@@ -180,3 +183,4 @@ export default function PatientHomePage() {
     </div>
   );
 }
+

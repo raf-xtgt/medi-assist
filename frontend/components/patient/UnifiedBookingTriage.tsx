@@ -28,9 +28,11 @@ interface UnifiedBookingTriageProps {
   /** Patient lead guid — already created at PatientLanding level */
   leadGuid?: string;
   onBack?: () => void;
+  /** Called after a triage-based booking creates a real patient record */
+  onPatientBookingComplete?: (patientGuid: string) => void;
 }
 
-export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLeadGuid, onBack }: UnifiedBookingTriageProps) {
+export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLeadGuid, onBack, onPatientBookingComplete }: UnifiedBookingTriageProps) {
   const [view, setView] = useState<UnifiedView>("idle");
   const [searchValue, setSearchValue] = useState("");
   const [foundDoctor, setFoundDoctor] = useState<DoctorSearchResultItem | null>(null);
@@ -123,9 +125,13 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
   };
 
   /* ── Booking confirmed callback ─────────────────────────── */
-  const handleBookingConfirmed = async () => {
+  const handleBookingConfirmed = async (patientGuid?: string | null) => {
     await updateLeadOnBooking();
-    handleBackToIdle();
+    if (patientGuid && onPatientBookingComplete) {
+      onPatientBookingComplete(patientGuid);
+    } else {
+      handleBackToIdle();
+    }
   };
 
   /* ── Searching state ─────────────────────────────────────── */
@@ -190,7 +196,7 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
           }}
           prefillName={userName}
           prefillMobile={userMobile}
-          onConfirmed={handleBookingConfirmed}
+          onConfirmed={() => handleBookingConfirmed()}
           onBack={handleBackToIdle}
         />
       </div>
@@ -208,7 +214,7 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
           chatHdrGuid={chatHdrGuid ?? undefined}
           leadGuid={leadGuid}
           onBack={handleBackToIdle}
-          onBookingConfirmed={handleBookingConfirmed}
+          onBookingConfirmed={(patientGuid) => handleBookingConfirmed(patientGuid)}
         />
       </div>
     );
@@ -221,7 +227,7 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
         <BookingFlow
           prefillName={userName}
           prefillMobile={userMobile}
-          onConfirmed={handleBookingConfirmed}
+          onConfirmed={() => handleBookingConfirmed()}
           onBack={handleBackToIdle}
         />
       </div>

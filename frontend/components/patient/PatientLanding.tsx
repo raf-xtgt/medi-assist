@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Shield, Zap, CalendarCheck, User, Phone, Sparkles } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
@@ -8,13 +9,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UnifiedBookingTriage } from "@/components/patient/UnifiedBookingTriage";
 import { patientLeadService } from "@/lib/api/services/patient-lead-service";
+import { usePatientSession } from "@/hooks/usePatientSession";
 
 export function PatientLanding() {
+  const router = useRouter();
+  const { patientGuid: cachedPatientGuid, isLoading: sessionLoading, saveSession } = usePatientSession();
+
   const [gateCompleted, setGateCompleted] = useState(false);
   const [userName, setUserName] = useState("");
   const [userMobile, setUserMobile] = useState("");
   const [leadGuid, setLeadGuid] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  /* ── Returning patient → redirect to home ────────────── */
+  if (!sessionLoading && cachedPatientGuid) {
+    router.replace("/patient/home");
+    return null;
+  }
+
+  /* ── Loading session check → brief blank state ───────── */
+  if (sessionLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--patient-landing-bg)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative size-10">
+            <span className="absolute inset-0 rounded-full border-4 border-[var(--color-brand-teal)]/20" />
+            <span
+              className="absolute inset-0 rounded-full border-4 border-transparent border-t-[var(--color-brand-teal)]"
+              style={{ animation: "spin 0.8s linear infinite" }}
+            />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Save session & navigate after triage booking ────── */
+  const handlePatientBookingComplete = async (patientGuid: string) => {
+    await saveSession({
+      patientGuid,
+      patientName: userName,
+      patientPhone: userMobile,
+    });
+    router.push("/patient/home");
+  };
 
   const handleGateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +103,7 @@ export function PatientLanding() {
             userName={userName}
             userMobile={userMobile}
             leadGuid={leadGuid ?? undefined}
+            onPatientBookingComplete={handlePatientBookingComplete}
           />
 
           {/* Trust strip */}

@@ -48,7 +48,7 @@ interface TriageChatProps {
   /** Custom back handler */
   onBack?: () => void;
   /** Called when booking is confirmed from within triage */
-  onBookingConfirmed?: () => void;
+  onBookingConfirmed?: (patientGuid: string | null) => void;
 }
 
 export function TriageChat({
@@ -349,7 +349,7 @@ export function TriageChat({
               console.error("Failed to create appointment record");
             }
 
-            if (onBookingConfirmed) onBookingConfirmed();
+            if (onBookingConfirmed) onBookingConfirmed(convertedPatientGuid);
             else setPhase("done");
           }}
         />

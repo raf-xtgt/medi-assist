@@ -21,6 +21,7 @@ export function middleware(req: NextRequest) {
     "/patient/landing",
     "/patient/book",
     "/patient/triage",
+    "/patient/home",
   ];
   if (PUBLIC_PATIENT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
