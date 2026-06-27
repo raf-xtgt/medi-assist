@@ -66,3 +66,17 @@ export interface PatientAppointmentByPatientItem {
   doctor_specialty?: string;
   doctor_image_url?: string;
 }
+
+export interface DoctorAppointmentPatientRequest {
+  doctor_guid: string;
+}
+
+export interface DoctorAppointmentListItem {
+  doctor_guid: string;
+  patient_guid: string;
+  patient_phone?: string;
+  patient_name?: string;
+  patient_email?: string;
+  patient_address?: string;
+  patient_triage_summary?: string;
+}
