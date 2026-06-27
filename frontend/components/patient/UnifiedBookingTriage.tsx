@@ -183,6 +183,11 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
         </div>
         <BookingFlow
           preselectedDoctorId={foundDoctor.guid}
+          preselectedDoctorInfo={{
+            name: foundDoctor.name ?? "Doctor",
+            specialty: foundDoctor.specialty ?? undefined,
+            image_url: foundDoctor.image_url ?? undefined,
+          }}
           prefillName={userName}
           prefillMobile={userMobile}
           onConfirmed={handleBookingConfirmed}

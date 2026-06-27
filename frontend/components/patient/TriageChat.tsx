@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -9,7 +8,6 @@ import {
   CalendarCheck,
   CheckCircle2,
   Send,
-  Sparkles,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -322,36 +320,13 @@ export function TriageChat({
 
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
-        <div className="px-4 pt-4">
-          <div className="mx-auto max-w-md">
-            <div className="flex items-center gap-3 rounded-xl bg-[var(--color-brand-teal-light)] border border-[var(--color-brand-teal)]/20 px-4 py-3 mb-1">
-              <div className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {doctorImageUrl ? (
-                  <Image
-                    src={doctorImageUrl}
-                    alt={doctorDisplayName}
-                    fill
-                    className="object-cover"
-                    sizes="36px"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center size-9 bg-[var(--color-brand-teal)] rounded-lg">
-                    <User size={16} className="text-white" aria-hidden="true" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[var(--color-brand-teal)] flex items-center gap-1.5">
-                  <Sparkles size={11} aria-hidden="true" />
-                  AI recommended
-                </p>
-                <p className="text-sm font-semibold text-foreground truncate">{doctorDisplayName}</p>
-              </div>
-            </div>
-          </div>
-        </div>
         <BookingFlow
           preselectedDoctorId={doctorGuid}
+          preselectedDoctorInfo={{
+            name: doctorDisplayName,
+            specialty: recommendedDoctor?.specialty ?? undefined,
+            image_url: doctorImageUrl ?? undefined,
+          }}
           prefillName={userName}
           prefillMobile={userMobile}
           onConfirmed={async () => {

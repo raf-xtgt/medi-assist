@@ -109,6 +109,12 @@ interface SelectedSlot {
 
 interface BookingFlowProps {
   preselectedDoctorId?: string;
+  /** Real doctor data from backend (overrides hardcoded doctor display when preselectedDoctorId is a real GUID) */
+  preselectedDoctorInfo?: {
+    name: string;
+    specialty?: string;
+    image_url?: string;
+  };
   onConfirmed?: (info: { name: string; mobile: string; doctor: string; slot: SelectedSlot }) => void;
   /** Custom back handler for when embedded in unified view */
   onBack?: () => void;
@@ -118,7 +124,7 @@ interface BookingFlowProps {
   prefillMobile?: string;
 }
 
-export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack, prefillName, prefillMobile }: BookingFlowProps) {
+export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConfirmed, onBack, prefillName, prefillMobile }: BookingFlowProps) {
   const router = useRouter();
   const [view, setView] = useState<View>(preselectedDoctorId ? "calendar" : "directory");
   const [selectedDoctor, setSelectedDoctor] = useState(
@@ -273,17 +279,32 @@ export function BookingFlow({ preselectedDoctorId, onConfirmed, onBack, prefillN
             </button>
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={selectedDoctor.photo}
-                  alt={`${selectedDoctor.name} photo`}
-                  fill
-                  className="object-cover"
-                  sizes="40px"
-                />
+                {preselectedDoctorInfo?.image_url ? (
+                  <Image
+                    src={preselectedDoctorInfo.image_url}
+                    alt={`${preselectedDoctorInfo.name} photo`}
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                    unoptimized
+                  />
+                ) : (
+                  <Image
+                    src={selectedDoctor.photo}
+                    alt={`${selectedDoctor.name} photo`}
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                  />
+                )}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{selectedDoctor.name}</p>
-                <p className="text-xs text-muted-foreground">{selectedDoctor.specialty}</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {preselectedDoctorInfo?.name ?? selectedDoctor.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {preselectedDoctorInfo?.specialty ?? selectedDoctor.specialty}
+                </p>
               </div>
             </div>
           </div>
