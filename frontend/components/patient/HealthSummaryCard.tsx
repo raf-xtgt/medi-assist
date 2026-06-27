@@ -157,16 +157,6 @@ export function HealthSummaryCard({ patientGuid }: HealthSummaryCardProps) {
             </p>
           </div>
         )}
-
-        <Button
-          className="mt-4 h-10 w-full bg-white text-[var(--color-brand-teal)] hover:bg-white/90 font-medium"
-          asChild
-        >
-          <Link href="/patient/appointments">
-            View details
-            <ArrowRight size={14} data-icon="inline-end" aria-hidden="true" />
-          </Link>
-        </Button>
       </CardContent>
     </Card>
   );
