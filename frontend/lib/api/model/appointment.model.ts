@@ -50,6 +50,10 @@ export interface PatientAppointmentByPatientRequest {
   patient_guid: string;
 }
 
+export interface PatientLatestAppointmentRequest {
+  patient_guid: string;
+}
+
 export interface PatientAppointmentByPatientItem {
   doctor_guid?: string;
   patient_guid: string;
