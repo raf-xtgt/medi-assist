@@ -124,3 +124,9 @@ export interface DoctorSearchByNameResponse {
   found_doctor: boolean;
   doctor_name: string;
 }
+
+export interface DoctorImageUploadResponse {
+  doctor_guid: string;
+  image_url: string;
+  blob_path: string;
+}

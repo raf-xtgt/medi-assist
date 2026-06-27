@@ -1,8 +1,8 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse } from "../model/doctor.model";
+import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse } from "../model/doctor.model";
 import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
-export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse };
+export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
 export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
@@ -100,6 +100,18 @@ export const doctorService = {
       body: formData,
     });
     if (!res.ok) throw new Error(`Failed to upload doctor CV: ${res.status}`);
+    return res.json();
+  },
+
+  uploadImage: async (doctorGuid: string, file: File): Promise<DoctorImageUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${ENDPOINT}/upload-image/${doctorGuid}`, {
+      method: "POST",
+      headers: { ...HEADERS },
+      body: formData,
+    });
+    if (!res.ok) throw new Error(`Failed to upload doctor image: ${res.status}`);
     return res.json();
   },
 };
