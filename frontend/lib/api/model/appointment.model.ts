@@ -45,3 +45,20 @@ export interface PatientAppointmentListingItem {
   appointment_status?: string;
   appointment_running_no?: string;
 }
+
+export interface PatientAppointmentByPatientRequest {
+  patient_guid: string;
+}
+
+export interface PatientAppointmentByPatientItem {
+  doctor_guid?: string;
+  patient_guid: string;
+  appointment_guid?: string;
+  appointment_start_time?: string;
+  appointment_end_time?: string;
+  appointment_status?: string;
+  appointment_running_no?: string;
+  doctor_name?: string;
+  doctor_specialty?: string;
+  doctor_image_url?: string;
+}

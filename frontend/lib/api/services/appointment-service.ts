@@ -1,7 +1,7 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem } from "../model/appointment.model";
+import type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem, PatientAppointmentByPatientRequest, PatientAppointmentByPatientItem } from "../model/appointment.model";
 
-export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem };
+export type { AppointmentCreate, AppointmentUpdate, AppointmentResponse, PatientAppointmentListingRequest, PatientAppointmentListingItem, PatientAppointmentByPatientRequest, PatientAppointmentByPatientItem };
 
 const ENDPOINT = `${API_MDA_PREFIX}/appointment`;
 
@@ -50,6 +50,16 @@ export const appointmentService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to fetch appointment list: ${res.status}`);
+    return res.json();
+  },
+
+  getByPatient: async (data: PatientAppointmentByPatientRequest): Promise<PatientAppointmentByPatientItem[]> => {
+    const res = await fetch(`${ENDPOINT}/get-by-patient`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch patient appointments: ${res.status}`);
     return res.json();
   },
 };
