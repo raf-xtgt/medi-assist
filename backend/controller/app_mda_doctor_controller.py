@@ -12,6 +12,7 @@ from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, Pati
 from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult, PatientPortalSearchDocByNameDto
 from model.dto.doctor_cv_ingestion_dto import DoctorCVExtraction
 from model.dto.doctor_image_upload_dto import DoctorImageUploadResponse
+from model.dto.patient_triage_report_dto import PatientTriageReportRequestDto, PatientTriageReportResponseDto
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
@@ -272,6 +273,26 @@ def get_patient_report(payload: PatientAppointmentRequestDto, db: Session = Depe
         total_appointment_sessions=len(sessions),
         appointment_detail_list=detail_list,
     )
+
+# ─── Patient Triage Report ────────────────────────────────────────────────────
+
+@router.post("/patient-triage-report", response_model=PatientTriageReportResponseDto)
+def patient_triage_report(payload: PatientTriageReportRequestDto, db: Session = Depends(get_db)):
+    """
+    Generate a triage summary for a patient lead.
+
+    1. Looks up the chat header by lead_guid.
+    2. Parses the full triage conversation from transcripts.
+    3. Calls Gemini 2.5 Flash to generate a brief summary.
+    4. Stores the summary in the chat header's triage_summary column.
+    """
+    try:
+        result = doctor_service.generate_triage_report(db, payload.lead_guid)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return PatientTriageReportResponseDto(**result)
+
 
 # ─── CV Upload & Ingestion ────────────────────────────────────────────────────
 

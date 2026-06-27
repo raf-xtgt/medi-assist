@@ -146,6 +146,49 @@ class AppMdaDoctorService(BaseService):
         )
 
 
+    def generate_triage_report(self, db: Session, lead_guid: uuid.UUID) -> dict:
+        """Generate a triage summary for a patient lead.
+
+        1. Retrieves the chat header for the given lead_guid.
+        2. Parses the triage conversation using parse_triage_info.
+        3. Calls Gemini to generate a summary.
+        4. Stores the summary in the chat header's triage_summary column.
+
+        Returns a dict with lead_guid, chat_hdr_guid, and triage_summary.
+        Raises ValueError if no chat header is found or conversation is empty.
+        """
+        from model.app_mda_lead_chat_hdr import AppMdaLeadChatHdr
+        from service.inference.patient_triage_inference_service import parse_triage_info
+        from service.inference.app_mda_inference_service import generate_triage_summary
+
+        # 1. Retrieve chat header for this lead
+        chat_hdr = (
+            db.query(AppMdaLeadChatHdr)
+            .filter(AppMdaLeadChatHdr.lead_guid == lead_guid)
+            .first()
+        )
+        if not chat_hdr:
+            raise ValueError(f"No chat header found for lead_guid: {lead_guid}")
+
+        # 2. Parse the triage conversation
+        conversation_str = parse_triage_info(db, str(chat_hdr.guid))
+        if not conversation_str:
+            raise ValueError(f"No triage conversation found for chat_hdr_guid: {chat_hdr.guid}")
+
+        # 3. Generate summary via LLM
+        summary = generate_triage_summary(conversation_str)
+
+        # 4. Store summary in the chat header
+        chat_hdr.triage_summary = summary
+        db.commit()
+        db.refresh(chat_hdr)
+
+        return {
+            "lead_guid": lead_guid,
+            "chat_hdr_guid": chat_hdr.guid,
+            "triage_summary": summary,
+        }
+
     def upload_image(
         self,
         db: Session,

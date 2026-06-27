@@ -176,6 +176,59 @@ def generate_report_from_llm(transcript: str, appointment_note_str: str) -> dict
             },
         }
 
+# ─── Triage Summary Generation ────────────────────────────────────────────────
+
+TRIAGE_SUMMARY_PROMPT_TEMPLATE = """You are a clinical triage summarization assistant. Your task is to generate a brief summary of a patient-bot triage conversation.
+
+## Instructions
+- Summarize the key symptoms reported by the patient.
+- Note any clarifying details the patient provided (duration, severity, related conditions).
+- Mention the bot's recommendation if one was given (e.g., suggested doctor or specialty).
+- Keep the summary concise — no more than 3-4 sentences.
+- Use clinical but accessible language.
+- Do NOT diagnose or provide medical advice.
+
+---
+
+## TRIAGE CONVERSATION:
+{triage_conversation}
+
+---
+
+Generate a brief clinical triage summary now."""
+
+
+def generate_triage_summary(triage_conversation: str) -> str:
+    """Generate a brief summary of a patient-bot triage conversation using Gemini 2.5 Flash.
+
+    Args:
+        triage_conversation: The full triage conversation as a formatted string
+                             (e.g., "bot: ...\npatient: ...\nbot: ...").
+
+    Returns:
+        A concise summary string of the triage conversation.
+    """
+    prompt = TRIAGE_SUMMARY_PROMPT_TEMPLATE.format(
+        triage_conversation=triage_conversation,
+    )
+
+    try:
+        response = _client.models.generate_content(
+            model=REPORT_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+            ),
+        )
+
+        result = response.text.strip()
+        print(f"[InferenceService] Triage summary generated successfully via {REPORT_MODEL}")
+        return result
+
+    except Exception as e:
+        print(f"[InferenceService] ERROR generating triage summary: {e}")
+        return "Unable to generate triage summary at this time."
+
 
 # ─── Follow-Up Message Generation ────────────────────────────────────────────
 
