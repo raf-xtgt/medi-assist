@@ -28,12 +28,21 @@ _STOP_WORDS = frozenset([
     "doctor", "dr.", "dr",
     # Medical/triage terms (symptoms, conditions, not specialties)
     "emergency", "pain", "ache", "fever", "cold", "cough", "headache",
-    "bleeding", "broken", "injury", "sick", "ill", "hurt",
+    "bleeding", "broken", "injury", "sick", "ill", "hurt", "hurts",
     "amputation", "surgery", "operation", "procedure", "treatment",
     "medicine", "medication", "prescription", "diagnosis",
     "chest", "breath", "breathing", "shortness", "dizziness", "dizzy",
     "nausea", "vomiting", "swelling", "rash", "infection", "allergic",
     "symptoms", "feeling", "feels", "condition", "problem", "issue",
+    "can't", "cannot", "unable", "difficulty", "difficult",
+    "lift", "move", "walk", "stand", "sit", "bend", "turn", "reach",
+    # Body parts (prevent substring matches against doctor names)
+    "arm", "arms", "leg", "legs", "back", "neck", "shoulder", "shoulders",
+    "knee", "knees", "foot", "feet", "hand", "hands", "hip", "hips",
+    "wrist", "wrists", "ankle", "ankles", "elbow", "elbows",
+    "head", "eye", "eyes", "ear", "ears", "nose", "throat", "mouth",
+    "stomach", "abdomen", "belly", "spine", "rib", "ribs", "jaw",
+    "finger", "fingers", "toe", "toes", "thumb", "shin", "thigh",
     # Filler words
     "the", "for", "with", "from", "about", "this", "that", "what",
     "who", "how", "when", "where", "some", "any", "just", "very",
