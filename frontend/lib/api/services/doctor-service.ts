@@ -1,8 +1,8 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse } from "../model/doctor.model";
+import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse } from "../model/doctor.model";
 import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
-export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse };
+export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
 export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
@@ -112,6 +112,16 @@ export const doctorService = {
       body: formData,
     });
     if (!res.ok) throw new Error(`Failed to upload doctor image: ${res.status}`);
+    return res.json();
+  },
+
+  triggerTriageSummary: async (data: PatientTriageReportRequest): Promise<PatientTriageReportResponse> => {
+    const res = await fetch(`${ENDPOINT}/patient-triage-report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...HEADERS },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to generate triage summary: ${res.status}`);
     return res.json();
   },
 };

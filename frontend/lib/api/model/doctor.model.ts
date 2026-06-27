@@ -130,3 +130,13 @@ export interface DoctorImageUploadResponse {
   image_url: string;
   blob_path: string;
 }
+
+export interface PatientTriageReportRequest {
+  lead_guid: string;
+}
+
+export interface PatientTriageReportResponse {
+  lead_guid: string;
+  chat_hdr_guid: string;
+  triage_summary: string;
+}
