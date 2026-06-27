@@ -11,6 +11,7 @@ from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientL
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
 from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult, PatientPortalSearchDocByNameDto
 from model.dto.doctor_cv_ingestion_dto import DoctorCVExtraction
+from model.dto.doctor_image_upload_dto import DoctorImageUploadResponse
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_appointment import AppMdaAppointment
@@ -314,3 +315,48 @@ async def upload_doctor_cv(doctor_guid: UUID, file: UploadFile = File(...), db: 
     db.refresh(doctor)
 
     return extraction
+
+
+# ─── Image Upload ─────────────────────────────────────────────────────────────
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"}
+
+
+@router.post("/upload-image/{doctor_guid}", response_model=DoctorImageUploadResponse)
+async def upload_doctor_image(
+    doctor_guid: UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a doctor's profile image to Google Cloud Storage.
+
+    1. Validates the uploaded file is an accepted image type (JPEG, PNG, WebP, GIF).
+    2. Uploads the image to GCS at path: image/{doctor_guid}/{doctor_name}/profile.{ext}
+    3. Updates the doctor record's 'image_url' column with the public URL.
+    4. Returns the doctor_guid, image_url, and blob_path.
+    """
+    # Validate file type
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only image files (JPEG, PNG, WebP, GIF) are accepted. Received: {file.content_type}",
+        )
+
+    # Read the image bytes
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    # Upload via service (handles GCS upload + DB update)
+    try:
+        result = doctor_service.upload_image(
+            db,
+            doctor_guid,
+            file_data=image_bytes,
+            content_type=file.content_type,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return DoctorImageUploadResponse(**result)

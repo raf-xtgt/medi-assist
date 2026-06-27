@@ -1,10 +1,14 @@
 """Service for app_mda_doctor table."""
 
+import re
+import uuid
+
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from model.app_mda_doctor import AppMdaDoctor
 from service.base_service import BaseService
+from util.gcs import get_bucket, GCS_BUCKET_NAME
 
 # Common words that appear in natural language queries but are NOT
 # doctor names or medical specialties. These get filtered out before
@@ -140,6 +144,59 @@ class AppMdaDoctorService(BaseService):
             .limit(limit)
             .all()
         )
+
+
+    def upload_image(
+        self,
+        db: Session,
+        doctor_guid: uuid.UUID,
+        file_data: bytes,
+        content_type: str,
+    ) -> dict:
+        """Upload a doctor profile image to GCS and update the doctor record.
+
+        Blob path: image/{doctor_guid}/{doctor_name}/{filename}
+
+        Returns a dict with doctor_guid, image_url, and blob_path.
+        """
+        doctor = self.get_by_guid(db, doctor_guid)
+        if not doctor:
+            raise ValueError("Doctor not found")
+
+        # Sanitize doctor name for path (lowercase, replace spaces/special chars with underscores)
+        doctor_name = doctor.name or "unknown"
+        safe_name = re.sub(r"[^a-z0-9]+", "_", doctor_name.lower()).strip("_")
+
+        # Determine file extension from content type
+        ext_map = {
+            "image/jpeg": "jpg",
+            "image/jpg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp",
+            "image/gif": "gif",
+        }
+        ext = ext_map.get(content_type, "jpg")
+        filename = f"profile.{ext}"
+
+        blob_path = f"image/{doctor_guid}/{safe_name}/{filename}"
+
+        bucket = get_bucket()
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(file_data, content_type=content_type)
+
+        # Build public URL
+        image_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{blob_path}"
+
+        # Update the doctor record with the image URL
+        doctor.image_url = image_url
+        db.commit()
+        db.refresh(doctor)
+
+        return {
+            "doctor_guid": doctor_guid,
+            "image_url": image_url,
+            "blob_path": blob_path,
+        }
 
 
 doctor_service = AppMdaDoctorService()
