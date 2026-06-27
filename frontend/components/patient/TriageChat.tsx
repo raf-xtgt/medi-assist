@@ -230,6 +230,8 @@ export function TriageChat({
     setPhase("morphing");
     setProcessingStep("Processing appointment…");
 
+    let resolvedDoctor: DoctorResponse | null = null;
+
     try {
       // Resolve the recommended doctor by name
       if (recommendedDoctorName) {
@@ -239,13 +241,14 @@ export function TriageChat({
           const doc = searchResult.doctor_results[0];
           // Fetch full doctor record
           const fullDoctor = await doctorService.getByGuid(doc.guid);
+          resolvedDoctor = fullDoctor;
           setRecommendedDoctor(fullDoctor);
         }
       }
 
       if (leadGuid) {
         setProcessingStep("Setting up your patient profile…");
-        const doctorGuid = recommendedDoctor?.guid ?? TESTING_DOCTOR_GUID;
+        const doctorGuid = resolvedDoctor?.guid ?? recommendedDoctor?.guid ?? TESTING_DOCTOR_GUID;
         const conversionResult = await patientLeadService.convertLeadToPatient({
           doctor_guid: doctorGuid,
           lead_guid: leadGuid,
