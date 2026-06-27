@@ -12,6 +12,24 @@ class PatientAppointmentListingRequestDto(BaseModel):
     doctor_guid: UUID
     patient_guid: UUID
 
+
+class PatientAppointmentByPatientRequestDto(BaseModel):
+    patient_guid: UUID
+
+
+class PatientAppointmentByPatientDto(BaseModel):
+    doctor_guid: Optional[UUID] = None
+    patient_guid: UUID
+    appointment_guid: Optional[UUID] = None
+    appointment_start_time: Optional[datetime] = None
+    appointment_end_time: Optional[datetime] = None
+    appointment_status: Optional[str] = None
+    appointment_running_no: Optional[str] = None
+    doctor_name: Optional[str] = None
+    doctor_specialty: Optional[str] = None
+    doctor_image_url: Optional[str] = None
+
+
 class PatientAppointmentListingDto(BaseModel):
     doctor_guid: UUID
     patient_guid: UUID
@@ -20,6 +38,7 @@ class PatientAppointmentListingDto(BaseModel):
     appointment_end_time: Optional[datetime] = None
     appointment_status: Optional[str]=None 
     appointment_running_no:Optional[str]=None
+
 
 
 class PatientAppointmentRequestDto(BaseModel):

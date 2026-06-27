@@ -1,9 +1,12 @@
 """Service for app_mda_appointment table."""
 
+import uuid
+
 from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
 from model.app_mda_appointment import AppMdaAppointment
+from model.app_mda_doctor import AppMdaDoctor
 from service.base_service import BaseService
 
 RUNNING_NO_START = 1000
@@ -29,6 +32,50 @@ class AppMdaAppointmentService(BaseService):
 
         data["running_no"] = str(next_no)
         return super().create(db, data)
+
+    def get_by_patient(self, db: Session, patient_guid: uuid.UUID) -> list[dict]:
+        """Get all appointments for a patient with doctor info via LEFT JOIN.
+
+        Joins appointment → doctor to include doctor name, specialty, and image_url.
+        Returns results ordered by scheduled_start descending (most recent first).
+        """
+        results = (
+            db.query(
+                AppMdaAppointment.guid.label("appointment_guid"),
+                AppMdaAppointment.doctor_guid,
+                AppMdaAppointment.patient_guid,
+                AppMdaAppointment.scheduled_start.label("appointment_start_time"),
+                AppMdaAppointment.scheduled_end.label("appointment_end_time"),
+                AppMdaAppointment.appointment_status,
+                AppMdaAppointment.running_no.label("appointment_running_no"),
+                AppMdaDoctor.name.label("doctor_name"),
+                AppMdaDoctor.specialty.label("doctor_specialty"),
+                AppMdaDoctor.image_url.label("doctor_image_url"),
+            )
+            .outerjoin(
+                AppMdaDoctor,
+                AppMdaAppointment.doctor_guid == AppMdaDoctor.guid,
+            )
+            .filter(AppMdaAppointment.patient_guid == patient_guid)
+            .order_by(AppMdaAppointment.scheduled_start.desc())
+            .all()
+        )
+
+        return [
+            {
+                "doctor_guid": row.doctor_guid,
+                "patient_guid": row.patient_guid,
+                "appointment_guid": row.appointment_guid,
+                "appointment_start_time": row.appointment_start_time,
+                "appointment_end_time": row.appointment_end_time,
+                "appointment_status": row.appointment_status,
+                "appointment_running_no": row.appointment_running_no,
+                "doctor_name": row.doctor_name,
+                "doctor_specialty": row.doctor_specialty,
+                "doctor_image_url": row.doctor_image_url,
+            }
+            for row in results
+        ]
 
 
 appointment_service = AppMdaAppointmentService()

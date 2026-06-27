@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from model.schemas import AppointmentCreate, AppointmentUpdate, AppointmentResponse
 from model.app_mda_appointment import AppMdaAppointment
-from model.dto.patient_appointment_dto import PatientAppointmentListingRequestDto, PatientAppointmentListingDto
+from model.dto.patient_appointment_dto import PatientAppointmentListingRequestDto, PatientAppointmentListingDto, PatientAppointmentByPatientRequestDto, PatientAppointmentByPatientDto
 from service.app_mda_appointment_service import appointment_service
 from util.database import get_db
 
@@ -71,3 +71,9 @@ def get_appointment_list(payload: PatientAppointmentListingRequestDto, db: Sessi
         )
         for appt in results
     ]
+
+
+@router.post("/get-by-patient", response_model=list[PatientAppointmentByPatientDto])
+def get_by_patient(payload: PatientAppointmentByPatientRequestDto, db: Session = Depends(get_db)):
+    """Get all appointments for a specific patient with doctor info, ordered by most recent first."""
+    return appointment_service.get_by_patient(db, payload.patient_guid)
