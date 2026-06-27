@@ -126,13 +126,16 @@ class AppMdaAppointmentService(BaseService):
         ]
 
     def get_patients_by_doctor(self, db: Session, doctor_guid: uuid.UUID) -> list[dict]:
-        """Get patients linked to a doctor with their triage summary.
+        """Get one row per appointment for patients linked to a doctor.
 
-        Uses a single query with JOINs:
-          doctor_patient_link → patient → lead_chat_hdr (via lead_guid)
+        Query path:
+          doctor_patient_link
+            JOIN patient            (doctor_patient_link.patient_guid = patient.guid)
+            LEFT JOIN lead_chat_hdr (patient.lead_guid = lead_chat_hdr.lead_guid)
+            JOIN appointment        (appointment.doctor_guid = doctor_guid
+                                     AND appointment.patient_guid = patient.guid)
 
-        This avoids N+1 queries by fetching all related data in one pass.
-        Only ACTIVE links are included.
+        Returns one dict per appointment row, ordered by scheduled_start ASC.
         """
         results = (
             db.query(
@@ -143,6 +146,11 @@ class AppMdaAppointmentService(BaseService):
                 AppMdaPatient.email.label("patient_email"),
                 AppMdaPatient.address.label("patient_address"),
                 AppMdaLeadChatHdr.triage_summary.label("patient_triage_summary"),
+                AppMdaAppointment.guid.label("appointment_guid"),
+                AppMdaAppointment.appointment_status,
+                AppMdaAppointment.running_no,
+                AppMdaAppointment.scheduled_start,
+                AppMdaAppointment.scheduled_end,
             )
             .join(
                 AppMdaPatient,
@@ -152,9 +160,15 @@ class AppMdaAppointmentService(BaseService):
                 AppMdaLeadChatHdr,
                 AppMdaPatient.lead_guid == AppMdaLeadChatHdr.lead_guid,
             )
+            .join(
+                AppMdaAppointment,
+                (AppMdaAppointment.doctor_guid == AppMdaDoctorPatientLink.doctor_guid)
+                & (AppMdaAppointment.patient_guid == AppMdaPatient.guid),
+            )
             .filter(
                 AppMdaDoctorPatientLink.doctor_guid == doctor_guid,
             )
+            .order_by(AppMdaAppointment.scheduled_start.asc())
             .all()
         )
 
@@ -167,9 +181,15 @@ class AppMdaAppointmentService(BaseService):
                 "patient_email": row.patient_email or "",
                 "patient_address": row.patient_address or "",
                 "patient_triage_summary": row.patient_triage_summary,
+                "appointment_guid": row.appointment_guid,
+                "appointment_status": row.appointment_status,
+                "running_no": row.running_no,
+                "scheduled_start": row.scheduled_start,
+                "scheduled_end": row.scheduled_end,
             }
             for row in results
         ]
 
 
 appointment_service = AppMdaAppointmentService()
+
