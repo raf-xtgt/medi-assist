@@ -33,6 +33,51 @@ class AppMdaAppointmentService(BaseService):
         data["running_no"] = str(next_no)
         return super().create(db, data)
 
+    def get_latest_by_patient(self, db: Session, patient_guid: uuid.UUID) -> dict | None:
+        """Get the single most-recently updated appointment for a patient with doctor info.
+
+        Uses a LEFT JOIN to doctor and orders by updated_date DESC with LIMIT 1
+        for an optimal single-row fetch.
+        """
+        row = (
+            db.query(
+                AppMdaAppointment.guid.label("appointment_guid"),
+                AppMdaAppointment.doctor_guid,
+                AppMdaAppointment.patient_guid,
+                AppMdaAppointment.scheduled_start.label("appointment_start_time"),
+                AppMdaAppointment.scheduled_end.label("appointment_end_time"),
+                AppMdaAppointment.appointment_status,
+                AppMdaAppointment.running_no.label("appointment_running_no"),
+                AppMdaDoctor.name.label("doctor_name"),
+                AppMdaDoctor.specialty.label("doctor_specialty"),
+                AppMdaDoctor.image_url.label("doctor_image_url"),
+            )
+            .outerjoin(
+                AppMdaDoctor,
+                AppMdaAppointment.doctor_guid == AppMdaDoctor.guid,
+            )
+            .filter(AppMdaAppointment.patient_guid == patient_guid)
+            .order_by(AppMdaAppointment.updated_date.desc())
+            .limit(1)
+            .first()
+        )
+
+        if not row:
+            return None
+
+        return {
+            "doctor_guid": row.doctor_guid,
+            "patient_guid": row.patient_guid,
+            "appointment_guid": row.appointment_guid,
+            "appointment_start_time": row.appointment_start_time,
+            "appointment_end_time": row.appointment_end_time,
+            "appointment_status": row.appointment_status,
+            "appointment_running_no": row.appointment_running_no,
+            "doctor_name": row.doctor_name,
+            "doctor_specialty": row.doctor_specialty,
+            "doctor_image_url": row.doctor_image_url,
+        }
+
     def get_by_patient(self, db: Session, patient_guid: uuid.UUID) -> list[dict]:
         """Get all appointments for a patient with doctor info via LEFT JOIN.
 

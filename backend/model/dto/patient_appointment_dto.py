@@ -13,6 +13,10 @@ class PatientAppointmentListingRequestDto(BaseModel):
     patient_guid: UUID
 
 
+class PatientLatestAppointmentRequestDto(BaseModel):
+    patient_guid: UUID
+
+
 class PatientAppointmentByPatientRequestDto(BaseModel):
     patient_guid: UUID
 

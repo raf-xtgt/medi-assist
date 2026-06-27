@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from model.schemas import AppointmentCreate, AppointmentUpdate, AppointmentResponse
 from model.app_mda_appointment import AppMdaAppointment
-from model.dto.patient_appointment_dto import PatientAppointmentListingRequestDto, PatientAppointmentListingDto, PatientAppointmentByPatientRequestDto, PatientAppointmentByPatientDto
+from model.dto.patient_appointment_dto import PatientAppointmentListingRequestDto, PatientAppointmentListingDto, PatientAppointmentByPatientRequestDto, PatientAppointmentByPatientDto, PatientLatestAppointmentRequestDto
 from service.app_mda_appointment_service import appointment_service
 from util.database import get_db
 
@@ -71,6 +71,15 @@ def get_appointment_list(payload: PatientAppointmentListingRequestDto, db: Sessi
         )
         for appt in results
     ]
+
+
+@router.post("/latest-appointment", response_model=PatientAppointmentByPatientDto)
+def get_latest_appointment(payload: PatientLatestAppointmentRequestDto, db: Session = Depends(get_db)):
+    """Get the single most recently updated appointment for a patient with doctor info."""
+    result = appointment_service.get_latest_by_patient(db, payload.patient_guid)
+    if not result:
+        raise HTTPException(status_code=404, detail="No appointments found for this patient")
+    return result
 
 
 @router.post("/get-by-patient", response_model=list[PatientAppointmentByPatientDto])
