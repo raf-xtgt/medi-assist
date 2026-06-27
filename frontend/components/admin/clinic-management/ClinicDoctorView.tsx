@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Save, Loader2, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Upload, FileText, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,10 @@ import { doctorService } from "@/lib/api/services/doctor-service";
 import type { DoctorResponse } from "@/lib/api/model/doctor.model";
 import { DoctorAvailabilityEditor } from "./DoctorAvailabilityEditor";
 
-type SaveStep = "idle" | "creating" | "ingesting" | "updating" | "done";
+type SaveStep = "idle" | "creating" | "ingesting" | "uploading_image" | "updating" | "done";
 type DoctorTab = "details" | "schedule";
+
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
 
 interface ClinicDoctorViewProps {
   clinicGuid: string;
@@ -30,6 +32,7 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
   const [about, setAbout] = useState(doctor?.about ?? "");
   const [specialty, setSpecialty] = useState(doctor?.specialty ?? "");
   const [file, setFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [saveStep, setSaveStep] = useState<SaveStep>("idle");
   const [activeTab, setActiveTab] = useState<DoctorTab>("details");
 
@@ -37,7 +40,8 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
     idle: "",
     creating: "Creating doctor record…",
     ingesting: "Extracting info from doctor CV…",
-    updating: "Updating doctor info with extracted data…",
+    uploading_image: "Uploading doctor image…",
+    updating: "Updating doctor info…",
     done: "Done!",
   };
 
@@ -48,6 +52,15 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
       return;
     }
     setFile(selected);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    if (selected && !ACCEPTED_IMAGE_TYPES.includes(selected.type)) {
+      toast.error("Only image files (JPEG, PNG, WebP, GIF) are accepted.");
+      return;
+    }
+    setImageFile(selected);
   };
 
   const handleSave = async () => {
@@ -67,6 +80,13 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
           about: about.trim() || undefined,
           specialty: specialty.trim() || undefined,
         });
+
+        // Upload image if selected
+        if (imageFile) {
+          setSaveStep("uploading_image");
+          await doctorService.uploadImage(doctor.guid, imageFile);
+        }
+
         toast.success("Doctor updated successfully.");
         setSaveStep("done");
         onSaved();
@@ -96,6 +116,13 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
           // Merge extracted data into the created response for local state
           created.about = extraction.about;
           created.specialty = extraction.specialty;
+        }
+
+        // Upload image if selected (after CV ingestion)
+        if (imageFile) {
+          setSaveStep("uploading_image");
+          const imageResult = await doctorService.uploadImage(created.guid, imageFile);
+          created.image_url = imageResult.image_url;
         }
 
         toast.success("Doctor created successfully.");
@@ -164,6 +191,17 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
         <>
           {/* Form fields */}
           <div className="flex flex-col gap-4 flex-1">
+            {/* Doctor profile image — edit mode only, shown above Name */}
+            {isEditing && doctor?.image_url && (
+              <div className="flex items-start">
+                <img
+                  src={doctor.image_url}
+                  alt={doctor.name || "Doctor profile"}
+                  className="h-16 w-16 rounded-lg object-cover border border-border"
+                />
+              </div>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="doctor-name">Name</Label>
               <Input
@@ -232,6 +270,40 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
                 </p>
               </div>
             )}
+
+            {/* Profile image upload */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="doctor-image">Profile Image</Label>
+              <label
+                htmlFor="doctor-image"
+                className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-border cursor-pointer hover:bg-muted/30 transition-colors"
+              >
+                {imageFile ? (
+                  <>
+                    <ImageIcon size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
+                    <span className="text-sm text-foreground truncate">{imageFile.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon size={18} className="text-muted-foreground shrink-0" aria-hidden="true" />
+                    <span className="text-sm text-muted-foreground">
+                      {doctor?.image_url ? "Click to replace image" : "Click to upload image"}
+                    </span>
+                  </>
+                )}
+              </label>
+              <input
+                id="doctor-image"
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                className="sr-only"
+                onChange={handleImageChange}
+                disabled={isSaving}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Accepted formats: JPEG, PNG, WebP, GIF.
+              </p>
+            </div>
 
             {/* Show about and specialty fields when editing */}
             {isEditing && (
