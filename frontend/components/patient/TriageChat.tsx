@@ -254,8 +254,16 @@ export function TriageChat({
           lead_guid: leadGuid,
         });
         setConvertedPatientGuid(conversionResult.patient_guid);
-      }
 
+        // Generate triage summary from the conversation
+        setProcessingStep("Processing triage conversation…");
+        try {
+          await doctorService.triggerTriageSummary({ lead_guid: leadGuid });
+        } catch {
+          console.error("Failed to generate triage summary");
+        }
+      }
+      
       setProcessingStep("Opening calendar…");
       await new Promise((r) => setTimeout(r, 800));
       setProcessingStep(null);
