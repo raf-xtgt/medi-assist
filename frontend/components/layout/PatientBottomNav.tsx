@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { CalendarCheck, FileText, Home, Sparkles, User } from "lucide-react";
+import { FileText, Home, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,20 +14,9 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Home",         href: "/patient/home",         icon: Home },
-  {
-    label: "Book",
-    href: "/patient/book",
-    icon: CalendarCheck,
-    activePaths: ["/patient/book", "/patient/landing"],
-  },
-  {
-    label: "Ask AI",
-    href: "/patient/triage",
-    icon: Sparkles,
-  },
-  { label: "Records",      href: "/patient/records",      icon: FileText },
-  { label: "Profile",      href: "/patient/profile",      icon: User },
+  { label: "Home",    href: "/patient/home",    icon: Home },
+  { label: "Records", href: "/patient/records", icon: FileText },
+  { label: "Profile", href: "/patient/profile", icon: User },
 ];
 
 export function PatientBottomNav() {
