@@ -366,7 +366,7 @@ export function AmbientCoreWorkspace() {
     chunkCount,
     error: recordingError,
   } = useAmbientRecording({
-    appointmentGuid: HARDCODED_APPOINTMENT_GUID,
+    appointmentGuid: activeAppointment?.appointmentGuid ?? HARDCODED_APPOINTMENT_GUID,
     doctorGuid: HARDCODED_DOCTOR_GUID,
   });
 

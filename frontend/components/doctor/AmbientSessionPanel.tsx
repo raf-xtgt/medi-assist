@@ -195,9 +195,9 @@ export function AmbientSessionPanel({
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Testing GUIDs
-    const patient_guid = TESTING_PATIENT_GUID;
-    const appointment_guid = TESTING_APPOINTMENT_GUID;
+    // Use the selected appointment's GUID, fall back to testing GUID
+    const patient_guid = appointment.patientGuid || TESTING_PATIENT_GUID;
+    const appointment_guid = appointment.appointmentGuid || TESTING_APPOINTMENT_GUID;
 
     try {
       // Save appointment note (vitals + chief complaint + clinical notes)
