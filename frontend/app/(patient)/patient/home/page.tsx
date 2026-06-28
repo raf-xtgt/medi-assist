@@ -92,6 +92,7 @@ export default function PatientHomePage() {
           <UnifiedBookingTriage
             userName={patientName ?? ""}
             userMobile={patientPhone ?? ""}
+            patientGuid={patientGuid ?? undefined}
             onPatientBookingComplete={handleNewBooking}
           />
         </section>

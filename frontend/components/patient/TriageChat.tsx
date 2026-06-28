@@ -45,6 +45,8 @@ interface TriageChatProps {
   chatHdrGuid?: string;
   /** Lead guid for tracking */
   leadGuid?: string;
+  /** Existing patient guid — for returning patients (skip lead-to-patient conversion) */
+  existingPatientGuid?: string;
   /** Custom back handler */
   onBack?: () => void;
   /** Called when booking is confirmed from within triage */
@@ -57,6 +59,7 @@ export function TriageChat({
   userMobile = "",
   chatHdrGuid,
   leadGuid,
+  existingPatientGuid,
   onBack,
   onBookingConfirmed,
 }: TriageChatProps) {
@@ -246,7 +249,21 @@ export function TriageChat({
         }
       }
 
-      if (leadGuid) {
+      if (existingPatientGuid) {
+        // Returning patient — already has a patient record, skip lead conversion
+        setConvertedPatientGuid(existingPatientGuid);
+
+        // Still generate triage summary if we have a lead_guid
+        if (leadGuid) {
+          setProcessingStep("Processing triage conversation…");
+          try {
+            await doctorService.triggerTriageSummary({ lead_guid: leadGuid });
+          } catch {
+            console.error("Failed to generate triage summary");
+          }
+        }
+      } else if (leadGuid) {
+        // New patient — convert lead to patient record
         setProcessingStep("Setting up your patient profile…");
         const doctorGuid = resolvedDoctor?.guid ?? recommendedDoctor?.guid ?? TESTING_DOCTOR_GUID;
         const conversionResult = await patientLeadService.convertLeadToPatient({
@@ -349,6 +366,7 @@ export function TriageChat({
               endTime.setMinutes(endTime.getMinutes() + 30);
 
               await appointmentService.create({
+                clinic_guid: recommendedDoctor?.clinic_hdr_guid ?? undefined,
                 doctor_guid: doctorGuid,
                 patient_guid: convertedPatientGuid ?? undefined,
                 scheduled_start: tomorrow.toISOString(),

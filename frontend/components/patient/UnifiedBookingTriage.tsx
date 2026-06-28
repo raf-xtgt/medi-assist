@@ -27,26 +27,56 @@ interface UnifiedBookingTriageProps {
   userMobile: string;
   /** Patient lead guid — already created at PatientLanding level */
   leadGuid?: string;
+  /** For returning patients: their patient guid from encrypted session */
+  patientGuid?: string;
   onBack?: () => void;
   /** Called after a triage-based booking creates a real patient record */
   onPatientBookingComplete?: (patientGuid: string) => void;
 }
 
-export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLeadGuid, onBack, onPatientBookingComplete }: UnifiedBookingTriageProps) {
+export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLeadGuid, patientGuid, onBack, onPatientBookingComplete }: UnifiedBookingTriageProps) {
   const [view, setView] = useState<UnifiedView>("idle");
   const [searchValue, setSearchValue] = useState("");
   const [foundDoctor, setFoundDoctor] = useState<DoctorSearchResultItem | null>(null);
   const [initialTriageMessage, setInitialTriageMessage] = useState<string | undefined>(undefined);
 
   // Patient lead tracking
-  const [leadGuid] = useState<string | undefined>(initialLeadGuid);
+  const [leadGuid, setLeadGuid] = useState<string | undefined>(initialLeadGuid);
   const [chatHdrGuid, setChatHdrGuid] = useState<string | null>(null);
+
+  /**
+   * Ensure a lead_guid exists for the triage session.
+   * - If one was already provided (new patient flow), use it.
+   * - If absent (returning patient from /patient/home), auto-create a new patient_lead.
+   */
+  const ensureLeadGuid = async (): Promise<string | null> => {
+    if (leadGuid) return leadGuid;
+
+    // Returning patient: create a fresh lead using their cached identity
+    if (userName && userMobile) {
+      try {
+        const newLead = await patientLeadService.create({
+          name: userName,
+          phone: userMobile,
+          lead_status: "triage_started",
+        });
+        setLeadGuid(newLead.guid);
+        return newLead.guid;
+      } catch {
+        console.error("Failed to auto-create patient lead for returning patient");
+        return null;
+      }
+    }
+
+    return null;
+  };
 
   /** Create a lead_chat_hdr record and return the guid */
   const createChatHdr = async (): Promise<string | null> => {
-    if (!leadGuid) return null;
+    const resolvedLeadGuid = await ensureLeadGuid();
+    if (!resolvedLeadGuid) return null;
     try {
-      const hdr = await leadChatHdrService.create({ lead_guid: leadGuid });
+      const hdr = await leadChatHdrService.create({ lead_guid: resolvedLeadGuid });
       return hdr.guid;
     } catch {
       console.error("Failed to create chat header");
@@ -213,6 +243,7 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
           userMobile={userMobile}
           chatHdrGuid={chatHdrGuid ?? undefined}
           leadGuid={leadGuid}
+          existingPatientGuid={patientGuid}
           onBack={handleBackToIdle}
           onBookingConfirmed={(patientGuid) => handleBookingConfirmed(patientGuid)}
         />
