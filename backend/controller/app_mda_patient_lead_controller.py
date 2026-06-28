@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from model.schemas import PatientLeadCreate, PatientLeadUpdate, PatientLeadResponse
 from model.dto.lead_conversion_dto import PatientLeadConversionRequestDto, PatientLeadConversionResponseDto
 from model.app_mda_patient import AppMdaPatient
+from model.app_mda_doctor import AppMdaDoctor
 from model.app_mda_doctor_patient_link import AppMdaDoctorPatientLink
 from service.app_mda_patient_lead_service import patient_lead_service
 from util.database import get_db
@@ -63,11 +64,17 @@ def convert_lead_to_patient(payload: PatientLeadConversionRequestDto, db: Sessio
     if not lead:
         raise HTTPException(status_code=404, detail="Patient lead not found")
 
+    # Retrieve the doctor record to get clinic_hdr_guid
+    doctor = db.query(AppMdaDoctor).filter(AppMdaDoctor.guid == payload.doctor_guid).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
     # 2. Create patient record from lead data
     patient_guid = uuid.uuid4()
     patient = AppMdaPatient(
         guid=patient_guid,
         lead_guid=lead.guid,
+        clinic_hdr_guid=doctor.clinic_hdr_guid,
         phone=lead.phone,
         name=lead.name,
         status="active",
@@ -80,7 +87,7 @@ def convert_lead_to_patient(payload: PatientLeadConversionRequestDto, db: Sessio
         guid=link_guid,
         doctor_guid=payload.doctor_guid,
         patient_guid=patient_guid,
-        status="active",
+        status="ACTIVE",
     )
     db.add(link)
 
