@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Bot, CalendarClock, History, LayoutGrid, Loader2, Stethoscope, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TESTING_APPOINTMENT_GUID, TESTING_DOCTOR_GUID, TESTING_PATIENT_GUID } from "@/lib/api/model/testing-guid.model";
+import { TESTING_DOCTOR_GUID, TESTING_PATIENT_GUID } from "@/lib/api/model/testing-guid.model";
 import { useAmbientRecording } from "@/hooks/useAmbientRecording";
 import { useSessionEvents, type SessionEvent } from "@/hooks/useSessionEvents";
 import { toast } from "sonner";
@@ -231,7 +231,6 @@ function generateBrief(appointment: Appointment, data: SessionData): AIBriefData
 }
 
 /* ── Testing GUIDs for MVP ──────────────────────────────── */
-const HARDCODED_APPOINTMENT_GUID = TESTING_APPOINTMENT_GUID;
 const HARDCODED_DOCTOR_GUID = TESTING_DOCTOR_GUID;
 
 /* ── Main Component ─────────────────────────────────────── */
@@ -366,7 +365,7 @@ export function AmbientCoreWorkspace() {
     chunkCount,
     error: recordingError,
   } = useAmbientRecording({
-    appointmentGuid: activeAppointment?.appointmentGuid ?? HARDCODED_APPOINTMENT_GUID,
+    appointmentGuid: activeAppointment?.appointmentGuid ?? "",
     doctorGuid: HARDCODED_DOCTOR_GUID,
   });
 

@@ -32,7 +32,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TESTING_PATIENT_GUID, TESTING_APPOINTMENT_GUID } from "@/lib/api/model/testing-guid.model";
+import { TESTING_PATIENT_GUID } from "@/lib/api/model/testing-guid.model";
 import { useRouter } from "next/navigation";
 import type { Appointment } from "./AmbientScheduler";
 import { TriageSummaryBanner } from "./TriageSummaryBanner";
@@ -195,9 +195,9 @@ export function AmbientSessionPanel({
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Use the selected appointment's GUID, fall back to testing GUID
+    // Use the selected appointment's GUID
     const patient_guid = appointment.patientGuid || TESTING_PATIENT_GUID;
-    const appointment_guid = appointment.appointmentGuid || TESTING_APPOINTMENT_GUID;
+    const appointment_guid = appointment.appointmentGuid || "";
 
     try {
       // Save appointment note (vitals + chief complaint + clinical notes)
