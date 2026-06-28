@@ -713,7 +713,7 @@ export function AmbientCoreWorkspace() {
         />
 
         {/* Column 3 — Session Panel */}
-        <div className="flex flex-1 min-w-0 flex-col border-r border-border/60 bg-background">
+        <div className={cn("flex flex-1 min-w-0 flex-col bg-background", brief !== null && "border-r border-border/60")}>
           <AmbientSessionPanel
             appointment={activeAppointment}
             sessionState={sessionState}
@@ -723,18 +723,21 @@ export function AmbientCoreWorkspace() {
             onSessionDataChange={setSessionData}
             onOpenHistory={handleOpenHistory}
             historyCount={patientHistory?.history_timeline?.length ?? 0}
+            isBriefHidden={brief === null}
           />
         </div>
 
-        {/* Column 3 — AI Brief */}
-        <div className="flex w-[340px] shrink-0 flex-col bg-background">
-          <AmbientBrief
-            sessionState={sessionState}
-            brief={brief}
-            appointment={activeAppointment}
-            sessionData={sessionData}
-          />
-        </div>
+        {/* Column 4 — AI Brief */}
+        {brief !== null && (
+          <div className="flex w-[340px] shrink-0 flex-col bg-background overflow-hidden animate-in slide-in-from-right duration-300 shadow-sm">
+            <AmbientBrief
+              sessionState={sessionState === "processing" ? "complete" : sessionState}
+              brief={brief}
+              appointment={activeAppointment}
+              sessionData={sessionData}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

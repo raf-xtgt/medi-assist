@@ -72,6 +72,7 @@ interface AmbientSessionPanelProps {
   onSessionDataChange: (data: SessionData) => void;
   onOpenHistory?: () => void;
   historyCount?: number;
+  isBriefHidden?: boolean;
 }
 
 /* ── Wave Visualizer ────────────────────────────────────── */
@@ -180,6 +181,7 @@ export function AmbientSessionPanel({
   onSessionDataChange,
   onOpenHistory,
   historyCount = 0,
+  isBriefHidden = false,
 }: AmbientSessionPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -369,7 +371,7 @@ export function AmbientSessionPanel({
 
       {/* ── Processing skeleton ── */}
       {isProcessing && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className={cn("flex-1 overflow-y-auto pl-4 py-4 space-y-3 transition-all duration-300", isBriefHidden ? "pr-8 md:pr-16 lg:pr-48 xl:pr-[280px]" : "pr-4")}>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
             Generating AI Brief
           </p>
@@ -384,7 +386,7 @@ export function AmbientSessionPanel({
 
       {/* ── Active / Idle form ── */}
       {!isProcessing && (
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+        <div className={cn("flex-1 overflow-y-auto pl-4 py-3 space-y-4 transition-all duration-300", isBriefHidden ? "pr-8 md:pr-16 lg:pr-48 xl:pr-[280px]" : "pr-4")}>
         {/* Triage Summary Banner — shown before/between sessions, hides when live */}
           <TriageSummaryBanner
             triageSummary={appointment.triageSummary}
@@ -591,7 +593,7 @@ export function AmbientSessionPanel({
               onClick={handleSave}
               disabled={isSaving}
               className={cn(
-                "w-full gap-2 h-9 text-sm font-semibold mt-2",
+                "w-[260px] sm:w-[280px] gap-2 h-9 text-sm font-semibold mt-2 shadow-sm",
                 saveSuccess
                   ? "bg-emerald-600 text-white hover:bg-emerald-700"
                   : "bg-[var(--color-brand-blue)] text-white hover:bg-[var(--color-brand-blue-dark)]"
@@ -619,11 +621,11 @@ export function AmbientSessionPanel({
       )}
 
       {/* ── Action footer ── */}
-      <div className="shrink-0 border-t border-border/60 p-3">
+      <div className={cn("shrink-0 border-t border-border/60 pl-4 py-3 transition-all duration-300", isBriefHidden ? "pr-8 md:pr-16 lg:pr-48 xl:pr-[280px]" : "pr-3")}>
         {isIdle && (
           <Button
             onClick={onStart}
-            className="w-full gap-2 bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal-dark)] h-9 text-sm font-semibold"
+            className="w-[260px] sm:w-[280px] gap-2 bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal-dark)] h-9 text-sm font-semibold shadow-sm"
           >
             <PlayCircle size={16} />
             Start Appointment
@@ -632,7 +634,7 @@ export function AmbientSessionPanel({
         {isLive && (
           <Button
             onClick={() => onEnd(sessionData)}
-            className="w-full gap-2 bg-[var(--color-danger)] text-white hover:bg-red-700 h-9 text-sm font-semibold"
+            className="w-[260px] sm:w-[280px] gap-2 bg-[var(--color-danger)] text-white hover:bg-red-700 h-9 text-sm font-semibold shadow-sm"
           >
             <StopCircle size={16} />
             End Appointment
