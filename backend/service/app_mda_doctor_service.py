@@ -8,6 +8,7 @@ from sqlalchemy import or_, func as sa_func
 from sqlalchemy.orm import Session
 
 from model.app_mda_doctor import AppMdaDoctor
+from model.app_mda_clinic_hdr import AppMdaClinicHdr
 from model.app_mda_patient import AppMdaPatient
 from model.app_mda_lead_chat_hdr import AppMdaLeadChatHdr
 from model.app_mda_appointment import AppMdaAppointment
@@ -72,6 +73,40 @@ _MIN_TOKEN_LENGTH = 3
 class AppMdaDoctorService(BaseService):
     def __init__(self):
         super().__init__(AppMdaDoctor)
+
+    def get_by_criteria(self, db: Session, clinic_hdr_guid: uuid.UUID) -> list[dict]:
+        """
+        Get doctors belonging to a clinic, joined with clinic info.
+
+        Returns a list of dicts with doctor fields + clinic_name.
+        """
+        results = (
+            db.query(
+                AppMdaDoctor.guid,
+                AppMdaDoctor.name,
+                AppMdaDoctor.phone,
+                AppMdaDoctor.email,
+                AppMdaDoctor.specialty,
+                AppMdaDoctor.image_url,
+                AppMdaClinicHdr.name.label("clinic_name"),
+            )
+            .join(AppMdaClinicHdr, AppMdaDoctor.clinic_hdr_guid == AppMdaClinicHdr.guid)
+            .filter(AppMdaDoctor.clinic_hdr_guid == clinic_hdr_guid)
+            .all()
+        )
+
+        return [
+            {
+                "guid": row.guid,
+                "name": row.name,
+                "phone": row.phone,
+                "email": row.email,
+                "specialty": row.specialty,
+                "image_url": row.image_url,
+                "clinic_name": row.clinic_name,
+            }
+            for row in results
+        ]
 
     def fuzzy_search(self, db: Session, search_string: str, limit: int = 20) -> list[AppMdaDoctor]:
         """

@@ -1,8 +1,8 @@
 import { API_MDA_PREFIX } from "../constants";
-import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse } from "../model/doctor.model";
+import type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse, DoctorByCriteriaRequest, DoctorByCriteriaItem } from "../model/doctor.model";
 import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 
-export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse };
+export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse, DoctorByCriteriaRequest, DoctorByCriteriaItem };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
 export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 import type { DoctorPatientHistoryRequest, PatientHistoryResponse } from "../model/patient-history.model";
@@ -134,6 +134,16 @@ export const doctorService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to fetch patient history: ${res.status}`);
+    return res.json();
+  },
+
+  getByCriteria: async (data: DoctorByCriteriaRequest): Promise<DoctorByCriteriaItem[]> => {
+    const res = await fetch(`${ENDPOINT}/get-by-criteria`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...HEADERS },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch doctors by criteria: ${res.status}`);
     return res.json();
   },
 };

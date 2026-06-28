@@ -7,6 +7,7 @@ from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
+from model.dto.doctor_by_criteria_dto import DoctorByCriteriaRequestDto, DoctorByCriteriaItemDto
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
 from model.dto.patient_history_dto import DoctorPatientHistoryRequestDto, PatientHistoryResponseDto
@@ -57,6 +58,16 @@ def update(guid: UUID, payload: DoctorUpdate, db: Session = Depends(get_db)):
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not doctor_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+@router.post("/get-by-criteria", response_model=list[DoctorByCriteriaItemDto])
+def get_by_criteria(payload: DoctorByCriteriaRequestDto, db: Session = Depends(get_db)):
+    """
+    Get all doctors belonging to a clinic, joined with clinic header info.
+    Returns doctor details along with the clinic name.
+    """
+    results = doctor_service.get_by_criteria(db, payload.clinic_hdr_guid)
+    return [DoctorByCriteriaItemDto(**row) for row in results]
 
 
 @router.post("/search", response_model=PatientPortalSearchResultDto)

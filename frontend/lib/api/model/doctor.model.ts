@@ -140,3 +140,17 @@ export interface PatientTriageReportResponse {
   chat_hdr_guid: string;
   triage_summary: string;
 }
+
+export interface DoctorByCriteriaRequest {
+  clinic_hdr_guid: string;
+}
+
+export interface DoctorByCriteriaItem {
+  guid: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  specialty?: string;
+  image_url?: string;
+  clinic_name?: string;
+}
