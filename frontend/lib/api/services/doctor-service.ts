@@ -5,6 +5,8 @@ import type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
 export type { DoctorCreate, DoctorUpdate, DoctorResponse, DoctorPatientRequest, DoctorPatientListItem, PatientAppointmentRequest, PatientReport, DoctorSearchRequest, DoctorSearchResponse, DoctorSearchByNameRequest, DoctorSearchByNameResponse, DoctorImageUploadResponse, PatientTriageReportRequest, PatientTriageReportResponse };
 export type { PatientAppointmentDetail, AppointmentNoteDetail, DoctorSearchResultItem } from "../model/doctor.model";
 export type { DoctorCVExtractionResponse } from "../model/clinic-hdr.model";
+import type { DoctorPatientHistoryRequest, PatientHistoryResponse } from "../model/patient-history.model";
+export type { DoctorPatientHistoryRequest, PatientHistoryResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/doctor`;
 
@@ -122,6 +124,16 @@ export const doctorService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to generate triage summary: ${res.status}`);
+    return res.json();
+  },
+
+  getPatientHistory: async (data: DoctorPatientHistoryRequest): Promise<PatientHistoryResponse> => {
+    const res = await fetch(`${ENDPOINT}/get-patient-history`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...HEADERS },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch patient history: ${res.status}`);
     return res.json();
   },
 };

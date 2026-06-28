@@ -5,14 +5,18 @@ import { AmbientScheduler, type Appointment } from "@/components/doctor/AmbientS
 import { AmbientSessionPanel, type SessionData } from "@/components/doctor/AmbientSessionPanel";
 import { AmbientBrief, type AIBriefData } from "@/components/doctor/AmbientBrief";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bot, CalendarClock, LayoutGrid, Loader2, Stethoscope, Wifi, WifiOff } from "lucide-react";
+import { Bot, CalendarClock, History, LayoutGrid, Loader2, Stethoscope, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TESTING_APPOINTMENT_GUID, TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
+import { TESTING_APPOINTMENT_GUID, TESTING_DOCTOR_GUID, TESTING_PATIENT_GUID } from "@/lib/api/model/testing-guid.model";
 import { useAmbientRecording } from "@/hooks/useAmbientRecording";
 import { useSessionEvents, type SessionEvent } from "@/hooks/useSessionEvents";
 import { toast } from "sonner";
 import { appointmentService } from "@/lib/api/services/appointment-service";
+import { doctorService } from "@/lib/api/services/doctor-service";
+import type { PatientHistoryResponse } from "@/lib/api/model/patient-history.model";
+import { PatientHistoryTimelineSheet } from "./PatientHistoryTimelineSheet";
 
 /* ── Fallback mock data (used when API is unreachable) ───── */
 const INITIAL_APPOINTMENTS: Appointment[] = [
@@ -234,13 +238,39 @@ const HARDCODED_DOCTOR_GUID = TESTING_DOCTOR_GUID;
 export function AmbientCoreWorkspace() {
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
-  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(INITIAL_APPOINTMENTS[1]);
   const [sessionState, setSessionState] = useState<"idle" | "live" | "processing" | "complete">("idle");
   const [sessionData, setSessionData] = useState<SessionData>(EMPTY_SESSION_DATA);
   const [brief, setBrief] = useState<AIBriefData | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
   const [followUpMsg, setFollowUpMsg] = useState<string | null>(null);
   const [pipelineStep, setPipelineStep] = useState<string | null>(null);
+
+  const [patientHistory, setPatientHistory] = useState<PatientHistoryResponse | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+
+  // Load patient history timeline when active appointment changes
+  useEffect(() => {
+    const patientGuid = activeAppointment?.patientGuid || TESTING_PATIENT_GUID;
+    let cancelled = false;
+    async function loadHistory() {
+      setIsLoadingHistory(true);
+      try {
+        const res = await doctorService.getPatientHistory({
+          doctor_guid: HARDCODED_DOCTOR_GUID,
+          patient_guid: patientGuid,
+        });
+        if (!cancelled) setPatientHistory(res);
+      } catch (err) {
+        if (!cancelled) console.warn("Failed to load patient history:", err);
+      } finally {
+        if (!cancelled) setIsLoadingHistory(false);
+      }
+    }
+    loadHistory();
+    return () => { cancelled = true; };
+  }, [activeAppointment?.patientGuid]);
 
   // ── Load real appointments from the backend on mount ─────────────────────
   useEffect(() => {
@@ -306,6 +336,10 @@ export function AmbientCoreWorkspace() {
           scheduledEnd: item.scheduled_end ?? undefined,
         }));
         setAppointments(mapped);
+        if (mapped.length > 0) {
+          const target = mapped.find((a) => a.patientGuid === TESTING_PATIENT_GUID || a.patientName?.includes("James")) || mapped[0];
+          setActiveAppointment(target);
+        }
       } catch (err) {
         if (cancelled) return;
         console.warn("[AmbientCoreWorkspace] getByDoctor failed — using mock data:", err);
@@ -569,6 +603,18 @@ export function AmbientCoreWorkspace() {
             <CalendarClock size={11} />
             {completedCount}/{totalCount} seen today
           </span>
+          {/* Patient History Trigger Button */}
+          <Separator orientation="vertical" className="h-3" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsHistorySheetOpen(true)}
+            className="gap-1.5 border-[var(--color-brand-teal)]/40 text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)] h-6 text-[11px] font-semibold px-2 shadow-sm"
+          >
+            <History size={12} />
+            <span>Timeline ({patientHistory?.history_timeline?.length ?? 0})</span>
+          </Button>
+
           {/* SSE connection indicator */}
           <Separator orientation="vertical" className="h-3" />
           <span className={cn(
@@ -627,8 +673,17 @@ export function AmbientCoreWorkspace() {
             onEnd={handleEndSession}
             sessionData={sessionData}
             onSessionDataChange={setSessionData}
+            onOpenHistory={() => setIsHistorySheetOpen(true)}
+            historyCount={patientHistory?.history_timeline?.length ?? 0}
           />
         </div>
+
+        <PatientHistoryTimelineSheet
+          open={isHistorySheetOpen}
+          onOpenChange={setIsHistorySheetOpen}
+          history={patientHistory}
+          isLoading={isLoadingHistory}
+        />
 
         {/* Column 3 — AI Brief */}
         <div className="flex w-[340px] shrink-0 flex-col bg-background">

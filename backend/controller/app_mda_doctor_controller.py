@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from model.schemas import DoctorCreate, DoctorUpdate, DoctorResponse
 from model.dto.doctor_patient_dto import DoctorPatientRequestDto, DoctorPatientListDto
 from model.dto.patient_appointment_dto import PatientAppointmentRequestDto, PatientAppointmentDto, PatientReportDto, AppointmentNoteDto
+from model.dto.patient_history_dto import DoctorPatientHistoryRequestDto, PatientHistoryResponseDto
 from model.dto.search_dto import PatientPortalSearchRequestDto, PatientPortalSearchResultDto, DoctorSearchResult, PatientPortalSearchDocByNameDto
 from model.dto.doctor_cv_ingestion_dto import DoctorCVExtraction
 from model.dto.doctor_image_upload_dto import DoctorImageUploadResponse
@@ -381,3 +382,19 @@ async def upload_doctor_image(
         raise HTTPException(status_code=404, detail=str(e))
 
     return DoctorImageUploadResponse(**result)
+
+
+@router.post("/get-patient-history", response_model=PatientHistoryResponseDto)
+def get_patient_history(
+    payload: DoctorPatientHistoryRequestDto,
+    db: Session = Depends(get_db),
+):
+    """
+    Generate patient history timeline per completed appointment for doctor review.
+    """
+    res = doctor_service.get_patient_history_timeline(
+        db=db,
+        patient_guid=payload.patient_guid,
+        doctor_guid=payload.doctor_guid,
+    )
+    return res

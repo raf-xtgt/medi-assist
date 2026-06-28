@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from model.schemas import PatientCreate, PatientUpdate, PatientResponse
+from model.dto.patient_history_dto import PatientOnlyHistoryRequestDto, PatientHistoryResponseDto
 from service.app_mda_patient_service import patient_service
+from service.app_mda_doctor_service import doctor_service
 from util.database import get_db
 
 router = APIRouter(prefix="/patient", tags=["app_mda_patient"])
@@ -42,3 +44,18 @@ def update(guid: UUID, payload: PatientUpdate, db: Session = Depends(get_db)):
 def delete(guid: UUID, db: Session = Depends(get_db)):
     if not patient_service.delete(db, guid):
         raise HTTPException(status_code=404, detail="Record not found")
+
+
+@router.post("/get-history", response_model=PatientHistoryResponseDto)
+def get_history(
+    payload: PatientOnlyHistoryRequestDto,
+    db: Session = Depends(get_db),
+):
+    """
+    Generate patient history timeline per completed appointment for patient viewing.
+    """
+    res = doctor_service.get_patient_history_timeline(
+        db=db,
+        patient_guid=payload.patient_guid,
+    )
+    return res

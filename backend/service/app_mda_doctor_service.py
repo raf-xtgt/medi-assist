@@ -3,10 +3,24 @@
 import re
 import uuid
 
-from sqlalchemy import or_
+from typing import Optional
+from sqlalchemy import or_, func as sa_func
 from sqlalchemy.orm import Session
 
 from model.app_mda_doctor import AppMdaDoctor
+from model.app_mda_patient import AppMdaPatient
+from model.app_mda_lead_chat_hdr import AppMdaLeadChatHdr
+from model.app_mda_appointment import AppMdaAppointment
+from model.app_mda_appointment_session import AppMdaAppointmentSession
+from model.app_mda_appointment_note import AppMdaAppointmentNote
+from model.app_mda_prescription import AppMdaPrescription
+from model.app_mda_clinical_report import AppMdaClinicalReport
+from model.dto.patient_appointment_dto import AppointmentNoteDto
+from model.dto.patient_history_dto import (
+    PrescriptionHistoryDto,
+    ClinicalReportHistoryDto,
+    AppointmentHistoryRecordDto,
+)
 from service.base_service import BaseService
 from util.gcs import get_bucket, GCS_BUCKET_NAME
 
@@ -252,6 +266,108 @@ class AppMdaDoctorService(BaseService):
             "doctor_guid": doctor_guid,
             "image_url": image_url,
             "blob_path": blob_path,
+        }
+
+    def get_patient_history_timeline(
+        self,
+        db: Session,
+        patient_guid: uuid.UUID,
+        doctor_guid: Optional[uuid.UUID] = None,
+    ) -> dict:
+        """Fetch multi-table patient history timeline using optimal batch joins."""
+        patient = db.query(AppMdaPatient).filter(AppMdaPatient.guid == patient_guid).first()
+        patient_name = patient.name if patient else None
+        patient_phone = patient.phone if patient else None
+        triage_summary = None
+        if patient and patient.lead_guid:
+            hdr = db.query(AppMdaLeadChatHdr).filter(AppMdaLeadChatHdr.lead_guid == patient.lead_guid).first()
+            if hdr:
+                triage_summary = hdr.triage_summary
+
+        query = db.query(AppMdaAppointment).filter(
+            AppMdaAppointment.patient_guid == patient_guid,
+            sa_func.lower(AppMdaAppointment.appointment_status) == "completed",
+        )
+        if doctor_guid:
+            query = query.filter(AppMdaAppointment.doctor_guid == doctor_guid)
+
+        appointments = query.order_by(AppMdaAppointment.scheduled_start.desc()).all()
+        appointment_guids = [a.guid for a in appointments]
+
+        sessions_map = {}
+        reports_map = {}
+        notes_map = {}
+        rx_map = {}
+
+        if appointment_guids:
+            sessions = (
+                db.query(AppMdaAppointmentSession)
+                .filter(AppMdaAppointmentSession.appointment_guid.in_(appointment_guids))
+                .all()
+            )
+            session_guids = []
+            for s in sessions:
+                sessions_map[s.appointment_guid] = s
+                session_guids.append(s.guid)
+
+            if session_guids:
+                reports = (
+                    db.query(AppMdaClinicalReport)
+                    .filter(AppMdaClinicalReport.appointment_session_guid.in_(session_guids))
+                    .all()
+                )
+                for r in reports:
+                    reports_map[r.appointment_session_guid] = r
+
+            notes = (
+                db.query(AppMdaAppointmentNote)
+                .filter(AppMdaAppointmentNote.appointment_guid.in_(appointment_guids))
+                .all()
+            )
+            for n in notes:
+                notes_map[n.appointment_guid] = n
+
+            prescriptions = (
+                db.query(AppMdaPrescription)
+                .filter(AppMdaPrescription.appointment_guid.in_(appointment_guids))
+                .all()
+            )
+            for p in prescriptions:
+                if p.appointment_guid not in rx_map:
+                    rx_map[p.appointment_guid] = []
+                rx_map[p.appointment_guid].append(p)
+
+        timeline = []
+        for a in appointments:
+            note_obj = notes_map.get(a.guid)
+            note_dto = AppointmentNoteDto.model_validate(note_obj) if note_obj else None
+
+            rx_list = rx_map.get(a.guid, [])
+            rx_dtos = [PrescriptionHistoryDto.model_validate(rx) for rx in rx_list]
+
+            sess = sessions_map.get(a.guid)
+            rep_obj = reports_map.get(sess.guid) if sess else None
+            rep_dto = ClinicalReportHistoryDto.model_validate(rep_obj) if rep_obj else None
+
+            record = AppointmentHistoryRecordDto(
+                appointment_guid=a.guid,
+                running_no=a.running_no,
+                scheduled_start=a.scheduled_start,
+                scheduled_end=a.scheduled_end,
+                appointment_status=a.appointment_status,
+                appointment_note=note_dto,
+                prescriptions=rx_dtos,
+                clinical_report=rep_dto,
+            )
+            timeline.append(record)
+
+        return {
+            "doctor_guid": doctor_guid if doctor_guid else (appointments[0].doctor_guid if appointments else None),
+            "patient_guid": patient_guid,
+            "patient_name": patient_name,
+            "patient_phone": patient_phone,
+            "patient_triage_summary": triage_summary,
+            "history_timeline": timeline,
         }
 
 

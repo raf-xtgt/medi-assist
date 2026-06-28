@@ -20,6 +20,7 @@ import {
   Activity,
   CheckCircle,
   ExternalLink,
+  History,
   Loader2,
   Mic,
   MicOff,
@@ -69,6 +70,8 @@ interface AmbientSessionPanelProps {
   onEnd: (data: SessionData) => void;
   sessionData: SessionData;
   onSessionDataChange: (data: SessionData) => void;
+  onOpenHistory?: () => void;
+  historyCount?: number;
 }
 
 /* ── Wave Visualizer ────────────────────────────────────── */
@@ -175,6 +178,8 @@ export function AmbientSessionPanel({
   onEnd,
   sessionData,
   onSessionDataChange,
+  onOpenHistory,
+  historyCount = 0,
 }: AmbientSessionPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -385,6 +390,22 @@ export function AmbientSessionPanel({
             triageSummary={appointment.triageSummary}
             collapsed={isLive || isProcessing}
           />
+
+          {/* Past Medical History Banner */}
+          {!isLive && !isProcessing && onOpenHistory && (
+            <div
+              onClick={onOpenHistory}
+              className="flex items-center justify-between rounded-lg border border-[var(--color-brand-teal)]/30 bg-[var(--color-brand-teal-light)]/40 px-3 py-2 cursor-pointer hover:bg-[var(--color-brand-teal-light)]/70 transition-colors shadow-sm"
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-brand-teal)]">
+                <History size={14} />
+                <span>Patient Medical Timeline</span>
+              </div>
+              <Badge className="bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal)] text-[10px] px-2 py-0.5 font-bold">
+                {historyCount} Completed Visit{historyCount !== 1 ? "s" : ""} &rarr;
+              </Badge>
+            </div>
+          )}
 
           {/* Chief complaint */}
           <div className="space-y-1.5">
@@ -629,10 +650,10 @@ export function AmbientSessionPanel({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs h-7"
-              onClick={() => router.push("/doctor/patients")}
+              className="gap-1.5 text-xs h-7 border-[var(--color-brand-teal)]/40 text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)]"
+              onClick={() => (onOpenHistory ? onOpenHistory() : router.push("/doctor/patients"))}
             >
-              View Archived Patient File
+              View Archived Patient File ({historyCount})
               <ExternalLink size={11} />
             </Button>
           </div>

@@ -1,7 +1,8 @@
 import { API_MDA_PREFIX } from "../constants";
 import type { PatientCreate, PatientUpdate, PatientResponse } from "../model/patient.model";
+import type { PatientOnlyHistoryRequest, PatientHistoryResponse } from "../model/patient-history.model";
 
-export type { PatientCreate, PatientUpdate, PatientResponse };
+export type { PatientCreate, PatientUpdate, PatientResponse, PatientOnlyHistoryRequest, PatientHistoryResponse };
 
 const ENDPOINT = `${API_MDA_PREFIX}/patient`;
 
@@ -41,5 +42,15 @@ export const patientService = {
   delete: async (guid: string): Promise<void> => {
     const res = await fetch(`${ENDPOINT}/delete/${guid}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Failed to delete patient: ${res.status}`);
+  },
+
+  getHistory: async (data: PatientOnlyHistoryRequest): Promise<PatientHistoryResponse> => {
+    const res = await fetch(`${ENDPOINT}/get-history`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to fetch patient history: ${res.status}`);
+    return res.json();
   },
 };

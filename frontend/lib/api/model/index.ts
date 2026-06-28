@@ -13,3 +13,4 @@ export type { PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse } fro
 export type { FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueueResponse } from "./follow-up-queue.model";
 export type { AppointmentNoteCreate, AppointmentNoteUpdate, AppointmentNoteResponse } from "./appointment-note.model";
 export type { ClinicalReportCreate, ClinicalReportUpdate, ClinicalReportResponse } from "./clinical-report.model";
+export type { PrescriptionHistoryItem, ClinicalReportHistoryItem, AppointmentHistoryRecord, PatientHistoryResponse, DoctorPatientHistoryRequest, PatientOnlyHistoryRequest } from "./patient-history.model";
