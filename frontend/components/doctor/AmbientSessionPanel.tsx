@@ -152,7 +152,7 @@ function WaveVisualizer({ isLive }: { isLive: boolean }) {
   return (
     <canvas
       ref={canvasRef}
-      className="h-full w-full"
+      className="absolute inset-0 h-full w-full"
       aria-label="Audio wave visualizer"
       aria-hidden="true"
     />
@@ -339,15 +339,17 @@ export function AmbientSessionPanel({
       {/* ── Canvas visualizer ── */}
       <div
         className={cn(
-          "relative h-[68px] shrink-0 border-b border-border/60 transition-all overflow-hidden",
+          "relative h-[68px] min-h-[68px] max-h-[68px] shrink-0 border-b border-border/60 transition-all overflow-hidden",
           isLive ? "bg-slate-950" : "bg-slate-50 dark:bg-slate-900/40"
         )}
         aria-label={isLive ? "Live audio recording in progress" : "Audio stream inactive"}
       >
         {isLive ? (
           <>
-            <WaveVisualizer isLive={true} />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+            <div className="absolute inset-0 overflow-hidden">
+              <WaveVisualizer isLive={true} />
+            </div>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
               <Mic size={11} className="text-[var(--color-brand-teal)]" />
               <span className="text-[10px] font-medium text-[var(--color-brand-teal)]">
                 Ambient recording active
@@ -587,58 +589,90 @@ export function AmbientSessionPanel({
             />
           </div>
 
-          {/* Save button */}
-          {!isComplete && (
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={cn(
-                "w-[260px] sm:w-[280px] gap-2 h-9 text-sm font-semibold mt-2 shadow-sm",
-                saveSuccess
-                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                  : "bg-[var(--color-brand-blue)] text-white hover:bg-[var(--color-brand-blue-dark)]"
-              )}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Saving...
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <CheckCircle size={14} />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save size={14} />
-                  Save Notes &amp; Prescriptions
-                </>
-              )}
-            </Button>
-          )}
         </div>
       )}
 
       {/* ── Action footer ── */}
       <div className={cn("shrink-0 border-t border-border/60 pl-4 py-3 transition-all duration-300", isBriefHidden ? "pr-8 md:pr-16 lg:pr-48 xl:pr-[280px]" : "pr-3")}>
         {isIdle && (
-          <Button
-            onClick={onStart}
-            className="w-[260px] sm:w-[280px] gap-2 bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal-dark)] h-9 text-sm font-semibold shadow-sm"
-          >
-            <PlayCircle size={16} />
-            Start Appointment
-          </Button>
+          <div className="flex items-center gap-3">
+            {!isComplete && (
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={cn(
+                  "gap-2 h-9 text-sm font-semibold shadow-sm px-4",
+                  saveSuccess
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "bg-[var(--color-brand-blue)] text-white hover:bg-[var(--color-brand-blue-dark)]"
+                )}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <CheckCircle size={14} />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    Save Notes &amp; Prescriptions
+                  </>
+                )}
+              </Button>
+            )}
+            <Button
+              onClick={onStart}
+              className="gap-2 bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal-dark)] h-9 text-sm font-semibold shadow-sm px-4"
+            >
+              <PlayCircle size={16} />
+              Start Appointment
+            </Button>
+          </div>
         )}
         {isLive && (
-          <Button
-            onClick={() => onEnd(sessionData)}
-            className="w-[260px] sm:w-[280px] gap-2 bg-[var(--color-danger)] text-white hover:bg-red-700 h-9 text-sm font-semibold shadow-sm"
-          >
-            <StopCircle size={16} />
-            End Appointment
-          </Button>
+          <div className="flex items-center gap-3">
+            {!isComplete && (
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={cn(
+                  "gap-2 h-9 text-sm font-semibold shadow-sm px-4",
+                  saveSuccess
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "bg-[var(--color-brand-blue)] text-white hover:bg-[var(--color-brand-blue-dark)]"
+                )}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <CheckCircle size={14} />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    Save Notes &amp; Prescriptions
+                  </>
+                )}
+              </Button>
+            )}
+            <Button
+              onClick={() => onEnd(sessionData)}
+              className="gap-2 bg-[var(--color-danger)] text-white hover:bg-red-700 h-9 text-sm font-semibold shadow-sm px-4"
+            >
+              <StopCircle size={16} />
+              End Appointment
+            </Button>
+          </div>
         )}
         {/* Session completion */}
         {isComplete && (
