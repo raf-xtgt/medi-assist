@@ -521,6 +521,17 @@ export function AmbientCoreWorkspace() {
       setSessionState("processing");
       setPipelineStep("Processing started...");
 
+      // Mark the appointment as completed in the backend
+      if (activeAppointment.appointmentGuid) {
+        try {
+          await appointmentService.update(activeAppointment.appointmentGuid, {
+            appointment_status: "completed",
+          });
+        } catch (err) {
+          console.error("Failed to update appointment status:", err);
+        }
+      }
+
       // Stop recording + trigger backend pipeline (transcription → report → follow-up)
       await stopRecording();
 

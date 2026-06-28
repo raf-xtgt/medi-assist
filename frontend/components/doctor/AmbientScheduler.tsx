@@ -134,7 +134,9 @@ export function AmbientScheduler({
           </div>
         ) : (
         <ul role="list" className="divide-y divide-border/40 px-2 py-1">
-          {appointments.map((appt) => {
+          {appointments
+            .filter((a) => a.status === "upcoming" || a.status === "in-progress")
+            .map((appt) => {
             const config = statusConfig[appt.status];
             const isActive = appt.id === activeAppointmentId;
             const isHovered = appt.id === hoveredId;
