@@ -78,7 +78,7 @@ export function useSessionEvents({
     // Next.js API routes and rewrites buffer responses, breaking SSE.
     // The browser connects directly to FastAPI (localhost:8000) which has
     // CORS allow_origins=["*"] set, so cross-origin from localhost:3000 works.
-    const url = `http://localhost:8000/api/agent/ambient-session/events/${doctorGuid}`;
+    const url = `${API_BASE_URL}/api/agent/ambient-session/events/${doctorGuid}`;
 
     console.log("[useSessionEvents] Opening EventSource:", url);
     const es = new EventSource(url);
