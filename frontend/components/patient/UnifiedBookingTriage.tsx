@@ -159,9 +159,8 @@ export function UnifiedBookingTriage({ userName, userMobile, leadGuid: initialLe
     await updateLeadOnBooking();
     if (patientGuid && onPatientBookingComplete) {
       onPatientBookingComplete(patientGuid);
-    } else {
-      handleBackToIdle();
     }
+    handleBackToIdle();
   };
 
   /* ── Searching state ─────────────────────────────────────── */
