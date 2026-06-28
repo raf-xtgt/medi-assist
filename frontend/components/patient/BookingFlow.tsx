@@ -12,7 +12,6 @@ import {
   Clock,
   Loader2,
   Phone,
-  Star,
   User,
   X,
 } from "lucide-react";
@@ -22,56 +21,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { doctorAvailabilityService } from "@/lib/api/services/doctor-availability-service";
+import { doctorService } from "@/lib/api/services/doctor-service";
+import type { DoctorByCriteriaItem } from "@/lib/api/services/doctor-service";
 import type { DoctorCalendarResponse } from "@/lib/api/model/doctor-availability.model";
-
-/* ─── Directory data (hardcoded for "Browse All Doctors" flow) ─── */
-const doctors = [
-  {
-    id: "priya-nair",
-    name: "Dr. Priya Nair",
-    specialty: "General Practice",
-    tags: ["GP", "Preventive Care"],
-    rating: 4.9,
-    reviews: 218,
-    photo: "/doctors/dr-priya-nair.png",
-  },
-  {
-    id: "marcus-oliveira",
-    name: "Dr. Marcus Oliveira",
-    specialty: "Internal Medicine",
-    tags: ["Internal Med", "Diabetes"],
-    rating: 4.8,
-    reviews: 174,
-    photo: "/doctors/dr-marcus-oliveira.png",
-  },
-  {
-    id: "sofia-chen",
-    name: "Dr. Sofia Chen",
-    specialty: "Dermatology",
-    tags: ["Dermatology", "Skin Care"],
-    rating: 4.9,
-    reviews: 302,
-    photo: "/doctors/dr-sofia-chen.png",
-  },
-  {
-    id: "james-okafor",
-    name: "Dr. James Okafor",
-    specialty: "Cardiology",
-    tags: ["Cardiology", "Heart Health"],
-    rating: 4.7,
-    reviews: 140,
-    photo: "/doctors/dr-james-okafor.png",
-  },
-  {
-    id: "aisha-rahman",
-    name: "Dr. Aisha Rahman",
-    specialty: "Paediatrics",
-    tags: ["Paediatrics", "Child Health"],
-    rating: 4.9,
-    reviews: 265,
-    photo: "/doctors/dr-aisha-rahman.png",
-  },
-];
+import { TESTING_CLINIC_HDR_GUID } from "@/lib/api/model/testing-guid.model";
 
 /* ─── Calendar utils ────────────────────────────────────────── */
 function getDaysInMonth(year: number, month: number) {
@@ -123,14 +76,16 @@ interface BookingFlowProps {
 export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConfirmed, onBack, prefillName, prefillMobile }: BookingFlowProps) {
   const router = useRouter();
   const [view, setView] = useState<View>(preselectedDoctorId ? "calendar" : "directory");
-  const [selectedDoctor, setSelectedDoctor] = useState(
-    preselectedDoctorId ? doctors.find((d) => d.id === preselectedDoctorId) ?? doctors[0] : doctors[0]
-  );
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorByCriteriaItem | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [name, setName] = useState(prefillName ?? "");
   const [mobile, setMobile] = useState(prefillMobile ?? "");
   const [submitting, setSubmitting] = useState(false);
+
+  // Doctor directory state (fetched from backend)
+  const [directoryDoctors, setDirectoryDoctors] = useState<DoctorByCriteriaItem[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
 
   // Calendar state
   const today = new Date();
@@ -143,7 +98,7 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
   const [calendarLoading, setCalendarLoading] = useState(false);
 
   // The doctor GUID to use for calendar fetch
-  const activeDoctorGuid = preselectedDoctorId ?? selectedDoctor.id;
+  const activeDoctorGuid = preselectedDoctorId ?? selectedDoctor?.guid ?? "";
 
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay = getFirstDayOfMonth(calYear, calMonth);
@@ -180,6 +135,27 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
     }
   }, [view, fetchCalendar]);
 
+  /* ── Fetch doctor directory from backend ────────────────── */
+  useEffect(() => {
+    if (view !== "directory") return;
+    let cancelled = false;
+
+    async function loadDoctors() {
+      setDirectoryLoading(true);
+      try {
+        const data = await doctorService.getByCriteria({ clinic_hdr_guid: TESTING_CLINIC_HDR_GUID });
+        if (!cancelled) setDirectoryDoctors(data);
+      } catch {
+        if (!cancelled) setDirectoryDoctors([]);
+      } finally {
+        if (!cancelled) setDirectoryLoading(false);
+      }
+    }
+
+    loadDoctors();
+    return () => { cancelled = true; };
+  }, [view]);
+
   // Derive which days have slots from real backend data
   const availableDates = calendarData?.available_dates ?? {};
   const slotDays = new Set(
@@ -212,7 +188,7 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
     setTimeout(() => {
       setSubmitting(false);
       setSheetOpen(false);
-      const doctorName = preselectedDoctorInfo?.name ?? selectedDoctor.name;
+      const doctorName = preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor";
       if (onConfirmed) {
         onConfirmed({ name, mobile, doctor: doctorName, slot: selectedSlot });
       } else {
@@ -240,50 +216,60 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
             </div>
           </div>
 
-          <ul role="list" className="flex flex-col gap-3">
-            {doctors.map((doc) => (
-              <li key={doc.id}>
-                <button
-                  onClick={() => { setSelectedDoctor(doc); setView("calendar"); }}
-                  className="group w-full text-left rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-[var(--color-brand-teal)] hover:shadow-sm active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-                      <Image
-                        src={doc.photo}
-                        alt={`${doc.name} photo`}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground text-sm leading-tight">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{doc.specialty}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {doc.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-[10px] px-2 py-0.5 bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)] border-0"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
+          {directoryLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 size={20} className="animate-spin text-muted-foreground" aria-hidden="true" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading doctors…</span>
+            </div>
+          ) : directoryDoctors.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-16">No doctors available at this time.</p>
+          ) : (
+            <ul role="list" className="flex flex-col gap-3">
+              {directoryDoctors.map((doc) => (
+                <li key={doc.guid}>
+                  <button
+                    onClick={() => { setSelectedDoctor(doc); setView("calendar"); }}
+                    className="group w-full text-left rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-[var(--color-brand-teal)] hover:shadow-sm active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                        {doc.image_url ? (
+                          <Image
+                            src={doc.image_url}
+                            alt={`${doc.name ?? "Doctor"} photo`}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex size-full items-center justify-center text-muted-foreground">
+                            <User size={24} aria-hidden="true" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground text-sm leading-tight">{doc.name ?? "Unknown"}</p>
+                        {doc.clinic_name && (
+                          <p className="text-[10px] text-muted-foreground mt-1">{doc.clinic_name}</p>
+                        )}
+                        {doc.specialty && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-2 py-0.5 bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)] border-0"
+                            >
+                              {doc.specialty}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
-                        <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" />
-                        {doc.rating}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{doc.reviews} reviews</span>
-                    </div>
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     );
@@ -305,31 +291,27 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
             </button>
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {preselectedDoctorInfo?.image_url ? (
+                {(preselectedDoctorInfo?.image_url || selectedDoctor?.image_url) ? (
                   <Image
-                    src={preselectedDoctorInfo.image_url}
-                    alt={`${preselectedDoctorInfo.name} photo`}
+                    src={preselectedDoctorInfo?.image_url ?? selectedDoctor?.image_url ?? ""}
+                    alt={`${preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"} photo`}
                     fill
                     className="object-cover"
                     sizes="40px"
                     unoptimized
                   />
                 ) : (
-                  <Image
-                    src={selectedDoctor.photo}
-                    alt={`${selectedDoctor.name} photo`}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
+                  <div className="flex size-full items-center justify-center text-muted-foreground">
+                    <User size={18} aria-hidden="true" />
+                  </div>
                 )}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {preselectedDoctorInfo?.name ?? selectedDoctor.name}
+                  {preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {preselectedDoctorInfo?.specialty ?? selectedDoctor.specialty}
+                  {preselectedDoctorInfo?.specialty ?? selectedDoctor?.specialty ?? ""}
                 </p>
               </div>
             </div>
@@ -484,7 +466,7 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
 
               <h2 className="text-lg font-bold text-foreground mb-1">Confirm Your Booking</h2>
               <p className="text-sm text-muted-foreground mb-5">
-                {preselectedDoctorInfo?.name ?? selectedDoctor.name} · {selectedSlot?.date} at {selectedSlot ? formatTime24to12(selectedSlot.time) : ""}
+                {preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"} · {selectedSlot?.date} at {selectedSlot ? formatTime24to12(selectedSlot.time) : ""}
               </p>
 
               <form onSubmit={handleBookSubmit} className="flex flex-col gap-4">
@@ -553,7 +535,7 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
         <p className="text-muted-foreground text-sm leading-relaxed mb-2">
           Your appointment with{" "}
           <span className="font-semibold text-foreground">
-            {preselectedDoctorInfo?.name ?? selectedDoctor.name}
+            {preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"}
           </span>
           {" "}is confirmed.
         </p>
@@ -561,31 +543,27 @@ export function BookingFlow({ preselectedDoctorId, preselectedDoctorInfo, onConf
           <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-left mb-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {preselectedDoctorInfo?.image_url ? (
+                {(preselectedDoctorInfo?.image_url || selectedDoctor?.image_url) ? (
                   <Image
-                    src={preselectedDoctorInfo.image_url}
-                    alt={preselectedDoctorInfo.name}
+                    src={preselectedDoctorInfo?.image_url ?? selectedDoctor?.image_url ?? ""}
+                    alt={preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"}
                     fill
                     className="object-cover"
                     sizes="40px"
                     unoptimized
                   />
                 ) : (
-                  <Image
-                    src={selectedDoctor.photo}
-                    alt={selectedDoctor.name}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
+                  <div className="flex size-full items-center justify-center text-muted-foreground">
+                    <User size={18} aria-hidden="true" />
+                  </div>
                 )}
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  {preselectedDoctorInfo?.name ?? selectedDoctor.name}
+                  {preselectedDoctorInfo?.name ?? selectedDoctor?.name ?? "Doctor"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {preselectedDoctorInfo?.specialty ?? selectedDoctor.specialty}
+                  {preselectedDoctorInfo?.specialty ?? selectedDoctor?.specialty ?? ""}
                 </p>
               </div>
             </div>
