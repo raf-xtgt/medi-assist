@@ -16,6 +16,8 @@ import {
   ChevronDown,
   Clock,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   RefreshCw,
   Stethoscope,
   X,
@@ -52,6 +54,8 @@ interface AmbientSchedulerProps {
   onStatusChange: (id: string, status: Appointment["status"]) => void;
   /** Show skeleton placeholder rows while the API fetch is in progress */
   isLoading?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const statusConfig: Record<
@@ -80,6 +84,8 @@ export function AmbientScheduler({
   activeAppointmentId,
   onStatusChange,
   isLoading = false,
+  isCollapsed = false,
+  onToggleCollapse,
 }: AmbientSchedulerProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -93,6 +99,54 @@ export function AmbientScheduler({
   const remaining = appointments.filter(
     (a) => a.status === "upcoming" || a.status === "in-progress"
   ).length;
+
+  if (isCollapsed) {
+    return (
+      <div className="flex h-full flex-col items-center py-3 bg-background">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className="size-8 text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)] mb-3"
+          title="Expand Schedule"
+        >
+          <PanelLeftOpen size={16} />
+        </Button>
+        <div className="w-full border-b border-border/60 mb-2" />
+        <ScrollArea className="flex-1 w-full">
+          <div className="flex flex-col items-center gap-2.5 py-1 px-1">
+            {appointments
+              .filter((a) => a.status === "upcoming" || a.status === "in-progress" || a.status === "completed")
+              .map((appt) => {
+                const isActive = appt.id === activeAppointmentId;
+                const config = statusConfig[appt.status];
+                return (
+                  <button
+                    key={appt.id}
+                    onClick={() => onSelectAppointment(appt)}
+                    title={`${appt.patientName} (${appt.time}) - ${config.label}`}
+                    className={cn(
+                      "relative flex size-9 items-center justify-center rounded-full text-xs font-bold transition-all",
+                      isActive
+                        ? "bg-[var(--color-brand-teal)] text-white shadow-sm ring-2 ring-[var(--color-brand-teal)]/30 ring-offset-2 ring-offset-background"
+                        : "bg-muted text-muted-foreground hover:bg-[var(--color-brand-teal-light)] hover:text-[var(--color-brand-teal)]"
+                    )}
+                  >
+                    {getInitials(appt.patientName)}
+                    <span
+                      className={cn(
+                        "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background",
+                        config.dot
+                      )}
+                    />
+                  </button>
+                );
+              })}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -110,6 +164,17 @@ export function AmbientScheduler({
             <Badge className="border-0 bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)] text-[10px] px-1.5 py-0">
               {remaining} left
             </Badge>
+          )}
+          {onToggleCollapse && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="size-6 text-muted-foreground hover:text-foreground ml-0.5"
+              title="Collapse Schedule"
+            >
+              <PanelLeftClose size={13} />
+            </Button>
           )}
         </div>
       </div>

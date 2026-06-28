@@ -248,6 +248,19 @@ export function AmbientCoreWorkspace() {
   const [patientHistory, setPatientHistory] = useState<PatientHistoryResponse | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [isScheduleCollapsed, setIsScheduleCollapsed] = useState(false);
+
+  const handleOpenHistory = useCallback(() => {
+    setIsHistorySheetOpen(true);
+    setIsScheduleCollapsed(true);
+  }, []);
+
+  const handleCloseHistory = useCallback((open: boolean) => {
+    setIsHistorySheetOpen(open);
+    if (!open) {
+      setIsScheduleCollapsed(false);
+    }
+  }, []);
 
   // Load patient history timeline when active appointment changes
   useEffect(() => {
@@ -607,7 +620,7 @@ export function AmbientCoreWorkspace() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsHistorySheetOpen(true)}
+            onClick={handleOpenHistory}
             className="gap-1.5 border-[var(--color-brand-teal)]/40 text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)] h-6 text-[11px] font-semibold px-2 shadow-sm"
           >
             <History size={12} />
@@ -650,8 +663,8 @@ export function AmbientCoreWorkspace() {
         {/* Column 1 — Schedule */}
         <div
           className={cn(
-            "flex w-[220px] shrink-0 flex-col border-r border-border/60 bg-background",
-            "overflow-hidden transition-all"
+            "flex shrink-0 flex-col border-r border-border/60 bg-background transition-all duration-200",
+            isScheduleCollapsed ? "w-[56px]" : "w-[220px]"
           )}
         >
           <AmbientScheduler
@@ -660,10 +673,46 @@ export function AmbientCoreWorkspace() {
             activeAppointmentId={activeAppointment?.id ?? null}
             onStatusChange={handleStatusChange}
             isLoading={isLoadingAppointments}
+            isCollapsed={isScheduleCollapsed}
+            onToggleCollapse={() => setIsScheduleCollapsed((prev) => !prev)}
           />
         </div>
 
-        {/* Column 2 — Session Panel */}
+        {/* Column 2 — Docked Patient History Timeline */}
+        <PatientHistoryTimelineSheet
+          open={isHistorySheetOpen}
+          onOpenChange={handleCloseHistory}
+          history={patientHistory}
+          isLoading={isLoadingHistory}
+          onCiteNote={(text) => {
+            setSessionData((prev) => ({
+              ...prev,
+              clinicalNotes: prev.clinicalNotes
+                ? `${prev.clinicalNotes}\n\n[Cited from History]: ${text}`
+                : `[Cited from History]: ${text}`,
+            }));
+            toast.success("Cited to Clinical Notes");
+          }}
+          onReprescribe={(rx) => {
+            setSessionData((prev) => ({
+              ...prev,
+              prescriptions: [
+                ...prev.prescriptions,
+                {
+                  id: crypto.randomUUID(),
+                  medicine: rx.medicine_name || "",
+                  dosage: rx.dosage || "",
+                  frequency: rx.frequency || "",
+                  duration: rx.duration || "",
+                  remarks: "Re-prescribed from history",
+                },
+              ],
+            }));
+            toast.success(`Re-prescribed ${rx.medicine_name || "medication"}`);
+          }}
+        />
+
+        {/* Column 3 — Session Panel */}
         <div className="flex flex-1 min-w-0 flex-col border-r border-border/60 bg-background">
           <AmbientSessionPanel
             appointment={activeAppointment}
@@ -672,17 +721,10 @@ export function AmbientCoreWorkspace() {
             onEnd={handleEndSession}
             sessionData={sessionData}
             onSessionDataChange={setSessionData}
-            onOpenHistory={() => setIsHistorySheetOpen(true)}
+            onOpenHistory={handleOpenHistory}
             historyCount={patientHistory?.history_timeline?.length ?? 0}
           />
         </div>
-
-        <PatientHistoryTimelineSheet
-          open={isHistorySheetOpen}
-          onOpenChange={setIsHistorySheetOpen}
-          history={patientHistory}
-          isLoading={isLoadingHistory}
-        />
 
         {/* Column 3 — AI Brief */}
         <div className="flex w-[340px] shrink-0 flex-col bg-background">
