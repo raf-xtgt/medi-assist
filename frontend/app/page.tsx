@@ -67,7 +67,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
           <Logo size="md" />
           <nav className="flex items-center gap-3" aria-label="Primary navigation">
-            <Button variant="ghost" size="sm" asChild>
+            {/* <Button variant="ghost" size="sm" asChild>
               <Link href="/login">Sign in</Link>
             </Button>
             <Button size="sm" className="bg-[var(--primary)] hover:bg-[var(--color-brand-blue-dark)] text-white" asChild>
@@ -75,7 +75,7 @@ export default function LandingPage() {
                 Get started
                 <ArrowRight size={14} data-icon="inline-end" aria-hidden="true" />
               </Link>
-            </Button>
+            </Button> */}
           </nav>
         </div>
       </header>
@@ -98,13 +98,13 @@ export default function LandingPage() {
               healthcare demands.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button
+              {/* <Button
                 size="lg"
                 className="min-w-40 bg-[var(--primary)] hover:bg-[var(--color-brand-blue-dark)] text-white"
                 asChild
               >
                 <Link href="/login">Get started</Link>
-              </Button>
+              </Button> */}
               <Button variant="outline" size="lg" className="min-w-40" asChild>
                 <Link href="#portals">View portals</Link>
               </Button>
