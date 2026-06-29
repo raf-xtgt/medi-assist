@@ -597,3 +597,79 @@ class LeadChatTranscriptResponse(BaseModel):
     created_date: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─── Dashboard Request & Response Models ──────────────────────────────────────
+
+# --- Admin Dashboard ---
+class AdminDashboardRequest(BaseModel):
+    clinic_guid: UUID
+    date: Optional[date] = None  # Defaults to current date if not provided
+
+class AdminKpiMetrics(BaseModel):
+    total_appointments: int
+    remaining_appointments: int
+    completed_appointments: int
+    completion_rate: float
+    canceled_or_postponed_appointments: int
+    average_utilization_rate: float
+
+class DoctorLoadItem(BaseModel):
+    doctor_guid: UUID
+    doctor_name: str
+    specialty: str
+    completed_appointments: int
+    total_appointments: int
+    utilization_percentage: float
+
+class AdminAppointmentItem(BaseModel):
+    appointment_guid: UUID
+    time: str  # Format: "HH:MM"
+    patient_name: str
+    doctor_name: str
+    visit_type: str  # derived from appointment_note.main_complaint or triage summary
+    appointment_status: str
+
+class AdminDashboardResponse(BaseModel):
+    clinic_guid: UUID
+    date: date
+    kpis: AdminKpiMetrics
+    provider_loads: list[DoctorLoadItem]
+    appointments: list[AdminAppointmentItem]
+
+
+# --- Doctor Dashboard ---
+class DoctorDashboardRequest(BaseModel):
+    doctor_guid: UUID
+    date: Optional[date] = None  # Defaults to current date if not provided
+
+class DoctorKpiMetrics(BaseModel):
+    patients_today: int
+    patients_remaining: int
+    total_appointments: int
+    next_appointment_time: Optional[str] = None  # Format: "HH:MM"
+    pending_notes: int  # count of sessions where is_reviewed_by_doctor is False
+    avg_consult_duration_minutes: float
+
+class QueuePatientItem(BaseModel):
+    patient_guid: UUID
+    patient_name: str
+    age: int
+    appointment_guid: UUID
+    scheduled_start: datetime
+    reason: str  # from lead_chat_hdr.triage_summary or appointment_note.main_complaint
+    appointment_status: str
+
+class ActivityItemResponse(BaseModel):
+    id: str
+    activity_type: str  # "note_completed", "clinical_report", "prescription"
+    message: str
+    timestamp: datetime
+
+class DoctorDashboardResponse(BaseModel):
+    doctor_guid: UUID
+    date: date
+    kpis: DoctorKpiMetrics
+    queue: list[QueuePatientItem]
+    recent_activities: list[ActivityItemResponse]
+

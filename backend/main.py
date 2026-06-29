@@ -37,6 +37,8 @@ from controller.app_mda_lead_chat_transcript_controller import router as lead_ch
 from controller.app_mda_inferencing_controller import router as inferencing_router
 from controller.app_mda_clinical_report_controller import router as clinical_report_router
 from controller.triage_chat_controller import router as triage_chat_router
+from controller.app_mda_dashboard_controller import router as dashboard_router
+
 
 app = FastAPI(
     title="Medi-Assist API",
@@ -82,3 +84,5 @@ app.include_router(triage_chat_router, prefix="/api/agent")
 app.include_router(lead_chat_hdr_router, prefix=url_prefix)
 app.include_router(lead_chat_transcript_router, prefix=url_prefix)
 app.include_router(inferencing_router, prefix="/api/agent")
+app.include_router(dashboard_router, prefix=url_prefix)
+
