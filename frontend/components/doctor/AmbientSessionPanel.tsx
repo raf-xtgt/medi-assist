@@ -292,7 +292,7 @@ export function AmbientSessionPanel({
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+              "flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
               isLive
                 ? "bg-emerald-100 text-emerald-700"
                 : "bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)]"
@@ -309,7 +309,7 @@ export function AmbientSessionPanel({
             <p className="truncate text-sm font-semibold text-foreground">
               {appointment.patientName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {appointment.patientAge}y &middot; {appointment.reason} &middot; {appointment.time}
             </p>
           </div>
@@ -317,19 +317,19 @@ export function AmbientSessionPanel({
 
         <div className="flex items-center gap-2 shrink-0">
           {isLive && (
-            <Badge className="border-0 bg-emerald-100 text-emerald-700 gap-1 text-[10px]">
+            <Badge className="border-0 bg-emerald-100 text-emerald-700 gap-1 text-xs">
               <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
               LIVE
             </Badge>
           )}
           {isProcessing && (
-            <Badge className="border-0 bg-amber-50 text-amber-700 text-[10px]">
+            <Badge className="border-0 bg-amber-50 text-amber-700 text-xs">
               Processing...
             </Badge>
           )}
           {isComplete && (
-            <Badge className="border-0 bg-emerald-50 text-emerald-700 gap-1 text-[10px]">
-              <CheckCircle size={10} />
+            <Badge className="border-0 bg-emerald-50 text-emerald-700 gap-1 text-xs">
+              <CheckCircle size={12} />
               Complete
             </Badge>
           )}
@@ -350,22 +350,22 @@ export function AmbientSessionPanel({
               <WaveVisualizer isLive={true} />
             </div>
             <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
-              <Mic size={11} className="text-[var(--color-brand-teal)]" />
-              <span className="text-[10px] font-medium text-[var(--color-brand-teal)]">
+              <Mic size={13} className="text-[var(--color-brand-teal)]" />
+              <span className="text-xs font-medium text-[var(--color-brand-teal)]">
                 Ambient recording active
               </span>
             </div>
           </>
         ) : isProcessing ? (
           <div className="flex h-full items-center justify-center gap-2">
-            <Activity size={14} className="animate-pulse text-amber-500" />
-            <span className="text-xs text-amber-600 font-medium">
+            <Activity size={15} className="animate-pulse text-amber-500" />
+            <span className="text-sm text-amber-600 font-medium">
               AI pipeline processing session data...
             </span>
           </div>
         ) : (
           <div className="flex h-full items-center justify-center gap-1.5 opacity-40">
-            <MicOff size={13} className="text-muted-foreground" />
+            <MicOff size={14} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Stream inactive</span>
           </div>
         )}
@@ -399,13 +399,13 @@ export function AmbientSessionPanel({
           {!isLive && !isProcessing && onOpenHistory && (
             <div
               onClick={onOpenHistory}
-              className="flex items-center justify-between rounded-lg border border-[var(--color-brand-teal)]/30 bg-[var(--color-brand-teal-light)]/40 px-3 py-2 cursor-pointer hover:bg-[var(--color-brand-teal-light)]/70 transition-colors shadow-sm"
+              className="flex items-center justify-between rounded-lg border border-[var(--color-brand-teal)]/30 bg-[var(--color-brand-teal-light)]/40 px-3 py-2.5 cursor-pointer hover:bg-[var(--color-brand-teal-light)]/70 transition-colors shadow-sm"
             >
-              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-brand-teal)]">
-                <History size={14} />
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-brand-teal)]">
+                <History size={15} />
                 <span>Patient Medical Timeline</span>
               </div>
-              <Badge className="bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal)] text-[10px] px-2 py-0.5 font-bold">
+              <Badge className="bg-[var(--color-brand-teal)] text-white hover:bg-[var(--color-brand-teal)] text-xs px-2.5 py-0.5 font-bold">
                 {historyCount} Completed Visit{historyCount !== 1 ? "s" : ""} &rarr;
               </Badge>
             </div>
@@ -413,7 +413,7 @@ export function AmbientSessionPanel({
 
           {/* Chief complaint */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Chief Complaint
             </Label>
             <Input
@@ -423,13 +423,13 @@ export function AmbientSessionPanel({
                 onSessionDataChange({ ...sessionData, chiefComplaint: e.target.value })
               }
               disabled={isComplete}
-              className="text-sm h-8"
+              className="text-sm h-9"
             />
           </div>
 
           {/* Vitals */}
           <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Vitals Capture
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -444,13 +444,13 @@ export function AmbientSessionPanel({
                 ] as { key: keyof VitalEntry; label: string; placeholder: string }[]
               ).map(({ key, label, placeholder }) => (
                 <div key={key} className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">{label}</Label>
+                  <Label className="text-xs text-muted-foreground">{label}</Label>
                   <Input
                     placeholder={placeholder}
                     value={sessionData.vitals[key]}
                     onChange={(e) => updateVitals(key, e.target.value)}
                     disabled={isComplete}
-                    className="h-7 text-xs"
+                    className="h-8 text-sm"
                   />
                 </div>
               ))}
@@ -462,17 +462,17 @@ export function AmbientSessionPanel({
           {/* Prescription table */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Prescription
               </p>
               {!isComplete && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 gap-1 text-[11px] text-[var(--color-brand-teal)] hover:text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)] px-2"
+                  className="h-7 gap-1 text-xs text-[var(--color-brand-teal)] hover:text-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-light)] px-2"
                   onClick={addRow}
                 >
-                  <Plus size={11} />
+                  <Plus size={12} />
                   Add Row
                 </Button>
               )}
@@ -480,60 +480,60 @@ export function AmbientSessionPanel({
 
             {sessionData.prescriptions.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border/60 py-4 text-center">
-                <p className="text-xs text-muted-foreground">No prescriptions added yet.</p>
+                <p className="text-sm text-muted-foreground">No prescriptions added yet.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {sessionData.prescriptions.map((row, idx) => (
                   <div
                     key={row.id}
-                    className="relative rounded-lg border border-border/60 bg-card p-2.5 shadow-none"
+                    className="relative rounded-lg border border-border/60 bg-card p-3 shadow-none"
                   >
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-muted-foreground">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">
                         Rx {idx + 1}
                       </span>
                       {!isComplete && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-5 text-muted-foreground hover:text-destructive"
+                          className="size-6 text-muted-foreground hover:text-destructive"
                           onClick={() => removeRow(row.id)}
                           aria-label="Remove prescription row"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={13} />
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-1.5">
+                    <div className="grid grid-cols-2 gap-2">
                       <div className="col-span-2">
-                        <Label className="text-[10px] text-muted-foreground">Medicine Name</Label>
+                        <Label className="text-xs text-muted-foreground">Medicine Name</Label>
                         <Input
                           placeholder="e.g. Amoxicillin 500mg"
                           value={row.medicine}
                           onChange={(e) => updatePrescription(row.id, "medicine", e.target.value)}
                           disabled={isComplete}
-                          className="mt-0.5 h-7 text-xs"
+                          className="mt-0.5 h-8 text-sm"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Dosage</Label>
+                        <Label className="text-xs text-muted-foreground">Dosage</Label>
                         <Input
                           placeholder="500mg"
                           value={row.dosage}
                           onChange={(e) => updatePrescription(row.id, "dosage", e.target.value)}
                           disabled={isComplete}
-                          className="mt-0.5 h-7 text-xs"
+                          className="mt-0.5 h-8 text-sm"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Frequency</Label>
+                        <Label className="text-xs text-muted-foreground">Frequency</Label>
                         <Select
                           value={row.frequency}
                           onValueChange={(v) => updatePrescription(row.id, "frequency", v)}
                           disabled={isComplete}
                         >
-                          <SelectTrigger className="mt-0.5 h-7 text-xs bg-background">
+                          <SelectTrigger className="mt-0.5 h-8 text-sm bg-background">
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -547,23 +547,23 @@ export function AmbientSessionPanel({
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Duration</Label>
+                        <Label className="text-xs text-muted-foreground">Duration</Label>
                         <Input
                           placeholder="7 days"
                           value={row.duration}
                           onChange={(e) => updatePrescription(row.id, "duration", e.target.value)}
                           disabled={isComplete}
-                          className="mt-0.5 h-7 text-xs"
+                          className="mt-0.5 h-8 text-sm"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Remarks</Label>
+                        <Label className="text-xs text-muted-foreground">Remarks</Label>
                         <Input
                           placeholder="After meals"
                           value={row.remarks}
                           onChange={(e) => updatePrescription(row.id, "remarks", e.target.value)}
                           disabled={isComplete}
-                          className="mt-0.5 h-7 text-xs"
+                          className="mt-0.5 h-8 text-sm"
                         />
                       </div>
                     </div>
@@ -575,7 +575,7 @@ export function AmbientSessionPanel({
 
           {/* Clinical notes */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Clinical Notes
             </Label>
             <Textarea
@@ -585,7 +585,7 @@ export function AmbientSessionPanel({
                 onSessionDataChange({ ...sessionData, clinicalNotes: e.target.value })
               }
               disabled={isComplete}
-              className="min-h-[72px] text-xs resize-none"
+              className="min-h-[80px] text-sm resize-none"
             />
           </div>
 

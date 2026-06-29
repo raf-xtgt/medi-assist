@@ -47,13 +47,13 @@ export function TriageSummaryBanner({
       aria-label="Pre-visit triage summary"
     >
       {/* Header row */}
-      <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5">
-          <Stethoscope size={11} className="text-[var(--color-brand-teal)] shrink-0" />
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-teal)]">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <Stethoscope size={14} className="text-[var(--color-brand-teal)] shrink-0" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand-teal)]">
             Pre-visit Triage
           </span>
-          <span className="text-[10px] text-[var(--color-brand-teal)]/60 font-normal">
+          <span className="text-xs text-[var(--color-brand-teal)]/60 font-normal">
             · AI-generated
           </span>
         </div>
@@ -62,7 +62,7 @@ export function TriageSummaryBanner({
           <button
             onClick={() => setExpanded((v) => !v)}
             className={cn(
-              "flex items-center gap-0.5 text-[10px] font-medium shrink-0",
+              "flex items-center gap-1 text-xs font-medium shrink-0",
               "text-[var(--color-brand-teal)] hover:text-[var(--color-brand-teal-dark)]",
               "transition-colors"
             )}
@@ -71,11 +71,11 @@ export function TriageSummaryBanner({
           >
             {expanded ? (
               <>
-                Hide <ChevronUp size={11} />
+                Hide <ChevronUp size={13} />
               </>
             ) : (
               <>
-                Expand <ChevronDown size={11} />
+                Expand <ChevronDown size={13} />
               </>
             )}
           </button>
@@ -83,7 +83,7 @@ export function TriageSummaryBanner({
       </div>
 
       {/* Summary text */}
-      <p className="text-xs text-foreground/80 leading-relaxed">
+      <p className="text-sm text-foreground/80 leading-relaxed">
         {displayText}
       </p>
     </div>

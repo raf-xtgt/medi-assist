@@ -137,14 +137,14 @@ export function AmbientBrief({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Bot size={15} className="text-[var(--color-brand-blue)]" />
+          <Bot size={16} className="text-[var(--color-brand-blue)]" />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             AI Post-Visit Brief
           </span>
         </div>
         {isReady && (
-          <Badge className="border-0 bg-[var(--color-brand-blue-light)] text-[var(--color-brand-blue)] text-[10px] gap-1">
-            <CircleDot size={9} />
+          <Badge className="border-0 bg-[var(--color-brand-blue-light)] text-[var(--color-brand-blue)] text-xs gap-1">
+            <CircleDot size={10} />
             Ready
           </Badge>
         )}
@@ -154,21 +154,21 @@ export function AmbientBrief({
         <EmptyState state={sessionState} />
       ) : (
         <Tabs defaultValue="insights" className="flex flex-1 flex-col overflow-hidden">
-          <TabsList className="mx-3 mt-2 mb-0 grid w-auto grid-cols-4 h-8 bg-muted/60 rounded-lg shrink-0">
-            <TabsTrigger value="insights" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <Lightbulb size={10} className="mr-0.5" />
+          <TabsList className="mx-3 mt-2 mb-0 grid w-auto grid-cols-4 h-9 bg-muted/60 rounded-lg shrink-0">
+            <TabsTrigger value="insights" className="text-xs h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Lightbulb size={12} className="mr-1" />
               Insights
             </TabsTrigger>
-            <TabsTrigger value="instructions" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <ListChecks size={10} className="mr-0.5" />
+            <TabsTrigger value="instructions" className="text-xs h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <ListChecks size={12} className="mr-1" />
               Plan
             </TabsTrigger>
-            <TabsTrigger value="audit" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <FileSearch size={10} className="mr-0.5" />
+            <TabsTrigger value="audit" className="text-xs h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <FileSearch size={12} className="mr-1" />
               Audit
             </TabsTrigger>
-            <TabsTrigger value="verification" className="text-[10px] h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <ShieldAlert size={10} className="mr-0.5" />
+            <TabsTrigger value="verification" className="text-xs h-full rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <ShieldAlert size={12} className="mr-1" />
               Rx
             </TabsTrigger>
           </TabsList>
@@ -183,24 +183,24 @@ export function AmbientBrief({
                   return (
                     <div
                       key={i}
-                      className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-card p-2.5 shadow-none"
+                      className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-card p-3 shadow-none"
                     >
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[var(--color-brand-blue-light)]">
-                        <Icon size={12} className="text-[var(--color-brand-blue)]" />
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--color-brand-blue-light)]">
+                        <Icon size={14} className="text-[var(--color-brand-blue)]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs text-foreground leading-relaxed">{insight.text}</p>
+                          <p className="text-sm text-foreground leading-relaxed">{insight.text}</p>
                           {sev && (
                             <Badge
                               variant="outline"
-                              className={cn("shrink-0 text-[9px] px-1.5 py-0 h-4 capitalize", sev.cls)}
+                              className={cn("shrink-0 text-[10px] px-1.5 py-0 h-4 capitalize", sev.cls)}
                             >
                               {sev.label}
                             </Badge>
                           )}
                         </div>
-                        <span className="mt-1 inline-block text-[10px] capitalize text-muted-foreground">
+                        <span className="mt-1 inline-block text-xs capitalize text-muted-foreground">
                           {insight.category}
                         </span>
                       </div>
@@ -215,8 +215,8 @@ export function AmbientBrief({
           <TabsContent value="instructions" className="flex-1 overflow-hidden mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-3">
-                <div className="mb-3 rounded-lg border border-[var(--color-brand-teal)]/20 bg-[var(--color-brand-teal-light)] p-2.5">
-                  <p className="text-[11px] text-[var(--color-brand-teal)] font-medium">
+                <div className="mb-3 rounded-lg border border-[var(--color-brand-teal)]/20 bg-[var(--color-brand-teal-light)] p-3">
+                  <p className="text-xs text-[var(--color-brand-teal)] font-medium">
                     Zero-jargon checklist for {appointment?.patientName}
                   </p>
                 </div>
@@ -226,12 +226,12 @@ export function AmbientBrief({
                     return (
                       <li
                         key={i}
-                        className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-card p-2.5"
+                        className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-card p-3"
                       >
-                        <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-teal-light)]">
-                          <Icon size={12} className="text-[var(--color-brand-teal)]" />
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-teal-light)]">
+                          <Icon size={14} className="text-[var(--color-brand-teal)]" />
                         </div>
-                        <p className="text-xs text-foreground leading-relaxed">{item.instruction}</p>
+                        <p className="text-sm text-foreground leading-relaxed">{item.instruction}</p>
                       </li>
                     );
                   })}
@@ -249,8 +249,8 @@ export function AmbientBrief({
                     {/* Form Discrepancies */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <FileSearch size={12} className="text-[var(--color-brand-blue)]" />
-                        <span className="text-[11px] font-semibold text-foreground">
+                        <FileSearch size={14} className="text-[var(--color-brand-blue)]" />
+                        <span className="text-xs font-semibold text-foreground">
                           Form vs. Conversation Discrepancies
                         </span>
                       </div>
@@ -259,17 +259,17 @@ export function AmbientBrief({
                           {brief.clinicalAudit.formDiscrepancies.map((discrepancy, i) => (
                             <div
                               key={i}
-                              className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5"
+                              className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3"
                             >
-                              <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-500" />
-                              <p className="text-xs text-amber-800 leading-relaxed">{discrepancy}</p>
+                              <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+                              <p className="text-sm text-amber-800 leading-relaxed">{discrepancy}</p>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5">
-                          <CheckCircle size={12} className="shrink-0 text-emerald-500" />
-                          <p className="text-xs text-emerald-700">
+                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                          <CheckCircle size={13} className="shrink-0 text-emerald-500" />
+                          <p className="text-sm text-emerald-700">
                             No discrepancies found between verbal discussion and form data.
                           </p>
                         </div>
@@ -281,13 +281,13 @@ export function AmbientBrief({
                     {/* Patient Comprehension */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <Eye size={12} className="text-[var(--color-brand-blue)]" />
-                        <span className="text-[11px] font-semibold text-foreground">
+                        <Eye size={14} className="text-[var(--color-brand-blue)]" />
+                        <span className="text-xs font-semibold text-foreground">
                           Patient Comprehension
                         </span>
                       </div>
                       <div className="rounded-lg border border-border/50 bg-card p-3">
-                        <p className="text-xs text-foreground leading-relaxed">
+                        <p className="text-sm text-foreground leading-relaxed">
                           {brief.clinicalAudit.patientComprehensionRating || "Not assessed"}
                         </p>
                       </div>
@@ -309,13 +309,13 @@ export function AmbientBrief({
           <TabsContent value="verification" className="flex-1 overflow-hidden mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-3 space-y-3">
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   Comparing your typed prescriptions against AI-extracted conversation context.
                 </div>
 
                 {brief.prescriptionVerification.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border/60 py-6 text-center">
-                    <p className="text-xs text-muted-foreground">No prescriptions to verify.</p>
+                    <p className="text-sm text-muted-foreground">No prescriptions to verify.</p>
                   </div>
                 ) : (
                   brief.prescriptionVerification.map((rx) => {
@@ -334,16 +334,16 @@ export function AmbientBrief({
                         )}
                       >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-3 py-2 border-b border-inherit bg-muted/30">
+                        <div className="flex items-center justify-between px-3 py-2.5 border-b border-inherit bg-muted/30">
                           <div className="flex items-center gap-1.5">
-                            <StatusIcon size={13} className={config.cls} />
-                            <span className="text-xs font-semibold text-foreground">
+                            <StatusIcon size={14} className={config.cls} />
+                            <span className="text-sm font-semibold text-foreground">
                               Rx {rx.rxIndex + 1} — {rx.medicine || "Unnamed"}
                             </span>
                           </div>
                           <Badge
                             variant="outline"
-                            className={cn("text-[10px] px-1.5 py-0 h-4", config.badgeCls)}
+                            className={cn("text-xs px-2 py-0 h-5", config.badgeCls)}
                           >
                             {config.label}
                           </Badge>
@@ -351,17 +351,17 @@ export function AmbientBrief({
 
                         {/* Split comparison */}
                         <div className="grid grid-cols-2 divide-x divide-border/50">
-                          <div className="p-2.5 space-y-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <div className="p-3 space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Typed
                             </p>
-                            <p className="text-xs text-foreground">{rx.typedDosage || "—"}</p>
+                            <p className="text-sm text-foreground">{rx.typedDosage || "—"}</p>
                           </div>
-                          <div className="p-2.5 space-y-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <div className="p-3 space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               AI Extracted
                             </p>
-                            <p className="text-xs text-foreground">{rx.aiExtracted || "—"}</p>
+                            <p className="text-sm text-foreground">{rx.aiExtracted || "—"}</p>
                           </div>
                         </div>
 
@@ -369,9 +369,9 @@ export function AmbientBrief({
                         {rx.flag && (
                           <>
                             <Separator />
-                            <div className="flex items-start gap-2 px-3 py-2 bg-amber-50">
-                              <AlertTriangle size={11} className="mt-0.5 shrink-0 text-amber-500" />
-                              <p className="text-[11px] text-amber-700">{rx.flag}</p>
+                            <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50">
+                              <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+                              <p className="text-sm text-amber-700">{rx.flag}</p>
                             </div>
                           </>
                         )}
