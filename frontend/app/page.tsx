@@ -23,7 +23,7 @@ const portals = [
   {
     role:        "admin",
     label:       "Admin Portal",
-    href:        "/admin/dashboard",
+    href:        "/api/auth/quick-login?role=admin",
     icon:        LayoutDashboard,
     description: "Manage clinics, users, and system-wide configuration from a powerful operational dashboard.",
     accent:      "blue" as const,
@@ -33,7 +33,7 @@ const portals = [
   {
     role:        "doctor",
     label:       "Doctor Portal",
-    href:        "/doctor/dashboard",
+    href:        "/api/auth/quick-login?role=doctor",
     icon:        Stethoscope,
     description: "Review patient queues, access clinical notes, manage your schedule, and surface AI-assisted insights.",
     accent:      "teal" as const,
