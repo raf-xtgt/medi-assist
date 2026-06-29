@@ -57,7 +57,7 @@ export default function DoctorDashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const doctorGuid = user?.id || TESTING_DOCTOR_GUID;
+      const doctorGuid = TESTING_DOCTOR_GUID;
       const data = await dashboardService.getDoctorDashboard(doctorGuid);
       setDashboardData(data);
     } catch (err: any) {
