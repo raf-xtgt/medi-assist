@@ -112,16 +112,13 @@ export default async function ClinicPage({ params }: PageProps) {
                 </p>
               </div>
             </div>
-            <nav className="flex items-center gap-6">
-              <a href="/patient/triage" className="text-sm font-medium hover:opacity-80">
-                Get Care
-              </a>
+            <nav className="flex items-center">
               <a
-                href="/patient/book"
+                href="/patient/landing"
                 className={`${branding.layout_shape} ${branding.border_style} px-4 py-2 text-sm font-medium`}
                 style={{ backgroundColor: "var(--primary)", color: "#fff" }}
               >
-                Book Now
+                Get Help
               </a>
             </nav>
           </div>
@@ -138,10 +135,10 @@ export default async function ClinicPage({ params }: PageProps) {
             </p>
             <div className="flex flex-col items-center gap-3">
               <a
-                href="/patient/triage"
+                href="/patient/landing"
                 className={`${branding.layout_shape} ${branding.border_style} px-8 py-4 text-lg font-semibold transition-colors bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white`}
               >
-                {content.cta.text}
+                Get Help
               </a>
               <p className="text-sm text-[var(--text-muted)]">{content.cta.subtext}</p>
             </div>
@@ -202,19 +199,13 @@ export default async function ClinicPage({ params }: PageProps) {
                 {content.header.tagline}
               </p>
             </div>
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center">
               <a
-                href="/patient/triage"
-                className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
-              >
-                Triage Assessment
-              </a>
-              <a
-                href="/patient/book"
+                href="/patient/landing"
                 className={`${branding.layout_shape} ${branding.border_style} px-5 py-2.5 text-sm font-medium text-white`}
                 style={{ backgroundColor: "var(--primary)" }}
               >
-                Schedule Visit
+                Get Help
               </a>
             </nav>
           </div>
@@ -233,11 +224,11 @@ export default async function ClinicPage({ params }: PageProps) {
                 </p>
                 <div className="flex items-center gap-4">
                   <a
-                    href="/patient/book"
+                    href="/patient/landing"
                     className={`${branding.layout_shape} ${branding.border_style} px-8 py-4 text-base font-semibold text-white transition-colors`}
                     style={{ backgroundColor: "var(--primary)" }}
                   >
-                    {content.cta.text}
+                    Get Help
                   </a>
                   <span className="text-sm text-[var(--text-muted)]">
                     {content.cta.subtext}
@@ -309,16 +300,13 @@ export default async function ClinicPage({ params }: PageProps) {
                 </p>
               </div>
             </div>
-            <nav className="flex items-center gap-6">
-              <a href="/patient/triage" className="text-sm font-medium hover:opacity-80">
-                Get Care
-              </a>
+            <nav className="flex items-center">
               <a
-                href="/patient/book"
+                href="/patient/landing"
                 className={`${branding.layout_shape} ${branding.border_style} px-5 py-2.5 text-sm font-medium text-white`}
                 style={{ backgroundColor: "var(--primary)" }}
               >
-                Book Now
+                Get Help
               </a>
             </nav>
           </div>
@@ -335,11 +323,11 @@ export default async function ClinicPage({ params }: PageProps) {
             </p>
             <div className="flex flex-col items-center gap-3">
               <a
-                href="/patient/triage"
+                href="/patient/landing"
                 className={`${branding.layout_shape} ${branding.border_style} px-8 py-4 text-lg font-semibold transition-colors text-white`}
                 style={{ backgroundColor: "var(--primary)" }}
               >
-                {content.cta.text}
+                Get Help
               </a>
               <p className="text-sm text-[var(--text-muted)]">{content.cta.subtext}</p>
             </div>
@@ -395,11 +383,11 @@ export default async function ClinicPage({ params }: PageProps) {
         <h2 className="text-2xl font-bold mb-4">{content.body.hero_title}</h2>
         <p className="text-[var(--text-muted)] mb-8">{content.body.hero_description}</p>
         <a
-          href="/patient/triage"
+          href="/patient/landing"
           className={`${branding.layout_shape} ${branding.border_style} inline-block px-6 py-3`}
           style={{ backgroundColor: "var(--primary)", color: "#fff" }}
         >
-          {content.cta.text}
+          Get Help
         </a>
       </div>
     </div>
