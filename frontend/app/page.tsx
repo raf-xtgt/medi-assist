@@ -82,7 +82,7 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden py-20 md:py-28">
+        <section className="relative overflow-hidden py-12 md:py-16">
           <div className="mx-auto max-w-4xl px-4 text-center md:px-8">
             <Badge className="mb-6 bg-[var(--color-brand-blue-light)] text-[var(--color-brand-blue)] border-0 px-3 py-1 text-xs font-medium">
               Digital Health Platform
@@ -93,7 +93,7 @@ export default function LandingPage() {
               <span className="text-[var(--color-brand-blue)]">for everyone</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-              medi-assist unifies Admins, Doctors, and Patients on a single
+              MediAssist unifies Admins, Doctors, and Patients on a single
               platform — purpose-built for the speed and trust that modern
               healthcare demands.
             </p>
@@ -113,7 +113,7 @@ export default function LandingPage() {
         </section>
 
         {/* Portals */}
-        <section id="portals" className="bg-muted/40 py-20">
+        <section id="portals" className="bg-muted/40 py-12">
           <div className="mx-auto max-w-6xl px-4 md:px-8">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground">
@@ -163,7 +163,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
-        <section className="py-20">
+        <section className="py-12">
           <div className="mx-auto max-w-6xl px-4 md:px-8">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground">
@@ -181,8 +181,8 @@ export default function LandingPage() {
                     >
                       <Icon size={18} strokeWidth={1.8} />
                     </span>
-                    <h3 className="text-sm font-semibold text-foreground">{f.label}</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                    <h3 className="text-base font-semibold text-foreground">{f.label}</h3>
+                    <p className="text-base leading-relaxed text-muted-foreground">{f.desc}</p>
                   </div>
                 );
               })}

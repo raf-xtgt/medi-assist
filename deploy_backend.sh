@@ -115,13 +115,17 @@ cat <<EOF > image-repo-config.json
 EOF
 
 if [ -n "$SERVICE_ARN" ]; then
-    echo "Updating existing App Runner service: $SERVICE_NAME"
+    echo "Updating existing App Runner service configuration: $SERVICE_NAME"
     aws apprunner update-service \
         --region $REGION \
         --service-arn "$SERVICE_ARN" \
         --source-configuration file://image-repo-config.json > /dev/null
     
-    echo "Update triggered successfully. Service is redeploying."
+    echo "Forcing ECR image pull and redeployment..."
+    aws apprunner start-deployment \
+        --region $REGION \
+        --service-arn "$SERVICE_ARN" >/dev/null 2>&1 || echo "Redeployment already in progress (triggered by configuration update)."
+    
     # Retrieve URL
     SERVICE_URL=$(aws apprunner describe-service --region $REGION --service-arn "$SERVICE_ARN" --query "Service.ServiceUrl" --output text)
     echo "Backend will be available at: https://$SERVICE_URL"
