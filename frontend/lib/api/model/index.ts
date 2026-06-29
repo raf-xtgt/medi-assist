@@ -14,3 +14,5 @@ export type { FollowUpQueueCreate, FollowUpQueueUpdate, FollowUpQueueResponse } 
 export type { AppointmentNoteCreate, AppointmentNoteUpdate, AppointmentNoteResponse } from "./appointment-note.model";
 export type { ClinicalReportCreate, ClinicalReportUpdate, ClinicalReportResponse } from "./clinical-report.model";
 export type { PrescriptionHistoryItem, ClinicalReportHistoryItem, AppointmentHistoryRecord, PatientHistoryResponse, DoctorPatientHistoryRequest, PatientOnlyHistoryRequest } from "./patient-history.model";
+export type { AdminDashboardResponse, DoctorDashboardResponse, AdminKpiMetrics, DoctorKpiMetrics, DoctorLoadItem, QueuePatientItem, ActivityItemResponse, AdminAppointmentItem } from "./dashboard.model";
+

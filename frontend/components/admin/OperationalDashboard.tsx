@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CalendarCheck,
   CheckCircle2,
@@ -10,51 +10,144 @@ import {
   TrendingUp,
   Users2,
   RefreshCw,
+  ServerCrash,
 } from "lucide-react";
 import { OpsKpiCard } from "@/components/admin/OpsKpiCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const APPOINTMENTS = [
-  { id: "A001", patient: "Eleanor Voss",      doctor: "Dr. Marcus Tan",     time: "09:00",  status: "done",       type: "GP Consult"         },
-  { id: "A002", patient: "James O'Brien",     doctor: "Dr. Priya Nair",     time: "09:30",  status: "done",       type: "Cardiology Review"  },
-  { id: "A003", patient: "Sofia Ramirez",     doctor: "Dr. Marcus Tan",     time: "10:00",  status: "in-progress",type: "Follow-up"          },
-  { id: "A004", patient: "Liam Chen",         doctor: "Dr. Aisha Kamara",   time: "10:30",  status: "scheduled",  type: "Dermatology"        },
-  { id: "A005", patient: "Amara Okafor",      doctor: "Dr. David Wu",       time: "11:00",  status: "scheduled",  type: "Endocrinology"      },
-  { id: "A006", patient: "Victor Petrov",     doctor: "Dr. Priya Nair",     time: "11:30",  status: "postponed",  type: "Cardiology Review"  },
-  { id: "A007", patient: "Hannah Schmidt",    doctor: "Dr. Marcus Tan",     time: "13:00",  status: "scheduled",  type: "GP Consult"         },
-  { id: "A008", patient: "Carlos Mendez",     doctor: "Dr. Aisha Kamara",   time: "13:30",  status: "canceled",   type: "Dermatology"        },
-  { id: "A009", patient: "Yuki Tanaka",       doctor: "Dr. David Wu",       time: "14:00",  status: "scheduled",  type: "Endocrinology"      },
-  { id: "A010", patient: "Nadia Al-Farsi",    doctor: "Dr. Priya Nair",     time: "14:30",  status: "scheduled",  type: "Cardiology Review"  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/hooks/useSession";
+import { clinicHdrService, dashboardService } from "@/lib/api/services";
+import type { AdminDashboardResponse } from "@/lib/api/model/dashboard.model";
+import { TESTING_CLINIC_USER_GUID } from "@/lib/api/model/testing-guid.model";
 
 const statusConfig: Record<string, { label: string; cls: string }> = {
-  done:        { label: "Done",        cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "in-progress":{ label: "In Progress", cls: "bg-blue-50 text-blue-700 border-blue-200"       },
-  scheduled:   { label: "Scheduled",   cls: "bg-slate-50 text-slate-700 border-slate-200"     },
-  postponed:   { label: "Postponed",   cls: "bg-amber-50 text-amber-700 border-amber-200"     },
-  canceled:    { label: "Canceled",    cls: "bg-red-50 text-red-700 border-red-200"           },
+  done:          { label: "Done",        cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "in-progress":  { label: "In Progress", cls: "bg-blue-50 text-blue-700 border-blue-200"       },
+  scheduled:     { label: "Scheduled",   cls: "bg-slate-50 text-slate-700 border-slate-200"     },
+  postponed:     { label: "Postponed",   cls: "bg-amber-50 text-amber-700 border-amber-200"     },
+  canceled:      { label: "Canceled",    cls: "bg-red-50 text-red-700 border-red-200"           },
 };
 
-const doctorLoad = [
-  { name: "Dr. Marcus Tan",   specialty: "General Practice", scheduled: 8, done: 3, utilization: 78 },
-  { name: "Dr. Priya Nair",   specialty: "Cardiology",       scheduled: 6, done: 2, utilization: 65 },
-  { name: "Dr. Aisha Kamara", specialty: "Dermatology",      scheduled: 5, done: 1, utilization: 55 },
-  { name: "Dr. David Wu",     specialty: "Endocrinology",    scheduled: 4, done: 0, utilization: 40 },
-];
-
 export function OperationalDashboard() {
+  const { user } = useSession();
   const [filter, setFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const total     = APPOINTMENTS.length;
-  const done      = APPOINTMENTS.filter((a) => a.status === "done").length;
-  const remaining = APPOINTMENTS.filter((a) => a.status === "scheduled" || a.status === "in-progress").length;
-  const freed     = APPOINTMENTS.filter((a) => a.status === "postponed" || a.status === "canceled").length;
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const userGuid = user?.id || TESTING_CLINIC_USER_GUID;
+      let clinicGuid = "";
+      
+      try {
+        const clinics = await clinicHdrService.getByCriteria({ user_guid: userGuid });
+        if (clinics && clinics.length > 0) {
+          clinicGuid = clinics[0].guid;
+        } else {
+          const allClinics = await clinicHdrService.getAll();
+          if (allClinics && allClinics.length > 0) {
+            clinicGuid = allClinics[0].guid;
+          }
+        }
+      } catch {
+        const allClinics = await clinicHdrService.getAll();
+        if (allClinics && allClinics.length > 0) {
+          clinicGuid = allClinics[0].guid;
+        }
+      }
+
+      if (!clinicGuid) {
+        throw new Error("No clinics configured. Please onboard a clinic first.");
+      }
+
+      const data = await dashboardService.getAdminDashboard(clinicGuid);
+      setDashboardData(data);
+    } catch (err: any) {
+      console.error("Dashboard fetch error:", err);
+      setError(err?.message || "Failed to load dashboard statistics.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  if (loading && !dashboardData) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64 mt-1" />
+          </div>
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="shadow-none border-border/60">
+              <CardContent className="p-5 flex flex-col gap-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-3 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="shadow-none border-border/60">
+            <CardHeader className="pb-3"><Skeleton className="h-5 w-28" /></CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2 shadow-none border-border/60">
+            <CardHeader className="pb-3"><Skeleton className="h-5 w-36" /></CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 min-h-[400px] border border-dashed rounded-lg border-border/60 bg-muted/10 gap-4">
+        <ServerCrash size={48} className="text-muted-foreground" />
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-foreground">Operational Stats Unavailable</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-md">{error}</p>
+        </div>
+        <Button onClick={loadData} variant="outline" size="sm" className="gap-1.5 mt-2">
+          <RefreshCw size={14} /> Retry Load
+        </Button>
+      </div>
+    );
+  }
+
+  const kpis = dashboardData!.kpis;
+  const providerLoads = dashboardData!.provider_loads;
+  const appointments = dashboardData!.appointments;
 
   const filtered = filter === "all"
-    ? APPOINTMENTS
-    : APPOINTMENTS.filter((a) => a.status === filter);
+    ? appointments
+    : appointments.filter((a) => {
+        const statusKey = a.appointment_status.toLowerCase().replace("_", "-");
+        return statusKey === filter;
+      });
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,10 +155,12 @@ export function OperationalDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-foreground tracking-tight">Operational Health</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Real-time appointment grid — today, {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Real-time appointment grid — today, {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          </p>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
-          <RefreshCw size={12} aria-hidden="true" />
+        <Button onClick={loadData} disabled={loading} variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+          <RefreshCw size={12} className={loading ? "animate-spin" : ""} aria-hidden="true" />
           Refresh
         </Button>
       </div>
@@ -74,7 +169,7 @@ export function OperationalDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <OpsKpiCard
           label="Total Appointments"
-          value={total}
+          value={kpis.total_appointments}
           sublabel="Scheduled capacity today"
           icon={CalendarCheck}
           accent="blue"
@@ -82,22 +177,22 @@ export function OperationalDashboard() {
         />
         <OpsKpiCard
           label="Remaining"
-          value={remaining}
+          value={kpis.remaining_appointments}
           sublabel="Upcoming slots for the day"
           icon={Clock}
           accent="neutral"
         />
         <OpsKpiCard
           label="Completed"
-          value={done}
-          sublabel={`${Math.round((done / total) * 100)}% completion rate`}
+          value={kpis.completed_appointments}
+          sublabel={`${kpis.completion_rate}% completion rate`}
           icon={CheckCircle2}
           accent="success"
           delta={{ value: 3, label: "vs avg" }}
         />
         <OpsKpiCard
           label="Postponed / Canceled"
-          value={freed}
+          value={kpis.canceled_or_postponed_appointments}
           sublabel="Freed slots available"
           icon={AlertTriangle}
           accent="warning"
@@ -114,36 +209,40 @@ export function OperationalDashboard() {
             <Activity size={14} className="text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {doctorLoad.map((doc) => (
-              <div key={doc.name} className="flex flex-col gap-1">
+            {providerLoads.map((doc) => (
+              <div key={doc.doctor_guid} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-xs font-medium text-foreground">{doc.name}</span>
+                    <span className="text-xs font-medium text-foreground">{doc.doctor_name}</span>
                     <span className="text-[10px] text-muted-foreground">{doc.specialty}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground tabular-nums">
-                    <span><span className="font-semibold text-foreground">{doc.done}</span>/{doc.scheduled}</span>
-                    <span className={`font-semibold ${doc.utilization >= 70 ? "text-amber-600" : "text-emerald-600"}`}>{doc.utilization}%</span>
+                    <span>
+                      <span className="font-semibold text-foreground">{doc.completed_appointments}</span>/{doc.total_appointments}
+                    </span>
+                    <span className={`font-semibold ${doc.utilization_percentage >= 70 ? "text-amber-600" : "text-emerald-600"}`}>
+                      {doc.utilization_percentage}%
+                    </span>
                   </div>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${doc.utilization >= 70 ? "bg-amber-400" : "bg-emerald-500"}`}
-                    style={{ width: `${doc.utilization}%` }}
+                    className={`h-full rounded-full transition-all ${doc.utilization_percentage >= 70 ? "bg-amber-400" : "bg-emerald-500"}`}
+                    style={{ width: `${doc.utilization_percentage}%` }}
                     role="progressbar"
-                    aria-valuenow={doc.utilization}
+                    aria-valuenow={doc.utilization_percentage}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    aria-label={`${doc.name} utilization`}
+                    aria-label={`${doc.doctor_name} utilization`}
                   />
                 </div>
               </div>
             ))}
             <div className="pt-2 border-t border-border/40 flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <TrendingUp size={11} aria-hidden="true" className="text-emerald-500" />
-              <span>Avg utilization: <strong className="text-foreground">59.5%</strong></span>
+              <span>Avg utilization: <strong className="text-foreground">{kpis.average_utilization_rate}%</strong></span>
               <span className="ml-auto flex items-center gap-1">
-                <Users2 size={10} aria-hidden="true" />4 active providers
+                <Users2 size={10} aria-hidden="true" />{providerLoads.length} active providers
               </span>
             </div>
           </CardContent>
@@ -183,25 +282,38 @@ export function OperationalDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((appt) => (
-                    <tr
-                      key={appt.id}
-                      className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
-                    >
-                      <td className="px-4 py-2.5 font-mono font-semibold text-foreground">{appt.time}</td>
-                      <td className="px-4 py-2.5 font-medium text-foreground">{appt.patient}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground hidden md:table-cell">{appt.doctor}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground hidden lg:table-cell">{appt.type}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] capitalize font-medium ${statusConfig[appt.status]?.cls}`}
-                        >
-                          {statusConfig[appt.status]?.label || appt.status}
-                        </Badge>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                        No appointments found matching filter.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filtered.map((appt) => {
+                      const normalizedStatus = appt.appointment_status.toLowerCase().replace("_", "-");
+                      const config = statusConfig[normalizedStatus] || { label: appt.appointment_status, cls: "bg-slate-50 text-slate-700" };
+
+                      return (
+                        <tr
+                          key={appt.appointment_guid}
+                          className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors"
+                        >
+                          <td className="px-4 py-2.5 font-mono font-semibold text-foreground">{appt.time}</td>
+                          <td className="px-4 py-2.5 font-medium text-foreground">{appt.patient_name}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground hidden md:table-cell">{appt.doctor_name}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground hidden lg:table-cell">{appt.visit_type}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] capitalize font-medium ${config.cls}`}
+                            >
+                              {config.label}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

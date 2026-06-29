@@ -13,3 +13,5 @@ export { prescriptionService } from "./prescription-service";
 export { followUpQueueService } from "./follow-up-queue-service";
 export { appointmentNoteService } from "./appointment-note-service";
 export { clinicalReportService } from "./clinical-report-service";
+export { dashboardService } from "./dashboard-service";
+
