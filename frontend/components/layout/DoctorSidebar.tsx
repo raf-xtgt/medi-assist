@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  CalendarCheck,
-  ClipboardList,
   LayoutDashboard,
   Stethoscope,
   Users,
@@ -25,9 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard",    href: "/doctor/dashboard",    icon: LayoutDashboard },
   { label: "Consult",      href: "/doctor/consult",      icon: Stethoscope,    badge: "Live" },
-  { label: "Appointments", href: "/doctor/appointments", icon: CalendarCheck },
   { label: "Patients",     href: "/doctor/patients",     icon: Users },
-  { label: "Notes",        href: "/doctor/notes",        icon: ClipboardList },
 ];
 
 interface DoctorSidebarProps {

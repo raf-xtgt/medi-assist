@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
-import { dashboardService } from "@/lib/api/services";
+import { dashboardService, doctorService } from "@/lib/api/services";
 import type { DoctorDashboardResponse } from "@/lib/api/model/dashboard.model";
 import { TESTING_DOCTOR_GUID } from "@/lib/api/model/testing-guid.model";
 
@@ -51,6 +51,7 @@ export default function DoctorDashboardPage() {
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DoctorDashboardResponse | null>(null);
+  const [doctorName, setDoctorName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -58,8 +59,12 @@ export default function DoctorDashboardPage() {
     setError(null);
     try {
       const doctorGuid = TESTING_DOCTOR_GUID;
-      const data = await dashboardService.getDoctorDashboard(doctorGuid);
+      const [data, doctor] = await Promise.all([
+        dashboardService.getDoctorDashboard(doctorGuid),
+        doctorService.getByGuid(doctorGuid),
+      ]);
       setDashboardData(data);
+      setDoctorName(doctor.name || null);
     } catch (err: any) {
       console.error("Doctor dashboard fetch error:", err);
       setError(err?.message || "Failed to load clinical overview statistics.");
@@ -184,7 +189,7 @@ export default function DoctorDashboardPage() {
     <PageShell>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Good morning, {user?.name || "Doctor"}</h1>
+          <h1 className="text-2xl font-bold text-foreground">Good morning, Dr. {doctorName || user?.name || "Doctor"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here&apos;s your clinical overview for today.
           </p>
