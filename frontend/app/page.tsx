@@ -40,16 +40,16 @@ const portals = [
     accentClass: "bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)]",
     btnClass:    "bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white",
   },
-  {
-    role:        "patient",
-    label:       "Patient Portal",
-    href:        "/patient/landing",
-    icon:        Heart,
-    description: "Book appointments, view your health records, and stay connected with your care team — no login required.",
-    accent:      "teal" as const,
-    accentClass: "bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)]",
-    btnClass:    "bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white",
-  },
+  // {
+  //   role:        "patient",
+  //   label:       "Patient Portal",
+  //   href:        "/patient/landing",
+  //   icon:        Heart,
+  //   description: "Book appointments, view your health records, and stay connected with your care team — no login required.",
+  //   accent:      "teal" as const,
+  //   accentClass: "bg-[var(--color-brand-teal-light)] text-[var(--color-brand-teal)]",
+  //   btnClass:    "bg-[var(--color-brand-teal)] hover:bg-[var(--color-brand-teal-dark)] text-white",
+  // },
 ];
 
 const features = [
@@ -117,14 +117,14 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 md:px-8">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground">
-                Three portals, one platform
+                Two portals, one platform
               </h2>
               <p className="mt-3 text-muted-foreground">
                 Each role gets an interface built around their exact workflow.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
               {portals.map((portal) => {
                 const Icon = portal.icon;
                 return (
