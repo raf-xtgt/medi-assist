@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { clinicHdrService } from "@/lib/api/services/clinic-hdr-service";
 import type { ClinicHdrResponse } from "@/lib/api/model/clinic-hdr.model";
+import { TESTING_CLINIC_USER_GUID } from "@/lib/api/model/testing-guid.model";
 import templateConfigs from "./ClinicTemplate.json";
 import { ClinicDoctorListing } from "./ClinicDoctorListing";
 import { ClientGBPView } from "./ClientGBPView";
@@ -87,7 +88,8 @@ export function ClinicView({ clinic, onSaved, onClose }: ClinicViewProps) {
         address: address.trim() || undefined,
         slug: websiteName.trim(),
         site_metadata: selectedTemplateConfig ?? undefined,
-        status: "active",
+        status: "ACTIVE",
+        created_by_guid: TESTING_CLINIC_USER_GUID,
       };
 
       if (isEditing && clinic) {

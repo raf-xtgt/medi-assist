@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Save, Loader2, Upload, FileText, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,19 @@ export function ClinicDoctorView({ clinicGuid, doctor, onSaved, onClose }: Clini
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saveStep, setSaveStep] = useState<SaveStep>("idle");
   const [activeTab, setActiveTab] = useState<DoctorTab>("details");
+
+  // Sync local state when the doctor prop changes (e.g. after create → edit transition)
+  useEffect(() => {
+    setName(doctor?.name ?? "");
+    setEmail(doctor?.email ?? "");
+    setPhone(doctor?.phone ?? "");
+    setAbout(doctor?.about ?? "");
+    setSpecialty(doctor?.specialty ?? "");
+    setFile(null);
+    setImageFile(null);
+    setSaveStep("idle");
+    setActiveTab("details");
+  }, [doctor]);
 
   const stepMessages: Record<SaveStep, string> = {
     idle: "",
