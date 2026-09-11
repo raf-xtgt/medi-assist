@@ -1,0 +1,26 @@
+# Environment and credentials
+.env*
+!.env.example
+creds.json
+
+# Virtual environments
+.webservice-venv/
+.venv/
+venv/
+env/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Git and editor files
+.git/
+.gitignore
+.vscode/
+.idea/
